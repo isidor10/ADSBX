@@ -44,6 +44,13 @@ export const config = {
     pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 5000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
+    /**
+     * How long one SSE connection is held open before the server closes it
+     * cleanly and the browser reconnects. Serverless platforms cap function
+     * duration (Vercel: 60s on Hobby, 300s on Pro), so rotating just under the
+     * cap turns a hard platform kill into an orderly hand-off.
+     */
+    streamLifetimeMs: num("ADSB_STREAM_LIFETIME_MS", 50_000),
   },
   search: {
     provider: str("SEARCH_PROVIDER", "none") as SearchProviderName,

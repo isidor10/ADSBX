@@ -124,6 +124,11 @@ export function useLiveFeed(
       setTransport("stream");
       source = new EventSource(`/api/aircraft/stream?${query}`);
 
+      // A server that closes the stream on purpose (serverless function
+      // duration caps) is not a failure — EventSource reconnects by itself.
+      let rotating = false;
+      let failuresWithoutData = 0;
+
       source.addEventListener("aircraft", (event) => {
         if (cancelled) return;
         try {
@@ -132,9 +137,14 @@ export function useLiveFeed(
           setConnected(true);
           setError(body.error ?? null);
           setErrorDetail(null);
+          failuresWithoutData = 0;
         } catch {
           /* ignore malformed frame */
         }
+      });
+
+      source.addEventListener("rotate", () => {
+        rotating = true;
       });
 
       source.addEventListener("error", (event) => {
@@ -149,7 +159,18 @@ export function useLiveFeed(
           }
           return;
         }
-        // Transport-level failure: drop to polling rather than hammering SSE.
+
+        if (rotating) {
+          // Announced hand-off: let the browser reconnect and keep streaming.
+          rotating = false;
+          return;
+        }
+
+        // Genuine transport failure. Give EventSource a couple of reconnect
+        // attempts before giving up on streaming for this viewport.
+        failuresWithoutData += 1;
+        if (failuresWithoutData < 3) return;
+
         setConnected(false);
         source?.close();
         source = null;

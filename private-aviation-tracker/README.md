@@ -65,6 +65,69 @@ Check what is wired up at any time: `curl localhost:3000/api/health`.
 
 ---
 
+## Deploy to Vercel
+
+The app lives in a subdirectory of this repository, so the one setting that
+matters is **Root Directory = `private-aviation-tracker`**.
+
+**Via the dashboard** — [vercel.com/new](https://vercel.com/new) → import
+`isidor10/instagram-scraper` → set Root Directory to `private-aviation-tracker`
+→ add the environment variables below → Deploy.
+
+**Via the CLI**, from the repository root:
+
+```bash
+npx vercel --cwd private-aviation-tracker            # preview deploy
+npx vercel --prod --cwd private-aviation-tracker     # production
+```
+
+Framework detection, `prisma generate` (via `postinstall`) and the build all
+work with no extra configuration.
+
+### Environment variables to set in the project
+
+| Variable | Value |
+|---|---|
+| `ADSB_PROVIDER` | `adsbexchange` (or `demo` to deploy without any keys) |
+| `ADSBX_RAPIDAPI_KEY` | your RapidAPI key |
+| `DATABASE_URL` | a **pooled** Postgres URL — see below |
+| `SEARCH_PROVIDER` + its key | e.g. `google_cse` + `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_CX` |
+| `REDIS_URL` | strongly recommended on serverless — see below |
+
+### Three things that matter on serverless
+
+**Use a pooled Postgres connection.** Every function instance opens its own
+connections, so a direct Postgres URL exhausts the server's connection limit
+under load. Use a pooler endpoint (Neon, Supabase, or Vercel Postgres) and
+append `?pgbouncer=true&connection_limit=1`. Run migrations once from your
+machine against the **direct** (non-pooled) URL:
+
+```bash
+DATABASE_URL="<direct url>" npx prisma migrate deploy
+```
+
+**Set `REDIS_URL` (e.g. Upstash).** The shared-viewport cache that keeps ADS-B
+usage to one upstream call per cell per interval is in-process. With several
+function instances and no Redis, each instance polls upstream separately and
+your ADS-B API usage multiplies by the instance count. Redis restores the
+single-poll behaviour across instances.
+
+**The live stream rotates, by design.** Vercel caps function duration (60 s on
+Hobby, 300 s on Pro). The SSE route closes each connection after
+`ADSB_STREAM_LIFETIME_MS` (default 50 s) with a `rotate` event; the browser
+reconnects immediately and the client treats an announced rotation as normal
+rather than as a failure, so the map stays live across the hand-off. On Pro you
+can raise both `maxDuration` in `src/app/api/aircraft/stream/route.ts` and
+`ADSB_STREAM_LIFETIME_MS` to reduce reconnects.
+
+Flight history also depends on the ingest path running, which on serverless
+only happens while requests are in flight. For continuous history recording,
+run one long-lived instance (a small container, or `npm start` on a VM) with
+`PERSIST_POSITIONS=true` and set `PERSIST_POSITIONS=false` on the Vercel
+deployment so legs are not derived twice.
+
+---
+
 ## Optional: load the official reference datasets
 
 Both are public datasets and both make the product materially better.
