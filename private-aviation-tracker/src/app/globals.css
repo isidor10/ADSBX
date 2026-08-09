@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+/*
+ * Private Aviation Tracker — dark operations-console theme.
+ * Near-black navy ground, cyan primary, amber and red reserved for state.
+ */
+@theme {
+  --color-ground: #04060c;
+  --color-panel: #080c16;
+  --color-panel-2: #0d1322;
+  --color-panel-3: #131b2e;
+  --color-edge: #1b2437;
+  --color-edge-2: #2a3550;
+
+  --color-ink: #e8eefb;
+  --color-ink-2: #9fb0cc;
+  --color-ink-3: #64748b;
+
+  --color-cyan: #22d3ee;
+  --color-cyan-dim: #0e7490;
+  --color-amber: #f5a524;
+  --color-lime: #4ade80;
+  --color-rose: #f43f5e;
+  --color-violet: #a78bfa;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Data readouts use tabular figures so columns don't jitter as values change. */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-edge-2) transparent;
+}
+.panel-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-edge-2);
+  border-radius: 999px;
+}
+
+/* Slide-in for the aircraft detail panel. */
+@keyframes panel-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.animate-panel-in {
+  animation: panel-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.82);
+  }
+}
+.live-dot {
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+/* MapLibre chrome, restyled for the dark console. */
+.maplibregl-ctrl-attrib {
+  background: rgba(4, 6, 12, 0.82) !important;
+  color: var(--color-ink-3) !important;
+  font-size: 10px !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-ink-2) !important;
+}
+.maplibregl-ctrl-group {
+  background: var(--color-panel-2) !important;
+  border: 1px solid var(--color-edge) !important;
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-edge) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) opacity(0.72);
+}
+.maplibregl-canvas:focus {
+  outline: none;
+}

@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tracker
+      POSTGRES_PASSWORD: tracker
+      POSTGRES_DB: private_aviation
+    ports:
+      - "5432:5432"
+    volumes:
+      - pat-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tracker -d private_aviation"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Optional. Without it the app falls back to an in-process LRU cache.
+  redis:
+    image: redis:7-alpine
+    container_name: pat-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - pat-redis:/data
+
+volumes:
+  pat-postgres:
+  pat-redis:

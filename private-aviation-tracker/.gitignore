@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+.env
+.env.local
+.env.*.local
+
+*.tsbuildinfo
+next-env.d.ts
+
+.DS_Store
+npm-debug.log*
+yarn-error.log*
+
+# Downloaded reference datasets
+/data/
+ReleasableAircraft*/
+airports.csv
+
+# The repository root ignores `lib/` (Python build output); this app's source
+# lives in src/lib, so re-include it.
+!src/lib/
+!src/lib/**
