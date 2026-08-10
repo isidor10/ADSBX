@@ -29,6 +29,38 @@ No key is ever exposed to the browser. Every provider call happens in a route
 handler or a server module; the only `NEXT_PUBLIC_*` values are the map style
 and refresh interval.
 
+### No ADS-B Exchange subscription? Two working alternatives
+
+ADS-B Exchange access is paid. If you want real aircraft on the map before
+committing to a plan, point the app at any readsb/tar1090-compatible feed —
+the provider is already built, only the URL changes:
+
+```bash
+ADSB_PROVIDER="readsb"
+ADSB_BASE_URL="https://opendata.adsb.fi/api/v2"   # or adsb.lol, airplanes.live
+```
+
+These are community feeds with their own terms — read them and confirm your use
+is allowed before relying on one. Coverage is thinner than ADS-B Exchange in
+some regions, but the data is real and the filtering, ownership research and
+history all work identically.
+
+For interface evaluation with no external service at all, `ADSB_PROVIDER=demo`
+serves simulated traffic behind a permanent **SIMULATED DATA** banner.
+
+**If you hold a direct ADS-B Exchange data agreement** rather than a RapidAPI
+subscription, set `ADSB_PROVIDER=adsbx_direct` and `ADSBX_API_KEY` instead. That
+path follows the vendor's published sample call exactly — requests go to
+`https://gateway.adsbexchange.com/api/aircraft/v2/...` with the key in an
+`api-auth` request header:
+
+```http
+GET /api/aircraft/v2/icao/A465DF HTTP/1.1
+Host: gateway.adsbexchange.com
+Accept: application/json
+api-auth: YOUR_API_KEY
+```
+
 ---
 
 ## Quick start
@@ -56,8 +88,11 @@ GOOGLE_CSE_CX="..."
 ```
 
 To evaluate the interface with no keys at all, set `ADSB_PROVIDER="demo"`. Demo
-traffic uses deliberately invalid registrations (`N0GLF6` — an N-number cannot
-have a leading zero) and the UI shows a permanent **SIMULATED DATA** banner.
+traffic spans several registries (US, UK, Germany, Switzerland, Austria, Italy,
+France, Malta, Isle of Man, Cayman) and every registration is deliberately
+invalid in its own scheme — `N0GLF6` (an N-number cannot have a leading zero),
+`G-0LEX` (UK registrations are four letters) — so a simulated contact can never
+be mistaken for a real airframe. The UI shows a permanent **SIMULATED DATA** banner.
 Ownership research still runs for real against those tails and correctly reports
 that nothing was found.
 
@@ -81,8 +116,14 @@ npx vercel --cwd private-aviation-tracker            # preview deploy
 npx vercel --prod --cwd private-aviation-tracker     # production
 ```
 
-Framework detection, `prisma generate` (via `postinstall`) and the build all
-work with no extra configuration.
+`vercel.json` pins the framework to `nextjs`, and `prisma generate` runs via
+`postinstall`, so no other configuration is needed.
+
+> If a deployment fails with **`No Output Directory named "public" found`**, the
+> project's Framework Preset is set to "Other" — Vercel is treating the build as
+> a static site. `vercel.json` overrides that on the next deployment; to fix an
+> existing project by hand, set Framework Preset to **Next.js** under Settings →
+> General and redeploy.
 
 ### Environment variables to set in the project
 
@@ -184,6 +225,18 @@ fallback. Adding viewers costs no extra API calls.
 **Smooth movement without extra requests.** Between updates the client
 dead-reckons each aircraft from its last reported position using ground speed and
 track, capped at 45 s so a stale contact drifts slightly and then stops.
+
+**Every aircraft is drawn individually.** Contacts are not merged into count
+bubbles — set `NEXT_PUBLIC_MAP_CLUSTER=true` to enable clustering at low zoom if
+you are rendering very dense traffic. Aircraft layers are built on the map's
+`style.load`, so traffic still draws even when the basemap tiles cannot be
+fetched.
+
+**Photos** come from the Planespotters API first (an exact tail-number match)
+and fall back to Google Programmable Search in image mode for aircraft the
+aviation databases have not photographed. Set `PHOTO_PROVIDER` to `planespotters`
+or `google` to use only one. Google image results are hosted by third parties, so
+they are shown with the host credited and a link to the page they came from.
 
 **Ownership research.** Cache → FAA registry → web search across a set of tail-number
 queries → organisation-name extraction from titles and snippets → scoring by source

@@ -166,10 +166,19 @@ export function useLiveFeed(
           return;
         }
 
-        // Genuine transport failure. Give EventSource a couple of reconnect
-        // attempts before giving up on streaming for this viewport.
-        failuresWithoutData += 1;
-        if (failuresWithoutData < 3) return;
+        // A non-200 response (e.g. 503 when ADS-B credentials are missing)
+        // makes EventSource "fail the connection": it errors once and never
+        // retries, leaving readyState CLOSED. Waiting for further errors there
+        // would hang forever and hide the reason from the user, so switch to
+        // polling immediately — that path reads the JSON error body.
+        const givenUp = !source || source.readyState === EventSource.CLOSED;
+
+        // Otherwise the browser is reconnecting on its own; allow a couple of
+        // attempts before abandoning the stream for this viewport.
+        if (!givenUp) {
+          failuresWithoutData += 1;
+          if (failuresWithoutData < 3) return;
+        }
 
         setConnected(false);
         source?.close();

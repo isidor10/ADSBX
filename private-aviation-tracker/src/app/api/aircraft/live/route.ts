@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { jsonError, jsonOk, parseFilters, parseViewport } from "@/lib/api";
-import { adsbConfigured, config } from "@/lib/config";
+import { adsbConfigurationHint, adsbConfigured } from "@/lib/config";
 import { getViewportAircraft } from "@/lib/live/feedManager";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       "adsb_not_configured",
       "Live aircraft data temporarily unavailable.",
       503,
-      `ADS-B provider "${config.adsb.provider}" is missing credentials. Set the matching API key, or use ADSB_PROVIDER=demo for simulated data.`,
+      adsbConfigurationHint(),
     );
   }
 

@@ -39,11 +39,20 @@ export const config = {
     rapidApiKey: str("ADSBX_RAPIDAPI_KEY"),
     rapidApiHost: str("ADSBX_RAPIDAPI_HOST", "adsbexchange-com1.p.rapidapi.com"),
     directApiKey: str("ADSBX_API_KEY"),
-    directBaseUrl: str("ADSBX_BASE_URL", "https://adsbexchange.com/api/aircraft"),
+    // Documented direct/enterprise endpoint:
+    //   GET https://gateway.adsbexchange.com/api/aircraft/v2/icao/{icao}
+    //   header: api-auth: <key>
+    directBaseUrl: str("ADSBX_BASE_URL", "https://gateway.adsbexchange.com/api/aircraft"),
     readsbBaseUrl: str("ADSB_BASE_URL", "https://opendata.adsb.fi/api/v2"),
     pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 5000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
+    /**
+     * Sent on every upstream call. Community feeds ask clients to identify
+     * themselves; set ADSB_USER_AGENT to add your contact details if you run
+     * this against one at any volume.
+     */
+    userAgent: str("ADSB_USER_AGENT", "PrivateAviationTracker/0.1 (+self-hosted)"),
     /**
      * How long one SSE connection is held open before the server closes it
      * cleanly and the browser reconnects. Serverless platforms cap function
@@ -77,6 +86,12 @@ export const config = {
   photos: {
     enabled: bool("PHOTOS_ENABLED", true),
     ttlHours: num("PHOTOS_CACHE_TTL_HOURS", 720),
+    /** auto (Planespotters then Google) | planespotters | google */
+    provider: str("PHOTO_PROVIDER", "auto") as "auto" | "planespotters" | "google",
+    // Falls back to the ownership-search Google credentials when a dedicated
+    // image search engine is not configured separately.
+    googleApiKey: str("GOOGLE_IMAGE_API_KEY") || str("GOOGLE_CSE_API_KEY"),
+    googleCx: str("GOOGLE_IMAGE_CSE_CX") || str("GOOGLE_CSE_CX"),
   },
   history: {
     persistPositions: bool("PERSIST_POSITIONS", true),
@@ -105,6 +120,31 @@ export function adsbConfigured(): boolean {
     default:
       return false;
   }
+}
+
+/**
+ * Why the configured ADS-B provider cannot run, naming the exact environment
+ * variable that is missing. Generic "set the matching API key" advice is not
+ * actionable when the reader is looking at a deployment dashboard.
+ */
+export function adsbConfigurationHint(): string {
+  const missing: Record<AdsbProviderName, string> = {
+    adsbexchange: 'ADSBX_RAPIDAPI_KEY is not set (ADSB_PROVIDER="adsbexchange").',
+    adsbx_direct: 'ADSBX_API_KEY is not set (ADSB_PROVIDER="adsbx_direct").',
+    readsb: 'ADSB_BASE_URL is not set (ADSB_PROVIDER="readsb").',
+    demo: "",
+  };
+  const reason =
+    missing[config.adsb.provider] ??
+    `ADSB_PROVIDER="${config.adsb.provider}" is not a recognised provider.`;
+
+  return (
+    `${reason} Add it in your deployment's environment variables and redeploy. ` +
+    "No paid key? Set ADSB_PROVIDER=readsb with " +
+    "ADSB_BASE_URL=https://opendata.adsb.fi/api/v2 for free live data " +
+    "(check their terms for your use), or ADSB_PROVIDER=demo for clearly " +
+    "labelled simulated traffic."
+  );
 }
 
 export function searchConfigured(): boolean {

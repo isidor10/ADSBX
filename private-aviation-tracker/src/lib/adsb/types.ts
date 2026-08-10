@@ -76,6 +76,13 @@ export class AdsbError extends Error {
     message: string,
     readonly status?: number,
     readonly provider?: string,
+    /**
+     * The upstream URL that failed. None of the supported providers carry
+     * credentials in the URL — every one authenticates with a request header —
+     * so this is safe to show to the operator, and without it a bare "400" is
+     * undiagnosable from a deployment you cannot shell into.
+     */
+    readonly url?: string,
   ) {
     super(message);
     this.name = "AdsbError";

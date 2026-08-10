@@ -34,7 +34,9 @@ export function getAdsbProvider(): AdsbProvider {
         baseUrl: config.adsb.directBaseUrl,
         headers: { "api-auth": config.adsb.directApiKey },
         configured: Boolean(config.adsb.directApiKey),
-        trailingSlash: true,
+        // The documented gateway paths carry no trailing slash:
+        //   /api/aircraft/v2/icao/A465DF
+        trailingSlash: false,
         hexPath: "icao",
       });
       break;
