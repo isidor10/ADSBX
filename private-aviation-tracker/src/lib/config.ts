@@ -44,6 +44,15 @@ export const config = {
     //   header: api-auth: <key>
     directBaseUrl: str("ADSBX_BASE_URL", "https://gateway.adsbexchange.com/api/aircraft"),
     readsbBaseUrl: str("ADSB_BASE_URL", "https://opendata.adsb.fi/api/v2"),
+    /**
+     * When the selected provider has no credentials, serve real traffic from
+     * an open readsb feed rather than an empty map. A deployment missing one
+     * environment variable should degrade to working-with-less, not to
+     * nothing — but it says so in the UI, because the operator needs to know
+     * which source they are looking at. Set false to fail closed instead.
+     */
+    openFeedFallback: bool("ADSB_OPEN_FEED_FALLBACK", true),
+    openFeedUrl: str("ADSB_OPEN_FEED_URL", "https://opendata.adsb.fi/api/v2"),
     pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 5000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
@@ -106,8 +115,8 @@ export const config = {
 
 export const isDemoMode = config.adsb.provider === "demo";
 
-/** True when the configured ADS-B provider has the credentials it needs. */
-export function adsbConfigured(): boolean {
+/** True when the *selected* provider has the credentials it needs. */
+export function selectedAdsbConfigured(): boolean {
   switch (config.adsb.provider) {
     case "adsbexchange":
       return Boolean(config.adsb.rapidApiKey);
@@ -120,6 +129,21 @@ export function adsbConfigured(): boolean {
     default:
       return false;
   }
+}
+
+/** True when the selected provider is unusable but the open feed can stand in. */
+export function usingOpenFeedFallback(): boolean {
+  return (
+    !selectedAdsbConfigured() &&
+    config.adsb.openFeedFallback &&
+    Boolean(config.adsb.openFeedUrl) &&
+    config.adsb.provider !== "demo"
+  );
+}
+
+/** True when *some* provider can serve live data. */
+export function adsbConfigured(): boolean {
+  return selectedAdsbConfigured() || usingOpenFeedFallback();
 }
 
 /**
@@ -140,10 +164,9 @@ export function adsbConfigurationHint(): string {
 
   return (
     `${reason} Add it in your deployment's environment variables and redeploy. ` +
-    "No paid key? Set ADSB_PROVIDER=readsb with " +
-    "ADSB_BASE_URL=https://opendata.adsb.fi/api/v2 for free live data " +
-    "(check their terms for your use), or ADSB_PROVIDER=demo for clearly " +
-    "labelled simulated traffic."
+    "The open community feed could not stand in either — set " +
+    "ADSB_OPEN_FEED_URL, or ADSB_PROVIDER=demo for clearly labelled " +
+    "simulated traffic."
   );
 }
 

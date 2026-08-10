@@ -85,6 +85,11 @@ export interface LiveFeedResult {
   simulated: boolean;
   stale: boolean;
   error?: string;
+  /**
+   * Shown persistently in the UI when the data is real but not from the
+   * source the operator selected — currently the open-feed fallback.
+   */
+  notice?: string;
 }
 
 export type ConfidenceBand = "high" | "medium" | "low" | "none";

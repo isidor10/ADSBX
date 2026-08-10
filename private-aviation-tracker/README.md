@@ -19,7 +19,7 @@ explanation on screen when it is not configured.
 
 | # | Credential | Needed for | Without it |
 |---|---|---|---|
-| 1 | **ADS-B Exchange API key** (`ADSBX_RAPIDAPI_KEY`) via [RapidAPI](https://rapidapi.com/adsbx/api/adsbexchange-com1) | Live aircraft positions | The map shows “Live aircraft data temporarily unavailable.” Use `ADSB_PROVIDER=demo` for clearly-labelled simulated traffic while you evaluate the UI. |
+| 1 | **ADS-B Exchange API key** (`ADSBX_RAPIDAPI_KEY`) via [RapidAPI](https://rapidapi.com/adsbx/api/adsbexchange-com1) | Live aircraft positions from ADS-B Exchange | The map falls back to the open community feed at `opendata.adsb.fi` and says so in a bar under the header. Real aircraft, different coverage. Set `ADSB_OPEN_FEED_FALLBACK=false` to show a configuration error instead. |
 | 2 | **A web search API key** — one of Google Programmable Search (`GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX`), SerpAPI (`SERPAPI_KEY`), Bing (`BING_SEARCH_KEY`) or Brave (`BRAVE_SEARCH_KEY`) | Owner research beyond official registries | Ownership shows “Unknown — no web search provider is configured”, with a link to the official registry for the tail number. |
 | 3 | **PostgreSQL** (`DATABASE_URL`) | Aircraft database, ownership cache, flight history | Map, filtering, search-by-live-traffic and ownership lookups still work; nothing is persisted between restarts and there is no flight history. |
 | 4 | *(optional)* **Anthropic API key** (`ANTHROPIC_API_KEY` + `OWNERSHIP_LLM_ENABLED=true`) | Model-assisted reading of the search evidence | Ownership uses the deterministic source scorer only. |
