@@ -233,7 +233,11 @@ export default function MapView({
       onViewportRef.current({
         lat: center.lat,
         lon: center.lng,
-        radiusNm: Math.max(25, Math.min(250, radiusNm)),
+        // Report the true viewport size. The server tiles anything larger
+        // than one upstream request can cover; capping it here meant a
+        // zoomed-out map only ever fetched a 250 NM circle at its centre and
+        // silently dropped the rest of the visible area.
+        radiusNm: Math.max(25, Math.min(1500, radiusNm)),
         zoom: map.getZoom(),
       });
     };

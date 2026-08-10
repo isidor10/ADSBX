@@ -128,7 +128,17 @@ async function searchAirports(query: string, limit: number): Promise<AirportHit[
     .slice(0, limit);
 }
 
-export async function globalSearch(query: string, limit = 8): Promise<GlobalSearchResults> {
+export interface SearchViewport {
+  lat: number;
+  lon: number;
+  radiusNm: number;
+}
+
+export async function globalSearch(
+  query: string,
+  limit = 8,
+  viewport?: SearchViewport,
+): Promise<GlobalSearchResults> {
   const q = query.trim();
   if (q.length < 2) {
     return { query: q, aircraft: [], companies: [], owners: [], operators: [], airports: [] };
@@ -136,7 +146,7 @@ export async function globalSearch(query: string, limit = 8): Promise<GlobalSear
 
   const [aircraft, companies, ownerHits, airports] = await Promise.all([
     searchAircraft(q, limit * 2),
-    searchCompanies(q, limit),
+    searchCompanies(q, limit, viewport),
     searchOwners(q, limit),
     searchAirports(q, limit),
   ]);

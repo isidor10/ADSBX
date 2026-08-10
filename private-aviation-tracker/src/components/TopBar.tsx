@@ -21,6 +21,7 @@ interface TopBarProps {
   onSearchSelect: (hit: SearchHit) => void;
   onCompanySelect?: (company: CompanySummary) => void;
   onAirportSelect?: (airport: AirportHit) => void;
+  searchViewport?: { lat: number; lon: number; radiusNm: number } | null;
 }
 
 export default function TopBar({
@@ -37,6 +38,7 @@ export default function TopBar({
   onSearchSelect,
   onCompanySelect,
   onAirportSelect,
+  searchViewport,
 }: TopBarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [, forceTick] = useState(0);
@@ -76,6 +78,7 @@ export default function TopBar({
             onSelect={onSearchSelect}
             onCompanySelect={onCompanySelect}
             onAirportSelect={onAirportSelect}
+            viewport={searchViewport}
           />
         </div>
 

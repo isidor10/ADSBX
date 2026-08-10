@@ -90,6 +90,12 @@ export interface LiveFeedResult {
    * source the operator selected — currently the open-feed fallback.
    */
   notice?: string;
+  /** Upstream requests used to cover the viewport (>1 when zoomed out). */
+  tilesRequested?: number;
+  /** How far from the centre was actually fetched. */
+  coveredRadiusNm?: number;
+  /** How far the user can see. Larger than covered = partial coverage. */
+  viewportRadiusNm?: number;
 }
 
 // ------------------------------------------------------------ routes / flight

@@ -30,7 +30,17 @@ export async function GET(request: NextRequest) {
     if (params.get("mode") === "aircraft") {
       return jsonOk({ query: q, results: await searchAircraft(q, limit * 3) });
     }
-    return jsonOk(await globalSearch(q, limit));
+    // The viewport lets company search fall back to aircraft actually in
+    // coverage when no database is configured.
+    const lat = Number(params.get("lat"));
+    const lon = Number(params.get("lon"));
+    const radiusNm = Number(params.get("radius"));
+    const viewport =
+      Number.isFinite(lat) && Number.isFinite(lon) && Number.isFinite(radiusNm)
+        ? { lat, lon, radiusNm }
+        : undefined;
+
+    return jsonOk(await globalSearch(q, limit, viewport));
   } catch (error) {
     return jsonError("search_failed", "Search temporarily unavailable.", 502, (error as Error).message);
   }

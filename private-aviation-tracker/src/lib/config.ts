@@ -60,6 +60,11 @@ export const config = {
      */
     pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 10_000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
+    /**
+     * Upstream requests used to cover one zoomed-out viewport. Each tile is a
+     * separate call, so this trades coverage against rate limits.
+     */
+    maxTiles: num("ADSB_MAX_TILES", 6),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
     /**
      * Sent on every upstream call. Community feeds ask clients to identify
