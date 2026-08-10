@@ -19,6 +19,7 @@ import {
   scoreToConfidence,
   type Candidate,
 } from "./extract";
+import { lookupAircraftDatabase, type AircraftDbRecord } from "./aircraftDb";
 import { lookupFaaRegistration, officialRegistrySource, type FaaOwnerRecord } from "./faa";
 import { analyzeWithLlm, llmEnabled, type LlmAnalysisResult } from "./llm";
 import { buildOwnershipQueries, type QueryHints } from "./queries";
@@ -199,12 +200,15 @@ async function research(
   const registryLink = registrySource(registration);
   const baseSources = registryLink ? [registryLink] : [];
 
-  const [faa, search] = await Promise.all([
+  const [faa, aircraftDb, search] = await Promise.all([
     lookupFaaRegistration(registration),
+    // Keyless public aircraft database. Without this, a deployment with no
+    // FAA import and no search key could never resolve any owner at all.
+    lookupAircraftDatabase(registration),
     gatherSearchResults(registration, options.hints ?? {}),
   ]);
 
-  if (search.error && !faa) {
+  if (search.error && !faa && !aircraftDb) {
     return emptyResult(
       registration,
       "ERROR",
@@ -218,7 +222,7 @@ async function research(
   const candidates = collectCandidates(registration, search.results);
   const llm = await analyzeWithLlm(registration, search.results, faa);
 
-  const decided = decide(registration, faa, candidates, llm);
+  const decided = decide(registration, faa, candidates, llm, aircraftDb);
 
   if (!decided.owner) {
     const reason = options.blocked
@@ -304,6 +308,7 @@ function decide(
   faa: FaaOwnerRecord | null,
   candidates: Candidate[],
   llm: LlmAnalysisResult | null,
+  aircraftDb: AircraftDbRecord | null = null,
 ): Decision {
   const evidence: string[] = [];
   const top = candidates[0] ?? null;
@@ -325,9 +330,42 @@ function decide(
       } as the registered owner of ${registration}.`,
     );
 
+    if (
+      aircraftDb?.registeredOwner &&
+      canonicalName(aircraftDb.registeredOwner) === canonicalName(faa.registrantName)
+    ) {
+      confidence = Math.min(97, confidence + 3);
+      sources = [...sources, aircraftDb.source];
+      evidence.push("A public aircraft database records the same registered owner.");
+    }
+
     const corroborating = candidates.find((c) => c.canonical === canonicalName(faa.registrantName));
     if (corroborating) {
       confidence = Math.min(97, confidence + 5);
+      sources = [...sources, ...corroborating.sources];
+      evidence.push(
+        `The same name appears on ${corroborating.domains.length} independent public source(s).`,
+      );
+    }
+  } else if (aircraftDb?.registeredOwner) {
+    // A compilation of public registry data: strong enough to name a
+    // registered owner, but not the register itself, so it sits below the FAA
+    // and can be corroborated upwards by independent web sources.
+    owner = aircraftDb.registeredOwner;
+    ownerKind = "REGISTERED_OWNER";
+    confidence = 74;
+    sources = [aircraftDb.source];
+    evidence.push(
+      `A public aircraft database lists ${aircraftDb.registeredOwner} as the registered owner of ${registration}${
+        aircraftDb.ownerCountry ? ` (${aircraftDb.ownerCountry})` : ""
+      }.`,
+    );
+
+    const corroborating = candidates.find(
+      (c) => c.canonical === canonicalName(aircraftDb.registeredOwner!),
+    );
+    if (corroborating) {
+      confidence = Math.min(88, confidence + 8);
       sources = [...sources, ...corroborating.sources];
       evidence.push(
         `The same name appears on ${corroborating.domains.length} independent public source(s).`,

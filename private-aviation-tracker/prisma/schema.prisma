@@ -220,6 +220,9 @@ model AircraftPhotoRecord {
   /// Page the photo appears on, for attribution and click-through.
   link         String?
   source       String
+  /// True only when the source keyed the image on this exact registration.
+  /// False means it is a type reference and must be labelled as one.
+  verified     Boolean  @default(false)
   width        Int?
   height       Int?
   rank         Int      @default(0)

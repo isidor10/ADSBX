@@ -18,7 +18,9 @@
     "verify:adsbx": "tsx scripts/verify-adsbx-sample.ts",
     "verify:fallback": "tsx scripts/verify-fallback.ts",
     "silhouettes": "tsx scripts/render-silhouettes.ts",
-    "e2e": "tsx scripts/e2e.ts"
+    "e2e": "tsx scripts/e2e.ts",
+    "verify:cost": "tsx scripts/verify-cost.ts",
+    "verify:ownership": "tsx scripts/verify-ownership-chain.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

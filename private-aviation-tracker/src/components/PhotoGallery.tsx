@@ -45,6 +45,15 @@ export default function PhotoGallery({
 
         {current && (
           <div className="px-4 pb-4">
+            {current.verified ? (
+              <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-sm border border-lime/40 bg-lime/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-lime">
+                verified aircraft photo
+              </div>
+            ) : (
+              <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-sm border border-amber/40 bg-amber/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-amber">
+                aircraft type reference — not confirmed as this airframe
+              </div>
+            )}
             <figure>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -82,7 +91,12 @@ export default function PhotoGallery({
                         ? "border-cyan"
                         : "border-edge hover:border-edge-2"
                     }`}
-                    aria-label={`Photo ${index + 1}`}
+                    aria-label={`Photo ${index + 1}${photo.verified ? " (verified)" : " (type reference)"}`}
+                    title={
+                      photo.verified
+                        ? "Confirmed photograph of this registration"
+                        : "Same aircraft type — not confirmed as this airframe"
+                    }
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

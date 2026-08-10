@@ -1,6 +1,7 @@
 import { cache, cacheKeys } from "@/lib/cache";
 import { config } from "@/lib/config";
 import { withDb } from "@/lib/db";
+import { lookupAircraftDatabase } from "@/lib/ownership/aircraftDb";
 import type { AircraftPhoto } from "@/lib/types";
 
 /**
@@ -59,6 +60,8 @@ function planespottersPhoto(photo: PlanespottersPhoto): AircraftPhoto | null {
     credit: photo.photographer ? `© ${photo.photographer} / Planespotters.net` : "Planespotters.net",
     link: photo.link ?? null,
     source: "planespotters",
+    // The API is queried by registration, so a result is this airframe.
+    verified: true,
   };
 }
 
@@ -177,6 +180,22 @@ async function googleImagesAll(
       if (!item.link?.startsWith("https://") || seen.has(item.link)) continue;
       seen.add(item.link);
       const host = hostOf(item.image?.contextLink ?? item.link) || "the web";
+      // Only claim this is the aircraft when the registration appears in the
+      // result itself. An image search for a G650 will happily return a
+      // different G650, and presenting that as "this aircraft" is exactly the
+      // fabrication this product must not commit.
+      const haystack = [
+        item.title,
+        item.image?.contextLink,
+        item.link,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toUpperCase();
+      const compact = registration.replace(/-/g, "");
+      const verified =
+        haystack.includes(registration.toUpperCase()) || haystack.includes(compact);
+
       photos.push({
         url: item.link,
         thumbnailUrl: item.image?.thumbnailLink ?? null,
@@ -185,6 +204,7 @@ async function googleImagesAll(
         credit: `Image via ${host} — found with Google Images`,
         link: item.image?.contextLink ?? item.link,
         source: "google_images",
+        verified,
       });
     }
     if (photos.length >= limit) break;
@@ -224,6 +244,10 @@ export async function getAircraftPhotos(
     const photos: AircraftPhoto[] = [];
 
     if (provider !== "google") {
+      // Keyless and keyed on the registration, so this works on a deployment
+      // with no credentials configured at all.
+      const record = await lookupAircraftDatabase(reg);
+      if (record?.photo) photos.push(record.photo);
       photos.push(...(await planespottersAll(reg)));
     }
     if (provider !== "planespotters" && photos.length < limit) {
@@ -232,6 +256,8 @@ export async function getAircraftPhotos(
 
     const seen = new Set<string>();
     const unique = photos.filter((p) => !seen.has(p.url) && seen.add(p.url));
+    // Confirmed shots of this airframe before type references, always.
+    unique.sort((a, b) => Number(b.verified ?? false) - Number(a.verified ?? false));
     void persistPhotos(reg, unique).catch(() => {});
     return unique.slice(0, limit);
   });
@@ -261,8 +287,14 @@ async function persistPhotos(registration: string, photos: AircraftPhoto[]): Pro
             link: photo.link,
             source: photo.source,
             rank: index,
+            verified: photo.verified ?? false,
           },
-          update: { rank: index, thumbnailUrl: photo.thumbnailUrl, credit: photo.credit },
+          update: {
+            rank: index,
+            thumbnailUrl: photo.thumbnailUrl,
+            credit: photo.credit,
+            verified: photo.verified ?? false,
+          },
         });
       }
       return null;
@@ -290,6 +322,7 @@ export async function storedPhotos(registration: string, limit = 6): Promise<Air
     credit: r.credit,
     link: r.link,
     source: r.source,
+    verified: r.verified,
   }));
 }
 

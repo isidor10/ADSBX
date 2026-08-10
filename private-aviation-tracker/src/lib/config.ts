@@ -82,6 +82,16 @@ export const config = {
     /** Most private callsigns will never resolve; re-ask sparingly. */
     missTtlHours: num("ROUTE_MISS_TTL_HOURS", 12),
   },
+  aircraftDb: {
+    /**
+     * Keyless public aircraft database (registered owner + type + photo),
+     * shares ROUTE_API_URL. This is what makes owner lookup, company pages and
+     * tail-specific photos work with no API key configured at all.
+     */
+    enabled: bool("AIRCRAFT_DB_ENABLED", true),
+    ttlHours: num("AIRCRAFT_DB_TTL_HOURS", 336),
+    missTtlHours: num("AIRCRAFT_DB_MISS_TTL_HOURS", 24),
+  },
   search: {
     provider: str("SEARCH_PROVIDER", "none") as SearchProviderName,
     googleApiKey: str("GOOGLE_CSE_API_KEY"),
@@ -118,6 +128,23 @@ export const config = {
   },
   research: {
     ttlHours: num("RESEARCH_CACHE_TTL_HOURS", 72),
+  },
+  cost: {
+    /** Display currency for every estimate. */
+    currency: str("COST_CURRENCY", "EUR"),
+    /** Jet-A price. Set COST_FUEL_PRICE_PER_GALLON instead to work in gallons. */
+    fuelPricePerLitre:
+      num("COST_FUEL_PRICE_PER_GALLON", 0) > 0
+        ? num("COST_FUEL_PRICE_PER_GALLON", 0) / 3.785411784
+        : num("COST_FUEL_PRICE_PER_LITRE", 1.2),
+    crewEurPerHourPerPilot: num("COST_CREW_PER_HOUR", 165),
+    navigationEurPerNm: num("COST_NAV_PER_NM", 1.1),
+    handlingEurPerStop: num("COST_HANDLING_PER_STOP", 550),
+    /** Great-circle inflation to approximate real routing. */
+    routingFactor: num("COST_ROUTING_FACTOR", 1.06),
+    /** Charter price as a multiple of operating cost. */
+    charterMarkupLow: num("COST_CHARTER_MARKUP_LOW", 1.35),
+    charterMarkupHigh: num("COST_CHARTER_MARKUP_HIGH", 1.85),
   },
   history: {
     persistPositions: bool("PERSIST_POSITIONS", true),

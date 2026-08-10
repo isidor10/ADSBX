@@ -184,6 +184,38 @@ export interface NextTrip {
 
 export type ConfidenceBand = "high" | "medium" | "low" | "none";
 
+/** Where an aircraft most likely lives. Always an inference, never a fact. */
+export interface LikelyBase {
+  known: boolean;
+  airport: AirportRef | null;
+  /** 0-100. */
+  confidence: number;
+  band: ConfidenceBand;
+  /** Movements observed at that airport. */
+  movements: number;
+  note: string;
+}
+
+export interface UtilisationPeriod {
+  days: number;
+  flights: number;
+  hours: number;
+  distanceNm: number;
+  activeDays: number;
+}
+
+export interface UtilisationStats {
+  registration: string;
+  periods: UtilisationPeriod[];
+  averageLegNm: number | null;
+  averageLegHours: number | null;
+  /** 0-100, or null when nothing has been observed. */
+  activityScore: number | null;
+  /** Published so the score is explainable rather than a black box. */
+  scoreMethod: string;
+  note: string;
+}
+
 export type OwnerKind =
   | "REGISTERED_OWNER"
   | "OPERATOR"
@@ -301,6 +333,14 @@ export interface AircraftPhoto {
   credit: string | null;
   link: string | null;
   source: string;
+  /**
+   * True only when the source keyed the image on this exact registration.
+   * False means the image is of the same *type* and must be labelled as a
+   * type reference — showing another airframe as though it were this one is
+   * exactly the kind of fabrication this product must not commit.
+   */
+  verified?: boolean;
+  takenAt?: string | null;
 }
 
 export interface AircraftDetail {
@@ -472,6 +512,53 @@ export interface SearchHit {
   lastSeenAt: string | null;
   matchedOn: string;
   score: number;
+}
+
+// -------------------------------------------------------------------- cost
+
+export type CostBasis = "PUBLISHED_PERFORMANCE" | "CLASS_ESTIMATE" | "CONFIGURED_RATE";
+
+export interface CostLine {
+  key: "fuel" | "crew" | "maintenance" | "airport" | "navigation" | "handling";
+  label: string;
+  low: number;
+  likely: number;
+  high: number;
+  basis: CostBasis;
+  note: string;
+}
+
+export interface LegCost {
+  kind: "PASSENGER" | "POSITIONING" | "RETURN";
+  from: AirportRef | null;
+  to: AirportRef | null;
+  greatCircleNm: number;
+  routedNm: number;
+  blockHours: number;
+  fuelLitres: number;
+  fuelKg: number;
+}
+
+export interface CostEstimate {
+  registration: string | null;
+  aircraftType: string;
+  typeCode: string | null;
+  exactPerformance: boolean;
+  performanceConfidence: "high" | "medium" | "low";
+  legs: LegCost[];
+  totalRoutedNm: number;
+  totalBlockHours: number;
+  totalFuelLitres: number;
+  lines: CostLine[];
+  total: { low: number; likely: number; high: number };
+  /** Separate from operating cost: includes margin, commission, positioning. */
+  charter: { low: number; likely: number; high: number; note: string } | null;
+  currency: string;
+  fuelPricePerLitre: number;
+  routingFactor: number;
+  rangeWarning: string | null;
+  assumptions: string[];
+  disclaimer: string;
 }
 
 export interface OwnerHit {

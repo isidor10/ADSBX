@@ -47,8 +47,15 @@ interface MapViewProps {
 const MAX_EXTRAPOLATION_SEC = 45;
 const FRAME_INTERVAL_MS = 100;
 
-/** Opt-in: group nearby aircraft into count bubbles at low zoom. */
-const CLUSTER_ENABLED = process.env.NEXT_PUBLIC_MAP_CLUSTER === "true";
+/**
+ * Clustering, on by default. Below `CLUSTER_MAX_ZOOM` nearby contacts collapse
+ * into a count bubble, which is what lets a continent-wide view carry hundreds
+ * of aircraft without turning into an unreadable pile of overlapping icons;
+ * above it every aircraft is drawn individually. Set NEXT_PUBLIC_MAP_CLUSTER
+ * to "false" to draw every contact separately at all zooms.
+ */
+const CLUSTER_ENABLED = process.env.NEXT_PUBLIC_MAP_CLUSTER !== "false";
+const CLUSTER_MAX_ZOOM = Number(process.env.NEXT_PUBLIC_MAP_CLUSTER_MAX_ZOOM ?? 7);
 
 const GLYPHS =
   process.env.NEXT_PUBLIC_MAP_GLYPHS ?? "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf";
@@ -324,8 +331,8 @@ export default function MapView({
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
         cluster: CLUSTER_ENABLED,
-        clusterMaxZoom: 6,
-        clusterRadius: 44,
+        clusterMaxZoom: CLUSTER_MAX_ZOOM,
+        clusterRadius: 46,
       });
 
       map.addLayer({
@@ -335,10 +342,18 @@ export default function MapView({
         filter: ["has", "point_count"],
         paint: {
           "circle-color": "#0b1220",
-          "circle-stroke-color": "#22d3ee",
-          "circle-stroke-width": 1.5,
-          "circle-opacity": 0.92,
-          "circle-radius": ["step", ["get", "point_count"], 16, 10, 21, 40, 27, 120, 34],
+          // Denser clusters read hotter, so a busy region is obvious at a glance.
+          "circle-stroke-color": [
+            "step",
+            ["get", "point_count"],
+            "#22d3ee",
+            25, "#4ade80",
+            75, "#f5a524",
+            200, "#f43f5e",
+          ],
+          "circle-stroke-width": 1.8,
+          "circle-opacity": 0.9,
+          "circle-radius": ["step", ["get", "point_count"], 15, 10, 19, 40, 24, 120, 30, 400, 36],
         },
       });
 
@@ -350,7 +365,8 @@ export default function MapView({
         layout: {
           "text-field": ["get", "point_count_abbreviated"],
           "text-font": FONT,
-          "text-size": 12,
+          "text-size": ["step", ["get", "point_count"], 11, 40, 12, 120, 13],
+          "text-allow-overlap": true,
         },
         paint: { "text-color": "#e8eefb" },
       });
