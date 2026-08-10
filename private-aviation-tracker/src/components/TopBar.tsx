@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import FilterBar from "@/components/FilterBar";
 import SearchBar from "@/components/SearchBar";
 import { formatRelative } from "@/lib/format";
-import type { FilterKey, SearchHit } from "@/lib/types";
+import type { AirportHit, CompanySummary, FilterKey, SearchHit } from "@/lib/types";
 
 interface TopBarProps {
   count: number;
@@ -19,6 +19,8 @@ interface TopBarProps {
   filters: FilterKey[];
   onFiltersChange: (filters: FilterKey[]) => void;
   onSearchSelect: (hit: SearchHit) => void;
+  onCompanySelect?: (company: CompanySummary) => void;
+  onAirportSelect?: (airport: AirportHit) => void;
 }
 
 export default function TopBar({
@@ -33,6 +35,8 @@ export default function TopBar({
   filters,
   onFiltersChange,
   onSearchSelect,
+  onCompanySelect,
+  onAirportSelect,
 }: TopBarProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [, forceTick] = useState(0);
@@ -68,7 +72,11 @@ export default function TopBar({
         {/* Below lg (which includes iPad portrait at 820px) the search takes its
             own full-width row — inline it gets squeezed to a few characters. */}
         <div className="order-3 w-full lg:order-none lg:w-auto lg:flex-1">
-          <SearchBar onSelect={onSearchSelect} />
+          <SearchBar
+            onSelect={onSearchSelect}
+            onCompanySelect={onCompanySelect}
+            onAirportSelect={onAirportSelect}
+          />
         </div>
 
         <button

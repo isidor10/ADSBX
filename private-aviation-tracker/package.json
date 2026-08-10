@@ -16,7 +16,9 @@
     "import:faa": "tsx scripts/import-faa.ts",
     "import:airports": "tsx scripts/import-airports.ts",
     "verify:adsbx": "tsx scripts/verify-adsbx-sample.ts",
-    "verify:fallback": "tsx scripts/verify-fallback.ts"
+    "verify:fallback": "tsx scripts/verify-fallback.ts",
+    "silhouettes": "tsx scripts/render-silhouettes.ts",
+    "e2e": "tsx scripts/e2e.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
@@ -33,6 +35,7 @@
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
+    "playwright": "^1.62.1",
     "postcss": "^8.5.1",
     "prisma": "^6.2.1",
     "tailwindcss": "^4.0.0",

@@ -70,6 +70,18 @@ export const config = {
      */
     streamLifetimeMs: num("ADSB_STREAM_LIFETIME_MS", 50_000),
   },
+  route: {
+    /**
+     * Filed-route lookup by callsign. ADS-B never carries a destination, so
+     * without this the only destination available is a trajectory estimate.
+     * "none" disables the lookup entirely.
+     */
+    provider: str("ROUTE_PROVIDER", "adsbdb") as "adsbdb" | "none",
+    baseUrl: str("ROUTE_API_URL", "https://api.adsbdb.com/v0"),
+    ttlHours: num("ROUTE_CACHE_TTL_HOURS", 168),
+    /** Most private callsigns will never resolve; re-ask sparingly. */
+    missTtlHours: num("ROUTE_MISS_TTL_HOURS", 12),
+  },
   search: {
     provider: str("SEARCH_PROVIDER", "none") as SearchProviderName,
     googleApiKey: str("GOOGLE_CSE_API_KEY"),
@@ -101,6 +113,11 @@ export const config = {
     // image search engine is not configured separately.
     googleApiKey: str("GOOGLE_IMAGE_API_KEY") || str("GOOGLE_CSE_API_KEY"),
     googleCx: str("GOOGLE_IMAGE_CSE_CX") || str("GOOGLE_CSE_CX"),
+    /** Query phrasings tried per aircraft when building a gallery. */
+    maxQueries: num("PHOTO_MAX_QUERIES", 3),
+  },
+  research: {
+    ttlHours: num("RESEARCH_CACHE_TTL_HOURS", 72),
   },
   history: {
     persistPositions: bool("PERSIST_POSITIONS", true),

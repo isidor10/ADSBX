@@ -21,6 +21,7 @@ export async function GET(
     const history = await getHistory(registration, {
       flightLimit: Number(search.get("flights") ?? 20),
       positionLimit: Number(search.get("positions") ?? 200),
+      minutes: search.get("minutes") ? Number(search.get("minutes")) : undefined,
     });
     return jsonOk(history);
   } catch (error) {

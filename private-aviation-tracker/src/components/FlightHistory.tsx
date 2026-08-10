@@ -30,12 +30,65 @@ function groupByDay(events: TimelineEvent[]) {
   return [...groups.entries()];
 }
 
+const WINDOWS: Array<{ minutes: number; label: string }> = [
+  { minutes: 30, label: "30 min" },
+  { minutes: 60, label: "1 hour" },
+  { minutes: 120, label: "2 hours" },
+  { minutes: 360, label: "6 hours" },
+  { minutes: 1440, label: "24 hours" },
+];
+
+/**
+ * Track-window selector. Windows with no recorded data are disabled rather
+ * than hidden, so it is obvious that the range exists but this deployment has
+ * not been watching long enough to fill it.
+ */
+function WindowPicker({
+  value,
+  available,
+  onChange,
+}: {
+  value: number;
+  available: number[];
+  onChange: (minutes: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {WINDOWS.map((w) => {
+        const enabled = available.length === 0 || available.includes(w.minutes);
+        return (
+          <button
+            key={w.minutes}
+            type="button"
+            disabled={!enabled}
+            onClick={() => onChange(w.minutes)}
+            title={enabled ? undefined : "No positions recorded over this period yet"}
+            className={`rounded-sm border px-1.5 py-0.5 text-[10px] tracking-[0.08em] transition-colors ${
+              value === w.minutes
+                ? "border-cyan/50 bg-cyan/15 text-cyan"
+                : enabled
+                  ? "border-edge bg-panel-2 text-ink-2 hover:border-edge-2 hover:text-ink"
+                  : "cursor-not-allowed border-edge/50 bg-panel-2/40 text-ink-3/40"
+            }`}
+          >
+            {w.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function FlightHistory({
   history,
   loading,
+  windowMinutes = 120,
+  onWindowChange,
 }: {
   history: AircraftHistory | null;
   loading: boolean;
+  windowMinutes?: number;
+  onWindowChange?: (minutes: number) => void;
 }) {
   if (loading && !history) {
     return (
@@ -48,10 +101,31 @@ export default function FlightHistory({
 
   const timeline = history?.timeline ?? [];
   const flights = history?.flights ?? [];
+  const positions = history?.recentPositions ?? [];
 
   return (
     <section className="border-t border-edge">
-      <SectionTitle>Flight history</SectionTitle>
+      <SectionTitle
+        action={
+          onWindowChange && (
+            <WindowPicker
+              value={windowMinutes}
+              available={history?.availableWindows ?? []}
+              onChange={onWindowChange}
+            />
+          )
+        }
+      >
+        Flight path
+      </SectionTitle>
+
+      {onWindowChange && (
+        <p className="px-4 pb-2 text-[10px] text-ink-3">
+          {positions.length > 0
+            ? `${positions.length} recorded position${positions.length === 1 ? "" : "s"} drawn on the map for the selected period.`
+            : "No positions recorded for the selected period."}
+        </p>
+      )}
 
       {timeline.length === 0 && flights.length === 0 && (
         <EmptyNote>{history?.note ?? "No recorded flights for this aircraft."}</EmptyNote>
