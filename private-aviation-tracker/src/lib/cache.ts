@@ -155,4 +155,8 @@ export const cacheKeys = {
   photo: (registration: string) => `photo:v1:${registration.toUpperCase()}`,
   liveCell: (key: string) => `live:v1:${key}`,
   aircraftIdentity: (registration: string) => `identity:v1:${registration.toUpperCase()}`,
+  photos: (registration: string) => `photos:v1:${registration.toUpperCase()}`,
+  research: (subject: string, key: string) => `research:v1:${subject}:${key.toUpperCase()}`,
+  company: (slug: string) => `company:v1:${slug}`,
+  currentFlight: (registration: string) => `flight:v1:${registration.toUpperCase()}`,
 };

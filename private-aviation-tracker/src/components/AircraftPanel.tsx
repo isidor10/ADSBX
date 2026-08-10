@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  CurrentFlightSection,
+  LastLandingSection,
+  NextTripSection,
+} from "@/components/CurrentFlight";
 import FlightHistory from "@/components/FlightHistory";
 import OwnerIntelligence from "@/components/OwnerIntelligence";
+import PhotoGallery from "@/components/PhotoGallery";
+import WebNews from "@/components/WebNews";
 import { CategoryBadge, Divider, EmptyNote, Field, SectionTitle } from "@/components/ui";
 import {
   flightStatusLabel,
@@ -17,8 +24,14 @@ import {
 import type {
   AircraftDetail,
   AircraftHistory,
+  AircraftPhoto,
+  CurrentFlight,
+  LandingSummary,
   LiveAircraft,
+  NextTrip,
   OwnershipResult,
+  ResearchReport,
+  SelectedRoute,
 } from "@/lib/types";
 
 /**
@@ -33,25 +46,87 @@ export default function AircraftPanel({
   registration,
   onClose,
   onLocate,
+  onRouteChange,
 }: {
   live: LiveAircraft | null;
   registration: string | null;
   onClose: () => void;
   onLocate: (lat: number, lon: number) => void;
+  /** Hands the route geometry up so the map can draw it. */
+  onRouteChange?: (route: SelectedRoute | null) => void;
 }) {
   const [detail, setDetail] = useState<AircraftDetail | null>(null);
   const [ownership, setOwnership] = useState<OwnershipResult | null>(null);
   const [history, setHistory] = useState<AircraftHistory | null>(null);
+  const [flight, setFlight] = useState<CurrentFlight | null>(null);
+  const [lastLanding, setLastLanding] = useState<LandingSummary | null>(null);
+  const [nextTrip, setNextTrip] = useState<NextTrip | null>(null);
+  const [photos, setPhotos] = useState<AircraftPhoto[]>([]);
+  const [photoNote, setPhotoNote] = useState<string | null>(null);
+  const [research, setResearch] = useState<ResearchReport | null>(null);
+  const [windowMinutes, setWindowMinutes] = useState(120);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [loadingOwnership, setLoadingOwnership] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingFlight, setLoadingFlight] = useState(false);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [loadingResearch, setLoadingResearch] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const routeCallback = useRef(onRouteChange);
+  routeCallback.current = onRouteChange;
+
+  // ---- route + flight: reloaded when the track window changes -------------
+  useEffect(() => {
+    if (!registration) {
+      setFlight(null);
+      setLastLanding(null);
+      setNextTrip(null);
+      routeCallback.current?.(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setLoadingFlight(true);
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/aircraft/${encodeURIComponent(registration)}/flight?minutes=${windowMinutes}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) return;
+        const body = (await response.json()) as {
+          current: CurrentFlight;
+          route: SelectedRoute | null;
+          lastLanding: LandingSummary | null;
+          nextTrip: NextTrip;
+        };
+        setFlight(body.current);
+        setLastLanding(body.lastLanding);
+        setNextTrip(body.nextTrip);
+        routeCallback.current?.(body.route);
+      } catch {
+        /* the section renders its own empty state */
+      } finally {
+        setLoadingFlight(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [registration, windowMinutes]);
+
+  // Clear the map route when the panel closes.
+  useEffect(() => () => routeCallback.current?.(null), []);
 
   useEffect(() => {
     setDetail(null);
     setOwnership(null);
     setHistory(null);
+    setPhotos([]);
+    setPhotoNote(null);
+    setResearch(null);
     setError(null);
     if (!registration) return;
 
@@ -94,6 +169,36 @@ export default function AircraftPanel({
         /* handled by the panel's empty state */
       } finally {
         setLoadingHistory(false);
+      }
+    })();
+
+    // Photographs and web coverage: both hit external services, so they load
+    // independently and neither can hold up the rest of the panel.
+    setLoadingPhotos(true);
+    void (async () => {
+      try {
+        const response = await fetch(`/api/aircraft/${reg}/photos`, { signal: controller.signal });
+        if (response.ok) {
+          const body = (await response.json()) as { photos: AircraftPhoto[]; note: string | null };
+          setPhotos(body.photos);
+          setPhotoNote(body.note);
+        }
+      } catch {
+        /* the gallery renders its own empty state */
+      } finally {
+        setLoadingPhotos(false);
+      }
+    })();
+
+    setLoadingResearch(true);
+    void (async () => {
+      try {
+        const response = await fetch(`/api/aircraft/${reg}/research`, { signal: controller.signal });
+        if (response.ok) setResearch(await response.json());
+      } catch {
+        /* the section renders its own empty state */
+      } finally {
+        setLoadingResearch(false);
       }
     })();
 
@@ -266,6 +371,11 @@ export default function AircraftPanel({
         </div>
       </section>
 
+      <Divider />
+      <CurrentFlightSection flight={flight} loading={loadingFlight} />
+      <LastLandingSection landing={lastLanding} />
+      <NextTripSection trip={nextTrip} />
+
       <OwnerIntelligence
         ownership={ownership}
         loading={loadingOwnership}
@@ -273,7 +383,16 @@ export default function AircraftPanel({
         onRefresh={refreshOwnership}
       />
 
-      <FlightHistory history={history} loading={loadingHistory} />
+      <PhotoGallery photos={photos} loading={loadingPhotos} note={photoNote} />
+
+      <FlightHistory
+        history={history}
+        loading={loadingHistory}
+        windowMinutes={windowMinutes}
+        onWindowChange={setWindowMinutes}
+      />
+
+      <WebNews report={research} loading={loadingResearch} />
 
       {registration && (
         <div className="mt-auto border-t border-edge px-4 py-3">

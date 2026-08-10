@@ -1,5 +1,6 @@
 import { normalizeRegistration, registryFor } from "@/lib/aircraft/registration";
 import { cache, cacheKeys } from "@/lib/cache";
+import { syncCompanyLinks } from "@/lib/company/service";
 import { config, searchConfigured } from "@/lib/config";
 import { withDb } from "@/lib/db";
 import { getSearchProvider } from "@/lib/search/providers";
@@ -510,6 +511,13 @@ export async function getOwnership(
 
   const result = await research(registration, options);
   await persist(result);
+  // Every resolved owner/operator/manager is also a company. Linking here —
+  // rather than in a separate crawl — means the company pages are built from
+  // exactly the sourced findings the aircraft panel shows, never from a
+  // second, divergent view of the same evidence.
+  void syncCompanyLinks(result).catch((error) =>
+    console.warn("[company] link sync failed:", (error as Error).message),
+  );
   await cache.setJson(key, result, result.status === "RESOLVED" ? 60 * 60 : 10 * 60);
   return result;
 }

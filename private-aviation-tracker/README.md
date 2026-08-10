@@ -63,6 +63,37 @@ api-auth: YOUR_API_KEY
 
 ---
 
+## What it shows, and where each fact comes from
+
+Data accuracy is the product here, so every claim on screen carries its origin
+and nothing is filled in when a source is missing.
+
+| Shown | Source | When it is unavailable |
+|---|---|---|
+| **Aircraft silhouette** | ICAO type designator → airframe family (`src/lib/aircraft/silhouettes.ts`) | Falls back to the classified category, so an unknown turboprop still draws as a turboprop |
+| **Destination + ETA** | A filed route resolved from the callsign (`ROUTE_PROVIDER`), else a trajectory estimate | “Unknown”, with a sentence explaining that ADS-B carries position only |
+| **Route line** | Flown leg from recorded positions; remaining leg drawn dashed | No remaining leg is drawn without a destination |
+| **Last landing** | A flight this deployment watched from the air onto the ground | “No completed flight observed yet” |
+| **Next trip** | Repeated observed departures on the same route (≥3, and a majority) | “Unknown” — private flight plans are not published in advance |
+| **Owner / operator** | Official registry + web search, scored and optionally LLM-read | “Beneficial owner not publicly confirmed”, with a registry link |
+| **Company fleet** | Sourced ownership findings, one row per role | The page says no aircraft are linked yet |
+| **Airport statistics** | Counted from observed legs | Zero until flights are recorded |
+| **Photos / news** | Public sources, hot-linked with attribution | An explicit “nothing found” note |
+
+A trajectory-estimated destination is capped at **45% confidence** while the
+aircraft is still at cruise — pointed at an airport from FL410 usually means
+overflying it, not landing there — and never exceeds 72% at any altitude. A
+filed route is the only thing that scores 100.
+
+### Owner is not operator
+
+The four roles are stored and displayed separately — registered owner,
+beneficial owner, operator, management company, charter operator. A company
+page shows the role each aircraft is linked under, so operating an aircraft is
+never rendered as owning it.
+
+---
+
 ## Quick start
 
 ```bash
@@ -283,6 +314,9 @@ src/lib/aircraft/    Type database, classifier, registration/registry helpers
 src/lib/live/        Shared viewport polling, recent-aircraft index
 src/lib/ownership/   Query building, evidence extraction, scoring, FAA, LLM, service
 src/lib/search/      Search providers behind one interface
+src/lib/flight/      Routes, destination estimation, ETA, next-trip patterns
+src/lib/company/     Company resolution, fleets, activity, airport stats
+src/lib/research/    News/forum research with CONFIRMED/REPORTED/UNVERIFIED
 src/lib/history/     Position ingest, flight-leg derivation, airport inference
 src/components/      Map, panels, owner intelligence, timeline
 ```

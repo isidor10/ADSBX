@@ -114,23 +114,63 @@ function buildTimeline(flights: FlightLegSummary[]): TimelineEvent[] {
   return events.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }
 
+/** Windows offered by the track selector, in minutes. */
+export const TRACK_WINDOWS = [30, 60, 120, 360, 1440] as const;
+
+/**
+ * Which windows actually contain recorded positions. The UI greys out the
+ * rest: offering "24 hours" for an aircraft first seen ten minutes ago would
+ * promise data that does not exist.
+ */
+async function availableWindows(registration: string): Promise<number[]> {
+  const oldest = await withDb(
+    (db) =>
+      db.position.findFirst({
+        where: { registration },
+        orderBy: { seenAt: "asc" },
+        select: { seenAt: true },
+      }),
+    null,
+    "history:oldest",
+  );
+  if (!oldest) return [];
+  const spanMin = (Date.now() - oldest.seenAt.getTime()) / 60000;
+  const usable = TRACK_WINDOWS.filter((w) => w <= spanMin);
+  // Always offer the smallest window when there is any data at all, so a fresh
+  // contact still has something to select.
+  return usable.length > 0 ? usable : [TRACK_WINDOWS[0]];
+}
+
 export async function getHistory(
   rawRegistration: string,
-  options: { flightLimit?: number; positionLimit?: number } = {},
+  options: { flightLimit?: number; positionLimit?: number; minutes?: number } = {},
 ): Promise<AircraftHistory> {
   const registration = normalizeRegistration(rawRegistration) ?? rawRegistration.toUpperCase();
   const flightLimit = Math.min(options.flightLimit ?? 20, 100);
   const positionLimit = Math.min(options.positionLimit ?? 200, 2000);
+  const minutes = options.minutes
+    ? Math.min(Math.max(options.minutes, 5), 7 * 24 * 60)
+    : null;
 
   if (!databaseEnabled()) {
-    return { registration, flights: [], recentPositions: [], timeline: [], note: NO_DATABASE_NOTE };
+    return {
+      registration,
+      flights: [],
+      recentPositions: [],
+      timeline: [],
+      windowMinutes: minutes,
+      availableWindows: [],
+      note: NO_DATABASE_NOTE,
+    };
   }
 
-  const [flightRows, positionRows] = await Promise.all([
+  const since = minutes ? new Date(Date.now() - minutes * 60 * 1000) : null;
+
+  const [flightRows, positionRows, windows] = await Promise.all([
     withDb(
       (db) =>
         db.flightLeg.findMany({
-          where: { registration },
+          where: { registration, ...(since ? { lastSeenAt: { gte: since } } : {}) },
           orderBy: { firstSeenAt: "desc" },
           take: flightLimit,
         }),
@@ -140,13 +180,14 @@ export async function getHistory(
     withDb(
       (db) =>
         db.position.findMany({
-          where: { registration },
+          where: { registration, ...(since ? { seenAt: { gte: since } } : {}) },
           orderBy: { seenAt: "desc" },
           take: positionLimit,
         }),
       [],
       "history:positions",
     ),
+    availableWindows(registration),
   ]);
 
   const flights = flightRows.map(toSummary);
@@ -166,9 +207,13 @@ export async function getHistory(
     flights,
     recentPositions,
     timeline: buildTimeline(flights),
+    windowMinutes: minutes,
+    availableWindows: windows,
     note:
       flights.length === 0 && recentPositions.length === 0
-        ? NO_HISTORY_NOTE
+        ? minutes
+          ? `Nothing recorded in the last ${minutes < 60 ? `${minutes} minutes` : `${minutes / 60} hours`}.`
+          : NO_HISTORY_NOTE
         : `Positions are retained for ${config.history.retentionDays} days. Departure and arrival airports are inferred from observed positions.`,
   };
 }

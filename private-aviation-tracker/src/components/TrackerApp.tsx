@@ -6,7 +6,7 @@ import AircraftPanel from "@/components/AircraftPanel";
 import TopBar from "@/components/TopBar";
 import type { MapViewport } from "@/components/MapView";
 import { useLiveFeed } from "@/hooks/useLiveFeed";
-import type { FilterKey, LiveAircraft, SearchHit } from "@/lib/types";
+import type { CompanySummary, FilterKey, LiveAircraft, SearchHit, SelectedRoute } from "@/lib/types";
 
 // MapLibre touches `window` at import time, so the map is client-only.
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -26,16 +26,35 @@ interface Selection {
   registration: string | null;
 }
 
+/** Company whose fleet the map is pinned to, if any. */
+interface CompanyFilter {
+  slug: string;
+  name: string;
+  registrations: Set<string>;
+}
+
 export default function TrackerApp() {
   const [viewport, setViewport] = useState<MapViewport | null>(null);
   const [filters, setFilters] = useState<FilterKey[]>(["business"]);
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [route, setRoute] = useState<SelectedRoute | null>(null);
+  const [company, setCompany] = useState<CompanyFilter | null>(null);
   const [focus, setFocus] = useState<{ lat: number; lon: number; zoom?: number; key: number } | null>(
     null,
   );
 
   const feed = useLiveFeed(viewport, filters);
-  const aircraft = useMemo(() => feed.data?.aircraft ?? [], [feed.data]);
+  const allAircraft = useMemo(() => feed.data?.aircraft ?? [], [feed.data]);
+
+  // Company mode narrows the map to one fleet. Filtering happens here rather
+  // than server-side so the live feed keeps streaming everything and toggling
+  // the filter is instant.
+  const aircraft = useMemo(() => {
+    if (!company) return allAircraft;
+    return allAircraft.filter(
+      (a) => a.registration && company.registrations.has(a.registration.toUpperCase()),
+    );
+  }, [allAircraft, company]);
 
   const selectedLive = useMemo(() => {
     if (!selection) return null;
@@ -63,6 +82,23 @@ export default function TrackerApp() {
     setFocus({ lat, lon, zoom: 10, key: Date.now() });
   }, []);
 
+  /** "Show all company aircraft" — pin the map to one operator's fleet. */
+  const handleCompanySelect = useCallback(async (summary: CompanySummary) => {
+    try {
+      const response = await fetch(`/api/company/${encodeURIComponent(summary.slug)}/fleet`);
+      if (!response.ok) return;
+      const body = (await response.json()) as { registrations: string[] };
+      setCompany({
+        slug: summary.slug,
+        name: summary.name,
+        registrations: new Set(body.registrations.map((r) => r.toUpperCase())),
+      });
+      setSelection(null);
+    } catch {
+      /* leave the map as it is */
+    }
+  }, []);
+
   return (
     <main className="flex h-dvh w-full flex-col overflow-hidden bg-ground">
       <TopBar
@@ -77,6 +113,7 @@ export default function TrackerApp() {
         filters={filters}
         onFiltersChange={setFilters}
         onSearchSelect={handleSearchSelect}
+        onCompanySelect={handleCompanySelect}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -86,7 +123,32 @@ export default function TrackerApp() {
           onSelect={handleSelect}
           onViewportChange={setViewport}
           focus={focus}
+          route={route}
         />
+
+        {company && (
+          <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-3 rounded-sm border border-cyan/40 bg-panel/95 px-3 py-2 backdrop-blur-md">
+            <span className="text-[11px] uppercase tracking-[0.14em] text-cyan">
+              {company.name}
+            </span>
+            <span className="tabular text-[11px] text-ink-2">
+              {aircraft.length} of {company.registrations.size} in view
+            </span>
+            <a
+              href={`/company/${company.slug}`}
+              className="text-[10px] uppercase tracking-[0.12em] text-ink-3 underline-offset-2 hover:text-cyan hover:underline"
+            >
+              Company page
+            </a>
+            <button
+              type="button"
+              onClick={() => setCompany(null)}
+              className="rounded-sm border border-edge px-1.5 py-0.5 text-[10px] uppercase tracking-[0.12em] text-ink-3 transition-colors hover:border-edge-2 hover:text-ink"
+            >
+              Clear
+            </button>
+          </div>
+        )}
 
         {feed.error && (
           <div className="absolute left-1/2 top-6 z-20 w-[min(92vw,560px)] -translate-x-1/2 rounded-sm border border-rose/40 bg-rose/12 px-4 py-3 backdrop-blur-md">
@@ -106,7 +168,9 @@ export default function TrackerApp() {
 
         {!feed.error && feed.data && aircraft.length === 0 && (
           <div className="pointer-events-none absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-sm border border-edge bg-panel/90 px-4 py-2 text-[11px] text-ink-3 backdrop-blur-md">
-            No private or business aircraft in view — pan the map or widen the filters.
+            {company
+              ? `No ${company.name} aircraft are currently airborne in this view.`
+              : "No private or business aircraft in view — pan the map or widen the filters."}
           </div>
         )}
 
@@ -114,8 +178,12 @@ export default function TrackerApp() {
           <AircraftPanel
             live={selectedLive}
             registration={selection.registration}
-            onClose={() => setSelection(null)}
+            onClose={() => {
+              setSelection(null);
+              setRoute(null);
+            }}
             onLocate={handleLocate}
+            onRouteChange={setRoute}
           />
         )}
 

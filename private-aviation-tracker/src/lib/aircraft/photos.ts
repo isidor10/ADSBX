@@ -1,5 +1,6 @@
 import { cache, cacheKeys } from "@/lib/cache";
 import { config } from "@/lib/config";
+import { withDb } from "@/lib/db";
 import type { AircraftPhoto } from "@/lib/types";
 
 /**
@@ -49,23 +50,29 @@ interface PlanespottersPhoto {
   photographer?: string;
 }
 
-async function fromPlanespotters(registration: string): Promise<AircraftPhoto | null> {
+function planespottersPhoto(photo: PlanespottersPhoto): AircraftPhoto | null {
+  const url = photo.thumbnail_large?.src ?? photo.thumbnail?.src;
+  if (!url) return null;
+  return {
+    url,
+    thumbnailUrl: photo.thumbnail?.src ?? null,
+    credit: photo.photographer ? `© ${photo.photographer} / Planespotters.net` : "Planespotters.net",
+    link: photo.link ?? null,
+    source: "planespotters",
+  };
+}
+
+async function planespottersAll(registration: string): Promise<AircraftPhoto[]> {
   const data = await getJson<{ photos?: PlanespottersPhoto[] }>(
     `https://api.planespotters.net/pub/photos/reg/${encodeURIComponent(registration)}`,
   );
-  const photo = data?.photos?.[0];
-  const url = photo?.thumbnail_large?.src ?? photo?.thumbnail?.src;
-  if (!url) return null;
+  return (data?.photos ?? [])
+    .map(planespottersPhoto)
+    .filter((p): p is AircraftPhoto => p !== null);
+}
 
-  return {
-    url,
-    thumbnailUrl: photo?.thumbnail?.src ?? null,
-    credit: photo?.photographer
-      ? `© ${photo.photographer} / Planespotters.net`
-      : "Planespotters.net",
-    link: photo?.link ?? null,
-    source: "planespotters",
-  };
+async function fromPlanespotters(registration: string): Promise<AircraftPhoto | null> {
+  return (await planespottersAll(registration))[0] ?? null;
 }
 
 // ------------------------------------------------------------ Google Images
@@ -134,6 +141,156 @@ async function fromGoogleImages(registration: string): Promise<AircraftPhoto | n
     link: preferred.image?.contextLink ?? preferred.link!,
     source: "google_images",
   };
+}
+
+async function googleImagesAll(
+  registration: string,
+  hints: PhotoHints,
+  limit: number,
+): Promise<AircraftPhoto[]> {
+  const key = config.photos.googleApiKey;
+  const cx = config.photos.googleCx;
+  if (!key || !cx) return [];
+
+  // Several phrasings, because the tail number alone misses shots that are
+  // captioned with the type or the operator instead.
+  const queries = [`"${registration}" aircraft`];
+  if (hints.model) queries.push(`"${registration}" ${hints.model}`);
+  if (hints.operator) queries.push(`"${registration}" ${hints.operator}`);
+  queries.push(`"${registration}" private jet`);
+
+  const photos: AircraftPhoto[] = [];
+  const seen = new Set<string>();
+
+  for (const query of queries.slice(0, config.photos.maxQueries)) {
+    const url = new URL("https://www.googleapis.com/customsearch/v1");
+    url.searchParams.set("key", key);
+    url.searchParams.set("cx", cx);
+    url.searchParams.set("q", query);
+    url.searchParams.set("searchType", "image");
+    url.searchParams.set("num", "8");
+    url.searchParams.set("safe", "active");
+    url.searchParams.set("imgSize", "large");
+
+    const data = await getJson<{ items?: GoogleImageItem[] }>(url.toString());
+    for (const item of data?.items ?? []) {
+      if (!item.link?.startsWith("https://") || seen.has(item.link)) continue;
+      seen.add(item.link);
+      const host = hostOf(item.image?.contextLink ?? item.link) || "the web";
+      photos.push({
+        url: item.link,
+        thumbnailUrl: item.image?.thumbnailLink ?? null,
+        // Hot-linked with attribution and a link back to the page it lives on;
+        // nothing is copied or re-hosted.
+        credit: `Image via ${host} — found with Google Images`,
+        link: item.image?.contextLink ?? item.link,
+        source: "google_images",
+      });
+    }
+    if (photos.length >= limit) break;
+  }
+
+  // Aviation photography sites first: those results are reliably the right
+  // airframe, where a generic web image may only be the right type.
+  return photos
+    .sort((a, b) => {
+      const rank = (p: AircraftPhoto) =>
+        AVIATION_IMAGE_HOSTS.includes(hostOf(p.link ?? p.url)) ? 0 : 1;
+      return rank(a) - rank(b);
+    })
+    .slice(0, limit);
+}
+
+export interface PhotoHints {
+  model?: string | null;
+  manufacturer?: string | null;
+  operator?: string | null;
+}
+
+/**
+ * A gallery rather than a single image. Planespotters first (an exact tail
+ * match), then Google Images for coverage the aviation databases lack.
+ */
+export async function getAircraftPhotos(
+  registration: string,
+  hints: PhotoHints = {},
+  limit = 6,
+): Promise<AircraftPhoto[]> {
+  if (!config.photos.enabled) return [];
+  const reg = registration.toUpperCase();
+
+  return cache.remember(cacheKeys.photos(reg), config.photos.ttlHours * 3600, async () => {
+    const provider = config.photos.provider;
+    const photos: AircraftPhoto[] = [];
+
+    if (provider !== "google") {
+      photos.push(...(await planespottersAll(reg)));
+    }
+    if (provider !== "planespotters" && photos.length < limit) {
+      photos.push(...(await googleImagesAll(reg, hints, limit - photos.length)));
+    }
+
+    const seen = new Set<string>();
+    const unique = photos.filter((p) => !seen.has(p.url) && seen.add(p.url));
+    void persistPhotos(reg, unique).catch(() => {});
+    return unique.slice(0, limit);
+  });
+}
+
+/**
+ * Keep what was found so a gallery survives a cache flush and a period with no
+ * search credentials. Only URLs and attribution are stored — never the image.
+ */
+async function persistPhotos(registration: string, photos: AircraftPhoto[]): Promise<void> {
+  if (photos.length === 0) return;
+  await withDb(
+    async (db) => {
+      const aircraft = await db.aircraft.findUnique({
+        where: { registration },
+        select: { id: true },
+      });
+      for (const [index, photo] of photos.entries()) {
+        await db.aircraftPhotoRecord.upsert({
+          where: { registration_url: { registration, url: photo.url } },
+          create: {
+            aircraftId: aircraft?.id ?? null,
+            registration,
+            url: photo.url,
+            thumbnailUrl: photo.thumbnailUrl,
+            credit: photo.credit,
+            link: photo.link,
+            source: photo.source,
+            rank: index,
+          },
+          update: { rank: index, thumbnailUrl: photo.thumbnailUrl, credit: photo.credit },
+        });
+      }
+      return null;
+    },
+    null,
+    "photos:persist",
+  );
+}
+
+/** Previously discovered photos, used when no image search is configured. */
+export async function storedPhotos(registration: string, limit = 6): Promise<AircraftPhoto[]> {
+  const rows = await withDb(
+    (db) =>
+      db.aircraftPhotoRecord.findMany({
+        where: { registration: registration.toUpperCase() },
+        orderBy: { rank: "asc" },
+        take: limit,
+      }),
+    [],
+    "photos:load",
+  );
+  return rows.map((r) => ({
+    url: r.url,
+    thumbnailUrl: r.thumbnailUrl,
+    credit: r.credit,
+    link: r.link,
+    source: r.source,
+  }));
 }
 
 export async function getAircraftPhoto(registration: string): Promise<AircraftPhoto | null> {

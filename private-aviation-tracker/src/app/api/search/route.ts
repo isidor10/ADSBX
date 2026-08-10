@@ -1,24 +1,36 @@
 import type { NextRequest } from "next/server";
 import { jsonError, jsonOk } from "@/lib/api";
+import { globalSearch } from "@/lib/search/global";
 import { searchAircraft } from "@/lib/search/service";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * GET /api/search?q=
- * Searches registration, callsign, ICAO hex, model, owner and operator across
- * live traffic and stored records.
+ * GET /api/search?q=[&mode=aircraft]
+ *
+ * Categorised results across aircraft, companies, owners, operators and
+ * airports. `mode=aircraft` returns the flat aircraft-only list, which is what
+ * callers that just want to locate a tail number use.
  */
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const params = request.nextUrl.searchParams;
+  const q = params.get("q")?.trim() ?? "";
+  const limit = Number(params.get("limit") ?? 8);
+
   if (q.length < 2) {
-    return jsonOk({ query: q, results: [] });
+    return jsonOk(
+      params.get("mode") === "aircraft"
+        ? { query: q, results: [] }
+        : { query: q, aircraft: [], companies: [], owners: [], operators: [], airports: [] },
+    );
   }
 
   try {
-    const results = await searchAircraft(q, Number(request.nextUrl.searchParams.get("limit") ?? 25));
-    return jsonOk({ query: q, results });
+    if (params.get("mode") === "aircraft") {
+      return jsonOk({ query: q, results: await searchAircraft(q, limit * 3) });
+    }
+    return jsonOk(await globalSearch(q, limit));
   } catch (error) {
     return jsonError("search_failed", "Search temporarily unavailable.", 502, (error as Error).message);
   }

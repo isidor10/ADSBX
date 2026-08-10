@@ -1,11 +1,17 @@
 // Private Aviation Tracker — data model
 //
-// Three groups of tables:
+// Five groups of tables:
 //   1. Aircraft identity + ownership intelligence (Aircraft, OwnershipRecord)
 //   2. Observed movement data (Position, FlightLeg) — only ever written from
 //      real ADS-B observations, never synthesised.
 //   3. Reference data imported from official public datasets
 //      (FaaRegistration, Airport).
+//   4. Company intelligence (Company, CompanyAircraft) — derived from
+//      ownership records, so every fleet link carries the role it was found
+//      under and the confidence of that finding.
+//   5. External research (ResearchItem, AircraftPhotoRecord) — everything
+//      discovered on the open web, always stored with its source URL, the
+//      date it was discovered and how far it can be trusted.
 
 generator client {
   provider = "prisma-client-js"
@@ -40,6 +46,53 @@ enum FlightStatus {
   STALE
 }
 
+/// How a company is connected to an aircraft. Kept distinct because conflating
+/// them is the single most damaging error this product can make: an operator
+/// is not an owner.
+enum FleetRole {
+  REGISTERED_OWNER
+  BENEFICIAL_OWNER
+  OPERATOR
+  MANAGEMENT_COMPANY
+  CHARTER_OPERATOR
+  ASSOCIATED
+}
+
+/// How far a piece of externally-sourced information can be trusted.
+enum Verification {
+  /// Stated by an official registry or the subject's own site.
+  CONFIRMED
+  /// Reported by a news outlet or established aviation database.
+  REPORTED
+  /// Forum posts, aggregators, anything uncorroborated.
+  UNVERIFIED
+}
+
+enum ResearchKind {
+  NEWS
+  FORUM
+  COMPANY_WEBSITE
+  OFFICIAL_REGISTRY
+  AVIATION_DATABASE
+  OTHER
+}
+
+enum SubjectType {
+  AIRCRAFT
+  COMPANY
+}
+
+/// Where a destination came from. Nothing may be shown to the user without one
+/// of these attached.
+enum RouteSource {
+  /// Supplied by a route/flight-plan data source keyed on the callsign.
+  FLIGHT_DATA
+  /// Observed: the aircraft actually landed there.
+  OBSERVED
+  /// Inferred from the current trajectory. Always labelled as an estimate.
+  TRAJECTORY_ESTIMATE
+}
+
 model Aircraft {
   id              String   @id @default(cuid())
   registration    String   @unique
@@ -67,10 +120,115 @@ model Aircraft {
   ownership OwnershipRecord?
   positions Position[]
   flights   FlightLeg[]
+  companies CompanyAircraft[]
+  photos    AircraftPhotoRecord[]
 
   @@index([typeCode])
   @@index([category])
   @@index([lastSeenAt])
+}
+
+/// A company that owns, operates or manages aircraft. Rows are created from
+/// resolved ownership records rather than typed in, so a company exists here
+/// only because a sourced ownership finding named it.
+model Company {
+  id   String @id @default(cuid())
+  /// URL segment, e.g. "prince-aviation".
+  slug String @unique
+  /// Display name as found in the sources.
+  name String
+  /// Upper-cased, suffix-stripped key used for matching ("PRINCE AVIATION").
+  matchKey String
+
+  website     String?
+  country     String?
+  summary     String?
+  /// [{ title, url, label, kind }] — provenance for the company record itself.
+  sources     Json     @default("[]")
+  /// 0-100, the strength of the evidence linking this company to its fleet.
+  confidence  Int      @default(0)
+
+  researchedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  aircraft CompanyAircraft[]
+
+  @@index([matchKey])
+  @@index([name])
+}
+
+/// One company-to-aircraft link, in one role. An aircraft can appear under the
+/// same company twice (owner and operator) or under two companies in different
+/// roles — which is the normal case in business aviation.
+model CompanyAircraft {
+  id           String    @id @default(cuid())
+  companyId    String
+  aircraftId   String
+  registration String
+  role         FleetRole
+
+  /// Where the link came from: faa_registry | ownership_search | feed_operator
+  source       String?
+  sourceUrl    String?
+  confidence   Int       @default(0)
+  discoveredAt DateTime  @default(now())
+  verifiedAt   DateTime?
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  aircraft Aircraft @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, registration, role])
+  @@index([registration])
+  @@index([companyId])
+}
+
+/// A link discovered on the open web about an aircraft or a company. Stored
+/// with its verification level so the UI never presents a forum post as fact.
+model ResearchItem {
+  id          String       @id @default(cuid())
+  subjectType SubjectType
+  /// Registration for aircraft, slug for companies.
+  subjectKey  String
+  title       String
+  url         String
+  host        String
+  snippet     String?
+  kind        ResearchKind @default(OTHER)
+  verification Verification @default(UNVERIFIED)
+  /// Publication date when the source exposes one; null is honest, not zero.
+  publishedAt DateTime?
+  provider    String?
+  query       String?
+  discoveredAt DateTime    @default(now())
+  lastSeenAt   DateTime    @default(now())
+
+  @@unique([subjectType, subjectKey, url])
+  @@index([subjectType, subjectKey, publishedAt])
+}
+
+/// Photographs found for a tail number. Only the source URL and thumbnail are
+/// kept — images are hot-linked to their origin with attribution, never
+/// re-hosted.
+model AircraftPhotoRecord {
+  id           String   @id @default(cuid())
+  aircraftId   String?
+  registration String
+  url          String
+  thumbnailUrl String?
+  credit       String?
+  /// Page the photo appears on, for attribution and click-through.
+  link         String?
+  source       String
+  width        Int?
+  height       Int?
+  rank         Int      @default(0)
+  discoveredAt DateTime @default(now())
+
+  aircraft Aircraft? @relation(fields: [aircraftId], references: [id], onDelete: SetNull)
+
+  @@unique([registration, url])
+  @@index([registration, rank])
 }
 
 model OwnershipRecord {
@@ -160,6 +318,19 @@ model FlightLeg {
   arrivalLat  Float?
   arrivalLon  Float?
   arrivedAt   DateTime?
+
+  /// Destination while the leg is still airborne. Separate from arrival* so an
+  /// estimate can never be mistaken for an observed landing: arrival* is only
+  /// written once the aircraft is actually on the ground there.
+  destinationIcao       String?
+  destinationName       String?
+  destinationLat        Float?
+  destinationLon        Float?
+  destinationSource     RouteSource?
+  /// 0-100 for an estimate; a flight-data destination is stored at 100.
+  destinationConfidence Int?
+  destinationEta        DateTime?
+  destinationUpdatedAt  DateTime?
 
   maxAltitudeFt   Int?
   maxGroundSpeedKt Float?

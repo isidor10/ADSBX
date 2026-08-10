@@ -92,6 +92,96 @@ export interface LiveFeedResult {
   notice?: string;
 }
 
+// ------------------------------------------------------------ routes / flight
+
+/**
+ * Where a departure or destination came from. Every airport shown in the UI
+ * carries one of these, because "we saw it land there" and "it is pointed that
+ * way" are completely different claims.
+ */
+export type RouteSourceKind =
+  /** A route data source resolved the callsign to a filed route. */
+  | "FLIGHT_DATA"
+  /** Observed: the aircraft was actually on the ground there. */
+  | "OBSERVED"
+  /** Inferred from the current trajectory. Always labelled as an estimate. */
+  | "TRAJECTORY_ESTIMATE";
+
+export interface AirportRef {
+  icao: string | null;
+  iata: string | null;
+  name: string;
+  city: string | null;
+  country: string | null;
+  lat: number;
+  lon: number;
+}
+
+/** The flight an aircraft is on right now. */
+export interface CurrentFlight {
+  registration: string;
+  callsign: string | null;
+  airborne: boolean;
+
+  departure: AirportRef | null;
+  departureSource: RouteSourceKind | null;
+  departedAt: string | null;
+
+  destination: AirportRef | null;
+  destinationSource: RouteSourceKind | null;
+  /** 0-100. Null when there is no destination at all. */
+  destinationConfidence: number | null;
+
+  etaAt: string | null;
+  distanceRemainingNm: number | null;
+  distanceFlownNm: number | null;
+  /** 0-100 along the great circle, when both ends are known. */
+  progressPct: number | null;
+
+  /** Plain-English reason when the destination is unknown. Never a guess. */
+  note: string | null;
+}
+
+/** Geometry the map needs to draw the selected aircraft's route. */
+export interface SelectedRoute {
+  registration: string;
+  /** [lon, lat] pairs of the path actually flown, oldest first. */
+  flown: Array<[number, number]>;
+  departure: AirportRef | null;
+  destination: AirportRef | null;
+  /** True when the destination is a trajectory estimate rather than filed. */
+  destinationEstimated: boolean;
+}
+
+/** A completed flight, used by LAST LANDING. */
+export interface LandingSummary {
+  registration: string;
+  callsign: string | null;
+  departure: AirportRef | null;
+  arrival: AirportRef | null;
+  departedAt: string | null;
+  arrivedAt: string | null;
+  durationSec: number | null;
+  distanceNm: number | null;
+}
+
+/**
+ * A future flight. Only ever produced from repeated observed behaviour, and
+ * always carries `estimated: true` plus the evidence count behind it.
+ */
+export interface NextTrip {
+  known: boolean;
+  estimated: boolean;
+  departure: AirportRef | null;
+  destination: AirportRef | null;
+  /** e.g. "Weekday mornings" — never a specific invented timestamp. */
+  window: string | null;
+  confidence: ConfidenceBand;
+  /** How many past flights support this. */
+  basis: number;
+  note: string;
+}
+
 export type ConfidenceBand = "high" | "medium" | "low" | "none";
 
 export type OwnerKind =
@@ -167,6 +257,44 @@ export interface AircraftIdentity {
   lastSeenAt: string | null;
 }
 
+// ---------------------------------------------------------------- research
+
+export type ResearchKind =
+  | "NEWS"
+  | "FORUM"
+  | "COMPANY_WEBSITE"
+  | "OFFICIAL_REGISTRY"
+  | "AVIATION_DATABASE"
+  | "OTHER";
+
+/**
+ * How far a source can be trusted. Shown as a chip on every result so a forum
+ * post is never read as an established fact.
+ */
+export type Verification = "CONFIRMED" | "REPORTED" | "UNVERIFIED";
+
+export interface ResearchItem {
+  title: string;
+  url: string;
+  host: string;
+  /** Short display name for the host, e.g. "FAA Registry". */
+  label: string;
+  snippet: string | null;
+  kind: ResearchKind;
+  verification: Verification;
+  publishedAt: string | null;
+  query: string | null;
+}
+
+export interface ResearchReport {
+  subject: string;
+  items: ResearchItem[];
+  provider: string | null;
+  cached: boolean;
+  /** Explains an empty report rather than showing nothing. */
+  note: string | null;
+}
+
 export interface AircraftPhoto {
   url: string;
   thumbnailUrl: string | null;
@@ -224,8 +352,108 @@ export interface AircraftHistory {
   flights: FlightLegSummary[];
   recentPositions: PositionSample[];
   timeline: TimelineEvent[];
+  /** The window this response covers, or null for "everything on record". */
+  windowMinutes: number | null;
+  /** Windows that actually contain data — the UI disables the others. */
+  availableWindows: number[];
   /** Explains an empty history rather than pretending data exists. */
   note: string | null;
+}
+
+// ----------------------------------------------------------------- companies
+
+/**
+ * How a company relates to an aircraft. Never collapsed into one "company"
+ * field: an operator is not an owner, and the UI must be able to say which.
+ */
+export type FleetRole =
+  | "REGISTERED_OWNER"
+  | "BENEFICIAL_OWNER"
+  | "OPERATOR"
+  | "MANAGEMENT_COMPANY"
+  | "CHARTER_OPERATOR"
+  | "ASSOCIATED";
+
+export const FLEET_ROLE_LABELS: Record<FleetRole, string> = {
+  REGISTERED_OWNER: "Registered owner",
+  BENEFICIAL_OWNER: "Beneficial owner",
+  OPERATOR: "Operator",
+  MANAGEMENT_COMPANY: "Management",
+  CHARTER_OPERATOR: "Charter",
+  ASSOCIATED: "Associated",
+};
+
+export interface CompanySummary {
+  slug: string;
+  name: string;
+  aircraftCount: number;
+  website: string | null;
+  country: string | null;
+  exact: boolean;
+}
+
+export interface CompanyFleetEntry {
+  registration: string;
+  role: FleetRole;
+  typeCode: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  /** "flying" is only claimed when the aircraft is being received now. */
+  status: "flying" | "on_ground" | "unknown";
+  location: string | null;
+  destination: AirportRef | null;
+  destinationEstimated: boolean;
+  lastSeenAt: string | null;
+  lastLanding: LandingSummary | null;
+  confidence: number;
+  sourceUrl: string | null;
+}
+
+export interface CompanyProfile {
+  slug: string;
+  name: string;
+  website: string | null;
+  country: string | null;
+  summary: string | null;
+  fleet: CompanyFleetEntry[];
+  stats: { aircraft: number; flying: number; onGround: number; unknown: number };
+  note: string | null;
+}
+
+export interface CompanyActivityFilters {
+  registration?: string;
+  airport?: string;
+  since?: string;
+  until?: string;
+  limit?: number;
+}
+
+export interface CompanyFlightActivity {
+  slug: string;
+  filters: CompanyActivityFilters;
+  flights: Array<{
+    id: string;
+    registration: string;
+    callsign: string | null;
+    status: "ACTIVE" | "COMPLETED" | "STALE";
+    departureIcao: string | null;
+    departureName: string | null;
+    departedAt: string | null;
+    arrivalIcao: string | null;
+    arrivalName: string | null;
+    arrivedAt: string | null;
+    distanceNm: number | null;
+    durationSec: number | null;
+  }>;
+  note: string | null;
+}
+
+export interface AirportActivity {
+  icao: string;
+  name: string | null;
+  departures: number;
+  arrivals: number;
+  movements: number;
 }
 
 export interface SearchHit {
@@ -244,6 +472,32 @@ export interface SearchHit {
   lastSeenAt: string | null;
   matchedOn: string;
   score: number;
+}
+
+export interface OwnerHit {
+  name: string;
+  role: "owner" | "operator" | "management";
+  registrations: string[];
+  confidence: number;
+}
+
+export interface AirportHit {
+  icao: string;
+  iata: string | null;
+  name: string;
+  city: string | null;
+  country: string | null;
+  lat: number;
+  lon: number;
+}
+
+export interface GlobalSearchResults {
+  query: string;
+  aircraft: SearchHit[];
+  companies: CompanySummary[];
+  owners: OwnerHit[];
+  operators: OwnerHit[];
+  airports: AirportHit[];
 }
 
 export interface ApiError {

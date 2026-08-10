@@ -7,18 +7,24 @@ import maplibregl, {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
+import { ensureIcon } from "@/components/map/aircraftIcon";
 import { distanceNm, projectPosition } from "@/lib/geo";
-import type { AircraftCategory, LiveAircraft } from "@/lib/types";
+import type { LiveAircraft, SelectedRoute } from "@/lib/types";
 
 /**
- * The map. Aircraft are drawn as heading-rotated icons on a clustered GeoJSON
- * source, with registration/type/altitude labels appearing as you zoom in.
+ * The map. Aircraft are drawn as heading-rotated silhouettes of their actual
+ * type on a GeoJSON source, with registration/type/altitude labels appearing
+ * as you zoom in.
  *
  * Between server updates each aircraft is dead-reckoned forward from its last
  * reported position using ground speed and track, which is what makes the
  * traffic move continuously rather than jumping every poll. Extrapolation is
  * capped so a stale contact drifts a little and then stops rather than
  * inventing a flight path.
+ *
+ * Selecting an aircraft adds its route: the track it has actually flown, and
+ * — only when a destination is known or estimated — the leg still to fly,
+ * drawn dashed so a projection can never be mistaken for a flown path.
  */
 
 export interface MapViewport {
@@ -34,25 +40,10 @@ interface MapViewProps {
   onSelect: (aircraft: LiveAircraft) => void;
   onViewportChange: (viewport: MapViewport) => void;
   focus: { lat: number; lon: number; zoom?: number; key: number } | null;
+  /** Route of the selected aircraft, or null when nothing is selected. */
+  route?: SelectedRoute | null;
 }
 
-const CATEGORY_COLORS: Record<AircraftCategory, string> = {
-  business_jet: "#22d3ee",
-  private_jet: "#22d3ee",
-  bizliner: "#a78bfa",
-  turboprop: "#4ade80",
-  vip: "#f5a524",
-  charter: "#f5a524",
-  helicopter: "#38bdf8",
-  military: "#f43f5e",
-  airliner: "#64748b",
-  light_ga: "#94a3b8",
-  special: "#f5a524",
-  unknown: "#94a3b8",
-};
-
-const SELECTED_COLOR = "#ffffff";
-const ICON_SIZE = 64;
 const MAX_EXTRAPOLATION_SEC = 45;
 const FRAME_INTERVAL_MS = 100;
 
@@ -86,68 +77,76 @@ const FALLBACK_STYLE: StyleSpecification = {
   ],
 };
 
-function drawPlane(ctx: CanvasRenderingContext2D, color: string) {
-  ctx.beginPath();
-  ctx.moveTo(32, 3);
-  ctx.lineTo(37, 21);
-  ctx.lineTo(61, 36);
-  ctx.lineTo(61, 43);
-  ctx.lineTo(37, 35);
-  ctx.lineTo(35, 51);
-  ctx.lineTo(46, 58);
-  ctx.lineTo(46, 62);
-  ctx.lineTo(32, 57);
-  ctx.lineTo(18, 62);
-  ctx.lineTo(18, 58);
-  ctx.lineTo(29, 51);
-  ctx.lineTo(27, 35);
-  ctx.lineTo(3, 43);
-  ctx.lineTo(3, 36);
-  ctx.lineTo(27, 21);
-  ctx.closePath();
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = "rgba(4,6,12,0.9)";
-  ctx.stroke();
+function setLine(map: maplibregl.Map, sourceId: string, coordinates: Array<[number, number]>) {
+  const source = map.getSource(sourceId) as GeoJSONSource | undefined;
+  if (!source) return;
+  source.setData({
+    type: "FeatureCollection",
+    features:
+      coordinates.length >= 2
+        ? [{ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } }]
+        : [],
+  });
 }
 
-function drawHelicopter(ctx: CanvasRenderingContext2D, color: string) {
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = color;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(10, 10);
-  ctx.lineTo(54, 54);
-  ctx.moveTo(54, 10);
-  ctx.lineTo(10, 54);
-  ctx.stroke();
+/**
+ * Paint the selected aircraft's route. `livePosition` is the dead-reckoned
+ * position from the current frame, so the flown path stays joined to the
+ * aircraft as it moves instead of lagging a poll behind.
+ */
+function drawRoute(
+  map: maplibregl.Map,
+  route: SelectedRoute,
+  livePosition: [number, number] | null,
+) {
+  const flown: Array<[number, number]> = [...route.flown];
+  if (route.departure) {
+    flown.unshift([route.departure.lon, route.departure.lat]);
+  }
+  if (livePosition) flown.push(livePosition);
+  setLine(map, "route-flown", flown);
 
-  ctx.beginPath();
-  ctx.arc(32, 32, 11, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = "rgba(4,6,12,0.9)";
-  ctx.stroke();
+  const head = livePosition ?? route.flown.at(-1) ?? null;
+  setLine(
+    map,
+    "route-remaining",
+    head && route.destination ? [head, [route.destination.lon, route.destination.lat]] : [],
+  );
+
+  const points: GeoJSON.Feature<GeoJSON.Point>[] = [];
+  if (route.departure) {
+    points.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [route.departure.lon, route.departure.lat] },
+      properties: {
+        role: "departure",
+        label: route.departure.icao ?? route.departure.name,
+      },
+    });
+  }
+  if (route.destination) {
+    points.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [route.destination.lon, route.destination.lat] },
+      properties: {
+        role: "destination",
+        // The map must state the estimate, not just imply it with a dash.
+        label: route.destinationEstimated
+          ? `${route.destination.icao ?? route.destination.name} (est.)`
+          : (route.destination.icao ?? route.destination.name),
+      },
+    });
+  }
+
+  const source = map.getSource("route-points") as GeoJSONSource | undefined;
+  source?.setData({ type: "FeatureCollection", features: points });
 }
 
-function renderIcon(shape: "plane" | "heli", color: string): ImageData | null {
-  const canvas = document.createElement("canvas");
-  canvas.width = ICON_SIZE;
-  canvas.height = ICON_SIZE;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.clearRect(0, 0, ICON_SIZE, ICON_SIZE);
-  if (shape === "heli") drawHelicopter(ctx, color);
-  else drawPlane(ctx, color);
-  return ctx.getImageData(0, 0, ICON_SIZE, ICON_SIZE);
-}
-
-function iconIdFor(a: LiveAircraft, selected: boolean): string {
-  if (selected) return a.category === "helicopter" ? "heli-selected" : "plane-selected";
-  const shape = a.category === "helicopter" ? "heli" : "plane";
-  return `${shape}-${a.category}`;
+function clearRoute(map: maplibregl.Map) {
+  setLine(map, "route-flown", []);
+  setLine(map, "route-remaining", []);
+  const source = map.getSource("route-points") as GeoJSONSource | undefined;
+  source?.setData({ type: "FeatureCollection", features: [] });
 }
 
 function labelFor(a: LiveAircraft): string {
@@ -165,19 +164,30 @@ export default function MapView({
   onSelect,
   onViewportChange,
   focus,
+  route = null,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const readyRef = useRef(false);
   const aircraftRef = useRef<LiveAircraft[]>(aircraft);
   const selectedRef = useRef<string | null>(selectedIcao);
+  const routeRef = useRef<SelectedRoute | null>(route);
   const onSelectRef = useRef(onSelect);
   const onViewportRef = useRef(onViewportChange);
 
   aircraftRef.current = aircraft;
   selectedRef.current = selectedIcao;
+  routeRef.current = route;
   onSelectRef.current = onSelect;
   onViewportRef.current = onViewportChange;
+
+  // Clearing has to be explicit: the render loop only repaints a route that
+  // exists, so a deselect would otherwise leave the last one on screen.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current || route) return;
+    clearRoute(map);
+  }, [route]);
 
   // ---- map bootstrap ------------------------------------------------------
   useEffect(() => {
@@ -233,16 +243,79 @@ export default function MapView({
     // cannot be fetched. Building the aircraft layers here means traffic still
     // draws over a blank background when the tile CDN is unreachable.
     map.on("style.load", () => {
-      // Register one icon per category so markers stay crisp (no SDF blur).
-      for (const [category, color] of Object.entries(CATEGORY_COLORS)) {
-        const shape = category === "helicopter" ? "heli" : "plane";
-        const image = renderIcon(shape, color);
-        if (image) map.addImage(`${shape}-${category}`, image, { pixelRatio: 2 });
+      // Aircraft icons are silhouettes of the actual type, built on first use
+      // by ensureIcon() in the render loop below — a viewport touches only a
+      // handful of type/colour combinations, so building all of them up front
+      // would be wasted work.
+
+      // ---- route of the selected aircraft --------------------------------
+      // Three separate sources so each can carry its own styling: the path
+      // actually flown, the leg still to fly, and the airport endpoints.
+      for (const id of ["route-flown", "route-remaining", "route-points"]) {
+        map.addSource(id, {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
       }
-      for (const shape of ["plane", "heli"] as const) {
-        const image = renderIcon(shape, SELECTED_COLOR);
-        if (image) map.addImage(`${shape}-selected`, image, { pixelRatio: 2 });
-      }
+
+      map.addLayer({
+        id: "route-flown-line",
+        type: "line",
+        source: "route-flown",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#22d3ee",
+          "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.6, 10, 3],
+          "line-opacity": 0.85,
+        },
+      });
+
+      map.addLayer({
+        id: "route-remaining-line",
+        type: "line",
+        source: "route-remaining",
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          // Dashed and dimmer: this leg has not been flown. An estimated
+          // destination must never look like observed track.
+          "line-color": "#f5a524",
+          "line-width": ["interpolate", ["linear"], ["zoom"], 4, 1.4, 10, 2.4],
+          "line-opacity": 0.75,
+          "line-dasharray": [2, 2],
+        },
+      });
+
+      map.addLayer({
+        id: "route-endpoints",
+        type: "circle",
+        source: "route-points",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 3.5, 10, 6],
+          "circle-color": ["case", ["==", ["get", "role"], "departure"], "#22d3ee", "#f5a524"],
+          "circle-stroke-color": "#04060c",
+          "circle-stroke-width": 1.5,
+        },
+      });
+
+      map.addLayer({
+        id: "route-endpoint-labels",
+        type: "symbol",
+        source: "route-points",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-font": FONT,
+          "text-size": 11,
+          "text-offset": [0, -1.2],
+          "text-anchor": "bottom",
+          "text-allow-overlap": false,
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": "#e8eefb",
+          "text-halo-color": "#04060c",
+          "text-halo-width": 1.5,
+        },
+      });
 
       // Every aircraft is drawn individually by default — grouping nearby
       // contacts into a count bubble hides the traffic you came to look at.
@@ -293,7 +366,17 @@ export default function MapView({
           "icon-rotation-alignment": "map",
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
-          "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.34, 7, 0.46, 11, 0.62],
+          // Large enough for the airframe planform to be readable rather than
+          // just a dot — that is the whole point of type-accurate silhouettes.
+          "icon-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            3, 0.5,
+            6, 0.72,
+            10, 1.0,
+            13, 1.25,
+          ],
           // Labels appear once individual aircraft are distinguishable.
           "text-field": ["step", ["zoom"], "", 8, ["get", "label"]],
           "text-font": FONT,
@@ -383,7 +466,7 @@ export default function MapView({
           properties: {
             icao24: a.icao24,
             registration: a.registration ?? "",
-            icon: iconIdFor(a, a.icao24 === selectedRef.current),
+            icon: ensureIcon(map, a, a.icao24 === selectedRef.current),
             track: a.trackDeg ?? 0,
             label: labelFor(a),
           },
@@ -391,6 +474,16 @@ export default function MapView({
       });
 
       source.setData({ type: "FeatureCollection", features });
+
+      // Keep the live end of the route attached to the moving aircraft.
+      const route = routeRef.current;
+      if (route) {
+        const selected = aircraftRef.current.find((a) => a.icao24 === selectedRef.current);
+        const live = selected
+          ? features.find((f) => f.properties?.icao24 === selected.icao24)
+          : undefined;
+        drawRoute(map, route, (live?.geometry.coordinates as [number, number]) ?? null);
+      }
     };
 
     frame = requestAnimationFrame(draw);
