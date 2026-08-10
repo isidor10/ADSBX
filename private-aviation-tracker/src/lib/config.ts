@@ -53,7 +53,12 @@ export const config = {
      */
     openFeedFallback: bool("ADSB_OPEN_FEED_FALLBACK", true),
     openFeedUrl: str("ADSB_OPEN_FEED_URL", "https://opendata.adsb.fi/api/v2"),
-    pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 5000),
+    /**
+     * Upstream poll interval per viewport cell. Community feeds rate-limit
+     * per client, so the default is deliberately gentler than a paid API
+     * needs; ADS-B Exchange subscribers can safely lower it.
+     */
+    pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 10_000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
     /**
