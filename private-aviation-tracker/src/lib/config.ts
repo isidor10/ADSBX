@@ -116,6 +116,31 @@ export function adsbConfigured(): boolean {
   }
 }
 
+/**
+ * Why the configured ADS-B provider cannot run, naming the exact environment
+ * variable that is missing. Generic "set the matching API key" advice is not
+ * actionable when the reader is looking at a deployment dashboard.
+ */
+export function adsbConfigurationHint(): string {
+  const missing: Record<AdsbProviderName, string> = {
+    adsbexchange: 'ADSBX_RAPIDAPI_KEY is not set (ADSB_PROVIDER="adsbexchange").',
+    adsbx_direct: 'ADSBX_API_KEY is not set (ADSB_PROVIDER="adsbx_direct").',
+    readsb: 'ADSB_BASE_URL is not set (ADSB_PROVIDER="readsb").',
+    demo: "",
+  };
+  const reason =
+    missing[config.adsb.provider] ??
+    `ADSB_PROVIDER="${config.adsb.provider}" is not a recognised provider.`;
+
+  return (
+    `${reason} Add it in your deployment's environment variables and redeploy. ` +
+    "No paid key? Set ADSB_PROVIDER=readsb with " +
+    "ADSB_BASE_URL=https://opendata.adsb.fi/api/v2 for free live data " +
+    "(check their terms for your use), or ADSB_PROVIDER=demo for clearly " +
+    "labelled simulated traffic."
+  );
+}
+
 export function searchConfigured(): boolean {
   switch (config.search.provider) {
     case "google_cse":

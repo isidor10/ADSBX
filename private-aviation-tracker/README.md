@@ -29,6 +29,25 @@ No key is ever exposed to the browser. Every provider call happens in a route
 handler or a server module; the only `NEXT_PUBLIC_*` values are the map style
 and refresh interval.
 
+### No ADS-B Exchange subscription? Two working alternatives
+
+ADS-B Exchange access is paid. If you want real aircraft on the map before
+committing to a plan, point the app at any readsb/tar1090-compatible feed —
+the provider is already built, only the URL changes:
+
+```bash
+ADSB_PROVIDER="readsb"
+ADSB_BASE_URL="https://opendata.adsb.fi/api/v2"   # or adsb.lol, airplanes.live
+```
+
+These are community feeds with their own terms — read them and confirm your use
+is allowed before relying on one. Coverage is thinner than ADS-B Exchange in
+some regions, but the data is real and the filtering, ownership research and
+history all work identically.
+
+For interface evaluation with no external service at all, `ADSB_PROVIDER=demo`
+serves simulated traffic behind a permanent **SIMULATED DATA** banner.
+
 **If you hold a direct ADS-B Exchange data agreement** rather than a RapidAPI
 subscription, set `ADSB_PROVIDER=adsbx_direct` and `ADSBX_API_KEY` instead. That
 path follows the vendor's published sample call exactly — requests go to
