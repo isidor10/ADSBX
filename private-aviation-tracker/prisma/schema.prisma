@@ -1,0 +1,229 @@
+// Private Aviation Tracker — data model
+//
+// Three groups of tables:
+//   1. Aircraft identity + ownership intelligence (Aircraft, OwnershipRecord)
+//   2. Observed movement data (Position, FlightLeg) — only ever written from
+//      real ADS-B observations, never synthesised.
+//   3. Reference data imported from official public datasets
+//      (FaaRegistration, Airport).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OwnershipStatus {
+  PENDING
+  RESOLVED
+  NOT_FOUND
+  BLOCKED
+  ERROR
+}
+
+enum OwnerKind {
+  REGISTERED_OWNER
+  OPERATOR
+  MANAGEMENT_COMPANY
+  CHARTER_OPERATOR
+  TRUSTEE
+  BENEFICIAL_OWNER
+  UNKNOWN
+}
+
+enum FlightStatus {
+  ACTIVE
+  COMPLETED
+  STALE
+}
+
+model Aircraft {
+  id              String   @id @default(cuid())
+  registration    String   @unique
+  icao24          String?  @unique
+  typeCode        String?
+  manufacturer    String?
+  model           String?
+  /// private_jet | business_jet | turboprop | vip | charter | helicopter | military | airliner | other
+  category        String?
+  serialNumber    String?
+  yearBuilt       Int?
+  engineCount     Int?
+  registryCountry String?
+  /// Where the identity fields came from: adsb | faa_registry | type_database | manual
+  identitySource  String?
+  photoUrl        String?
+  photoCredit     String?
+  photoLink       String?
+  photoCheckedAt  DateTime?
+  firstSeenAt     DateTime?
+  lastSeenAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  ownership OwnershipRecord?
+  positions Position[]
+  flights   FlightLeg[]
+
+  @@index([typeCode])
+  @@index([category])
+  @@index([lastSeenAt])
+}
+
+model OwnershipRecord {
+  id           String @id @default(cuid())
+  aircraftId   String @unique
+  registration String @unique
+
+  owner             String?
+  ownerKind         OwnerKind @default(UNKNOWN)
+  operator          String?
+  managementCompany String?
+  charterOperator   String?
+
+  status                   OwnershipStatus @default(PENDING)
+  /// 0-100
+  confidence               Int             @default(0)
+  /// high | medium | low | none
+  confidenceBand           String          @default("none")
+  beneficialOwnerConfirmed Boolean         @default(false)
+
+  summary  String?
+  evidence String?
+  /// [{ title, url, provider, kind, weight }]
+  sources  Json    @default("[]")
+  /// Search queries actually issued, for auditability
+  queries  Json    @default("[]")
+
+  searchProvider String?
+  analyzer       String?
+  errorMessage   String?
+
+  searchedAt     DateTime @default(now())
+  lastVerifiedAt DateTime @default(now())
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  aircraft Aircraft @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([owner])
+  @@index([operator])
+}
+
+model Position {
+  id           String   @id @default(cuid())
+  aircraftId   String
+  registration String
+  icao24       String?
+  callsign     String?
+  lat          Float
+  lon          Float
+  altBaroFt    Int?
+  altGeomFt    Int?
+  groundSpeedKt Float?
+  trackDeg     Float?
+  verticalRateFpm Int?
+  squawk       String?
+  onGround     Boolean  @default(false)
+  source       String?
+  seenAt       DateTime
+  flightLegId  String?
+
+  aircraft  Aircraft   @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+  flightLeg FlightLeg? @relation(fields: [flightLegId], references: [id], onDelete: SetNull)
+
+  @@index([registration, seenAt])
+  @@index([flightLegId, seenAt])
+  @@index([seenAt])
+}
+
+model FlightLeg {
+  id           String       @id @default(cuid())
+  aircraftId   String
+  registration String
+  callsign     String?
+  status       FlightStatus @default(ACTIVE)
+
+  departureIcao String?
+  departureName String?
+  departureLat  Float?
+  departureLon  Float?
+  departedAt    DateTime?
+
+  arrivalIcao String?
+  arrivalName String?
+  arrivalLat  Float?
+  arrivalLon  Float?
+  arrivedAt   DateTime?
+
+  maxAltitudeFt   Int?
+  maxGroundSpeedKt Float?
+  distanceNm      Float?
+  durationSec     Int?
+
+  firstSeenAt DateTime
+  lastSeenAt  DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  aircraft  Aircraft   @relation(fields: [aircraftId], references: [id], onDelete: Cascade)
+  positions Position[]
+
+  @@index([registration, firstSeenAt])
+  @@index([status])
+}
+
+/// Subset of the FAA Releasable Aircraft Database (public domain, published by
+/// the US FAA). Populated by `npm run import:faa`.
+model FaaRegistration {
+  nNumber        String    @id
+  serialNumber   String?
+  mfrMdlCode     String?
+  engMfrMdlCode  String?
+  yearMfr        Int?
+  /// 1=Individual 2=Partnership 3=Corporation 4=Co-Owned 5=Government
+  /// 7=LLC 8=Non Citizen Corporation 9=Non Citizen Co-Owned
+  registrantType String?
+  registrantName String?
+  street         String?
+  city           String?
+  state          String?
+  zipCode        String?
+  country        String?
+  lastActionDate DateTime?
+  certIssueDate  DateTime?
+  statusCode     String?
+  modeSHex       String?
+  fractionalOwner Boolean  @default(false)
+  expirationDate DateTime?
+  manufacturer   String?
+  model          String?
+  aircraftType   String?
+  engineType     String?
+  importedAt     DateTime  @default(now())
+
+  @@index([registrantName])
+  @@index([modeSHex])
+}
+
+/// Airport reference data. A curated core set ships with the app; the full
+/// OurAirports dataset can be imported with `npm run import:airports`.
+model Airport {
+  icao        String  @id
+  iata        String?
+  name        String
+  city        String?
+  country     String?
+  lat         Float
+  lon         Float
+  elevationFt Int?
+  type        String?
+
+  @@index([iata])
+  @@index([lat, lon])
+}
