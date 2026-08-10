@@ -21,7 +21,9 @@
     "e2e": "tsx scripts/e2e.ts",
     "verify:cost": "tsx scripts/verify-cost.ts",
     "verify:ownership": "tsx scripts/verify-ownership-chain.ts",
-    "verify:clock": "tsx scripts/verify-feed-clock.ts"
+    "verify:clock": "tsx scripts/verify-feed-clock.ts",
+    "import:dcv": "tsx scripts/import-dcv.ts",
+    "verify:registry": "tsx scripts/verify-registry.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

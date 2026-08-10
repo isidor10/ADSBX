@@ -561,6 +561,109 @@ export interface CostEstimate {
   disclaimer: string;
 }
 
+// ------------------------------------------------------- costed history
+
+export interface CostedFlight {
+  id: string;
+  registration: string;
+  callsign: string | null;
+  status: "ACTIVE" | "COMPLETED" | "STALE";
+  departure: AirportRef | null;
+  arrival: AirportRef | null;
+  departedAt: string;
+  arrivedAt: string | null;
+  durationSec: number | null;
+  distanceNm: number | null;
+  fuelLitres: number | null;
+  cost: { low: number; likely: number; high: number } | null;
+  /** Extra cost attributable to positioning, when a base is known. */
+  positioningCost: number | null;
+  /** Why there is no cost, when there is none. */
+  costNote: string | null;
+}
+
+export interface FleetCostSummary {
+  flights: number;
+  /** Flights the cost could actually be computed for. */
+  flightsCosted: number;
+  hours: number;
+  distanceNm: number;
+  fuelLitres: number;
+  cost: { low: number; likely: number; high: number };
+  positioningCost: number;
+}
+
+export interface CostedHistory {
+  registration: string;
+  from: string;
+  to: string;
+  flights: CostedFlight[];
+  totals: FleetCostSummary;
+  /** How much of the requested period this deployment could observe. */
+  coveragePercent: number;
+  firstObservedAt: string | null;
+  note: string | null;
+}
+
+// ------------------------------------------------------- national registries
+
+export interface RegistryRecordView {
+  authority: string;
+  registration: string;
+  aircraftType: string | null;
+  manufacturer: string | null;
+  model: string | null;
+  serialNumber: string | null;
+  yearBuilt: number | null;
+  /** The holder as printed in the register. Not necessarily the operator. */
+  registeredHolder: string | null;
+  operator: string | null;
+  status: string | null;
+  sourceName: string;
+  sourceUrl: string | null;
+  verifiedAt: string;
+  confidence: number;
+}
+
+/**
+ * HOLDER  — the operator appears in the authority's approved-operator list.
+ * NOT_FOUND — no record. Deliberately not "NO": absence of a record is not
+ * evidence that no certificate exists.
+ */
+export type AocStatus = "HOLDER" | "NOT_FOUND";
+
+export interface AocInfo {
+  status: AocStatus;
+  name: string | null;
+  aocNumber: string | null;
+  operationType: string | null;
+  operatingLicence: string | null;
+  principalPlace: string | null;
+  sourceName: string;
+  sourceUrl: string | null;
+  verifiedAt: string | null;
+  note: string | null;
+}
+
+/** A disagreement between the official register and another source. */
+export interface RegistryConflict {
+  field: "operator" | "holder";
+  official: string;
+  officialSource: string;
+  alternative: string;
+  alternativeSource: string;
+}
+
+export interface SerbianRegistryResult {
+  /** False for non-YU registrations; the section is then hidden. */
+  applicable: boolean;
+  registration: string;
+  record: RegistryRecordView | null;
+  aoc: AocInfo | null;
+  conflicts: RegistryConflict[];
+  note: string | null;
+}
+
 export interface OwnerHit {
   name: string;
   role: "owner" | "operator" | "management";
