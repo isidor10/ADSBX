@@ -1,7 +1,7 @@
 import { getAdsbProvider } from "@/lib/adsb";
 import { AdsbError } from "@/lib/adsb/types";
 import { matchesFilters } from "@/lib/aircraft/classifier";
-import { config } from "@/lib/config";
+import { config, usingOpenFeedFallback } from "@/lib/config";
 import { ingestObservations } from "@/lib/history/ingest";
 import type { FilterKey, LiveFeedResult } from "@/lib/types";
 import { recordObservations } from "./recentIndex";
@@ -126,7 +126,16 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
   }
 
   const filtered = result.aircraft.filter((a) => matchesFilters(a, query.filters));
-  return { ...result, aircraft: filtered, totalObserved: result.aircraft.length };
+  return {
+    ...result,
+    aircraft: filtered,
+    totalObserved: result.aircraft.length,
+    notice: usingOpenFeedFallback()
+      ? `Live data from the open community feed at ${new URL(config.adsb.openFeedUrl).host} — ` +
+        `no ${config.adsb.provider === "adsbx_direct" ? "ADSBX_API_KEY" : "ADSBX_RAPIDAPI_KEY"} ` +
+        "is set, so ADS-B Exchange is not in use. Coverage differs."
+      : undefined,
+  };
 }
 
 

@@ -15,7 +15,8 @@
     "prisma:studio": "prisma studio",
     "import:faa": "tsx scripts/import-faa.ts",
     "import:airports": "tsx scripts/import-airports.ts",
-    "verify:adsbx": "tsx scripts/verify-adsbx-sample.ts"
+    "verify:adsbx": "tsx scripts/verify-adsbx-sample.ts",
+    "verify:fallback": "tsx scripts/verify-fallback.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

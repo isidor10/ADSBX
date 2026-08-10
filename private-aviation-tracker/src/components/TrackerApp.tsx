@@ -71,6 +71,7 @@ export default function TrackerApp() {
         updatedAt={feed.data?.updatedAt ?? null}
         connected={feed.connected}
         simulated={feed.data?.simulated ?? false}
+        notice={feed.data?.notice ?? null}
         stale={feed.data?.stale ?? false}
         transport={feed.transport}
         filters={filters}

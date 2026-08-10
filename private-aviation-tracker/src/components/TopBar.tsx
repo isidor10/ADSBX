@@ -12,6 +12,8 @@ interface TopBarProps {
   updatedAt: number | null;
   connected: boolean;
   simulated: boolean;
+  /** Data is real but not from the selected provider (open-feed fallback). */
+  notice?: string | null;
   stale: boolean;
   transport: "stream" | "poll" | "idle";
   filters: FilterKey[];
@@ -25,6 +27,7 @@ export default function TopBar({
   updatedAt,
   connected,
   simulated,
+  notice,
   stale,
   transport,
   filters,
@@ -140,6 +143,12 @@ export default function TopBar({
       {simulated && (
         <div className="border-t border-amber/40 bg-amber/15 px-4 py-1.5 text-center text-[11px] font-semibold tracking-[0.14em] text-amber">
           SIMULATED DATA — ADSB_PROVIDER=demo. These aircraft are not real.
+        </div>
+      )}
+
+      {!simulated && notice && (
+        <div className="border-t border-edge bg-panel/70 px-4 py-1.5 text-center text-[11px] leading-relaxed text-ink-3">
+          {notice}
         </div>
       )}
     </header>
