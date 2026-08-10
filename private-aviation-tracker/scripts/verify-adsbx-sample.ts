@@ -60,9 +60,12 @@ const SAMPLE_RESPONSE = {
     },
   ],
   msg: "No error",
-  now: 1_700_000_000_000,
+  // Milliseconds, as ADS-B Exchange documents. Anchored to the current clock:
+  // the provider replaces a feed timestamp more than a day out with its own,
+  // so a hardcoded date would exercise that guard instead of the parser.
+  now: Date.now(),
   total: 1,
-  ctime: 1_700_000_000_000,
+  ctime: Date.now(),
   ptime: 12,
 };
 
@@ -194,7 +197,10 @@ async function main() {
   assert.equal(captured.at(-1)!.url, "/api/aircraft/v2/lat/39.0400/lon/-104.6100/dist/250");
   assert.equal(area.simulated, false);
   assert.equal(area.totalObserved, 1);
-  assert.equal(area.updatedAt, SAMPLE_RESPONSE.now);
+  assert.ok(
+    Math.abs(area.updatedAt - SAMPLE_RESPONSE.now) < 5000,
+    "the documented millisecond clock must be carried through unchanged",
+  );
 
   // --- 6. Radius is clamped to the documented 250 NM maximum ---------------
   await provider.fetchArea(0, 0, 5000);

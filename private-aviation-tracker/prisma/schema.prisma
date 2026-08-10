@@ -234,6 +234,99 @@ model AircraftPhotoRecord {
   @@index([registration, rank])
 }
 
+/// A record copied from an official national aircraft register.
+///
+/// Kept separate from OwnershipRecord because it is a different kind of claim:
+/// OwnershipRecord is a researched conclusion drawn from many sources, this is
+/// a transcription of what an official register states. Where both exist the
+/// register wins, and a disagreement between them is shown to the user rather
+/// than silently resolved.
+model RegistryRecord {
+  id           String @id @default(cuid())
+  registration String
+  /// Issuing authority, e.g. "DCV" (Directorate of Civil Aviation, Serbia).
+  authority    String
+
+  aircraftType String?
+  manufacturer String?
+  model        String?
+  serialNumber String?
+  yearBuilt    Int?
+  /// The holder as printed in the register — owner and holder are not always
+  /// the same party, so the register's own wording is preserved.
+  registeredHolder String?
+  holderAddress    String?
+  operator     String?
+  /// Certificate of airworthiness / registration status as published.
+  status       String?
+
+  sourceUrl    String?
+  /// Where the row came from: dcv_import | dcv_api | manual
+  sourceKind   String   @default("dcv_import")
+  /// 0-100. An official register transcription starts high.
+  confidence   Int      @default(95)
+  verifiedAt   DateTime @default(now())
+  importedAt   DateTime @default(now())
+  /// Raw source row, kept so a transcription can always be audited.
+  raw          Json?
+
+  @@unique([authority, registration])
+  @@index([registration])
+  @@index([operator])
+}
+
+/// An Air Operator Certificate holder, as published by a civil aviation
+/// authority. Presence in this table is the only thing that may produce
+/// "AOC: YES" — operating an aircraft never implies one.
+model AocRecord {
+  id        String @id @default(cuid())
+  authority String
+  /// Normalised name for matching, see companyMatchKey().
+  matchKey  String
+  name      String
+
+  aocNumber      String?
+  /// As published, e.g. "javni avio-prevoz".
+  operationType  String?
+  operatingLicence String?
+  principalPlace String?
+  status         String?
+  validFrom      DateTime?
+  validUntil     DateTime?
+
+  sourceUrl  String?
+  sourceKind String   @default("dcv_import")
+  confidence Int      @default(95)
+  verifiedAt DateTime @default(now())
+  importedAt DateTime @default(now())
+  raw        Json?
+
+  @@unique([authority, matchKey])
+  @@index([matchKey])
+  @@index([name])
+}
+
+/// An owner or operator role held over a period. Written only when a source
+/// states the change; absent history is left absent rather than inferred.
+model HistoricalRole {
+  id           String    @id @default(cuid())
+  registration String
+  /// OWNER | OPERATOR | MANAGEMENT
+  role         String
+  name         String
+  fromDate     DateTime?
+  toDate       DateTime?
+  current      Boolean   @default(false)
+
+  source     String
+  sourceUrl  String?
+  confidence Int      @default(50)
+  recordedAt DateTime @default(now())
+
+  @@unique([registration, role, name, fromDate])
+  @@index([registration, role])
+}
+
 model OwnershipRecord {
   id           String @id @default(cuid())
   aircraftId   String @unique

@@ -134,6 +134,15 @@ export const config = {
   research: {
     ttlHours: num("RESEARCH_CACHE_TTL_HOURS", 72),
   },
+  registry: {
+    /**
+     * Optional machine-readable endpoint for the Serbian register. The DCV
+     * publishes for human readers, so the supported path is the structured
+     * importer (npm run import:dcv); this exists so a future open endpoint can
+     * be pointed at without changing anything else.
+     */
+    dcvApiUrl: str("DCV_API_URL"),
+  },
   cost: {
     /** Display currency for every estimate. */
     currency: str("COST_CURRENCY", "EUR"),

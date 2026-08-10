@@ -10,6 +10,8 @@ import {
 import FlightHistory from "@/components/FlightHistory";
 import OwnerIntelligence from "@/components/OwnerIntelligence";
 import CostEstimateSection from "@/components/CostEstimate";
+import CostedHistorySection from "@/components/CostedHistory";
+import RegistrySection from "@/components/RegistrySection";
 import PhotoGallery from "@/components/PhotoGallery";
 import WebNews from "@/components/WebNews";
 import { CategoryBadge, Divider, EmptyNote, Field, SectionTitle } from "@/components/ui";
@@ -372,6 +374,8 @@ export default function AircraftPanel({
         </div>
       </section>
 
+      <RegistrySection registration={registration} />
+
       <Divider />
       <CurrentFlightSection flight={flight} loading={loadingFlight} />
       <LastLandingSection landing={lastLanding} />
@@ -385,6 +389,8 @@ export default function AircraftPanel({
       />
 
       <CostEstimateSection registration={registration} visible={Boolean(registration)} />
+
+      <CostedHistorySection registration={registration} />
 
       <PhotoGallery photos={photos} loading={loadingPhotos} note={photoNote} />
 
