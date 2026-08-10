@@ -33,8 +33,17 @@ export class HttpAdsbProvider implements AdsbProvider {
 
   private url(path: string): string {
     const base = this.opts.baseUrl.replace(/\/+$/, "");
-    const suffix = this.opts.trailingSlash && !path.endsWith("/") ? "/" : "";
-    return `${base}/${path.replace(/^\/+/, "")}${suffix}`;
+    let rel = path.replace(/^\/+/, "");
+    // Every provider documents its endpoint with the API version already in the
+    // URL — https://opendata.adsb.fi/api/v2, https://api.adsb.lol/v2 — so that
+    // is what people paste into ADSB_BASE_URL. Appending our own "v2/" segment
+    // to such a base yields /v2/v2/... and 404s everything, so drop the
+    // duplicate rather than making the correct value the surprising one.
+    if (/\/v2$/i.test(base) && rel.toLowerCase().startsWith("v2/")) {
+      rel = rel.slice(3);
+    }
+    const suffix = this.opts.trailingSlash && !rel.endsWith("/") ? "/" : "";
+    return `${base}/${rel}${suffix}`;
   }
 
   private async request(path: string): Promise<RawFeedResponse> {

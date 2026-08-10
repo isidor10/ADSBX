@@ -206,6 +206,32 @@ async function main() {
   await provider.fetchByCallsign("eja512");
   assert.equal(captured.at(-1)!.url, "/api/aircraft/v2/callsign/EJA512");
 
+  // --- 8. readsb feeds: a base URL that already carries /v2 -----------------
+  // Every compatible provider publishes its endpoint with the version in it
+  // (https://opendata.adsb.fi/api/v2, https://api.adsb.lol/v2), so that is what
+  // lands in ADSB_BASE_URL. It must not produce /v2/v2/.
+  const { HttpAdsbProvider } = await import("../src/lib/adsb/httpProvider");
+  for (const base of [
+    `http://127.0.0.1:${port}/api/v2`,
+    `http://127.0.0.1:${port}/api`,
+    `http://127.0.0.1:${port}/api/v2/`,
+  ]) {
+    const readsb = new HttpAdsbProvider({
+      name: "readsb-test",
+      baseUrl: base,
+      headers: { "api-auth": API_KEY },
+      configured: true,
+      trailingSlash: false,
+      hexPath: "hex",
+    });
+    await readsb.fetchArea(39.04, -104.61, 100);
+    assert.equal(
+      captured.at(-1)!.url,
+      "/api/v2/lat/39.0400/lon/-104.6100/dist/100",
+      `base "${base}" must not double the version segment`,
+    );
+  }
+
   server.close();
   console.log("ADS-B Exchange direct API contract: all checks passed");
 }
