@@ -62,7 +62,9 @@ export default function TopBar({
           </div>
         </div>
 
-        <div className="order-3 w-full md:order-none md:w-auto md:flex-1">
+        {/* Below lg (which includes iPad portrait at 820px) the search takes its
+            own full-width row — inline it gets squeezed to a few characters. */}
+        <div className="order-3 w-full lg:order-none lg:w-auto lg:flex-1">
           <SearchBar onSelect={onSearchSelect} />
         </div>
 
