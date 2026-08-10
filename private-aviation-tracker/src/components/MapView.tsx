@@ -56,6 +56,9 @@ const ICON_SIZE = 64;
 const MAX_EXTRAPOLATION_SEC = 45;
 const FRAME_INTERVAL_MS = 100;
 
+/** Opt-in: group nearby aircraft into count bubbles at low zoom. */
+const CLUSTER_ENABLED = process.env.NEXT_PUBLIC_MAP_CLUSTER === "true";
+
 const GLYPHS =
   process.env.NEXT_PUBLIC_MAP_GLYPHS ?? "https://fonts.openmaptiles.org/{fontstack}/{range}.pbf";
 const FONT = ["Noto Sans Bold"];
@@ -218,7 +221,18 @@ export default function MapView({
       });
     };
 
-    map.on("load", () => {
+    // Report the viewport as soon as the map exists. Centre and zoom are known
+    // immediately, and waiting for `load` means a slow or failing basemap
+    // delays the aircraft feed — the map can be blank but the traffic should
+    // still be arriving.
+    reportViewport();
+    map.once("idle", reportViewport);
+
+    // `style.load` fires once the style is parsed; `load` additionally waits
+    // for the first full render, which never completes if the basemap tiles
+    // cannot be fetched. Building the aircraft layers here means traffic still
+    // draws over a blank background when the tile CDN is unreachable.
+    map.on("style.load", () => {
       // Register one icon per category so markers stay crisp (no SDF blur).
       for (const [category, color] of Object.entries(CATEGORY_COLORS)) {
         const shape = category === "helicopter" ? "heli" : "plane";
@@ -230,10 +244,13 @@ export default function MapView({
         if (image) map.addImage(`${shape}-selected`, image, { pixelRatio: 2 });
       }
 
+      // Every aircraft is drawn individually by default — grouping nearby
+      // contacts into a count bubble hides the traffic you came to look at.
+      // Clustering stays available for very dense views via NEXT_PUBLIC_MAP_CLUSTER.
       map.addSource("aircraft", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
-        cluster: true,
+        cluster: CLUSTER_ENABLED,
         clusterMaxZoom: 6,
         clusterRadius: 44,
       });

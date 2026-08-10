@@ -77,6 +77,12 @@ export const config = {
   photos: {
     enabled: bool("PHOTOS_ENABLED", true),
     ttlHours: num("PHOTOS_CACHE_TTL_HOURS", 720),
+    /** auto (Planespotters then Google) | planespotters | google */
+    provider: str("PHOTO_PROVIDER", "auto") as "auto" | "planespotters" | "google",
+    // Falls back to the ownership-search Google credentials when a dedicated
+    // image search engine is not configured separately.
+    googleApiKey: str("GOOGLE_IMAGE_API_KEY") || str("GOOGLE_CSE_API_KEY"),
+    googleCx: str("GOOGLE_IMAGE_CSE_CX") || str("GOOGLE_CSE_CX"),
   },
   history: {
     persistPositions: bool("PERSIST_POSITIONS", true),

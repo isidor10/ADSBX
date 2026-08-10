@@ -28,19 +28,27 @@ interface DemoTemplate {
   dLon: number;
 }
 
+/**
+ * Every registration below is structurally invalid in its own national scheme
+ * — each one carries a digit where that registry only permits letters (a US
+ * N-number cannot have a leading zero, a UK registration is G- plus four
+ * letters, and so on) — so a simulated contact can never be mistaken for a
+ * real airframe. The registry mix is deliberate: business aviation is not a
+ * US-only phenomenon, and an all-N-number demo fleet gives a false impression.
+ */
 const TEMPLATES: DemoTemplate[] = [
   { reg: "N0GLF6", type: "GLF6", callsign: "N0GLF6", heading: 82, altitude: 45000, speed: 488, dLat: 0.42, dLon: -0.71 },
-  { reg: "N0CL35", type: "CL35", callsign: "LXJ001", heading: 271, altitude: 41000, speed: 452, dLat: -0.58, dLon: 0.33 },
+  { reg: "OE-0CL", type: "CL35", callsign: "LXJ001", heading: 271, altitude: 41000, speed: 452, dLat: -0.58, dLon: 0.33 },
   { reg: "N0C56X", type: "C56X", callsign: "EJA002", heading: 15, altitude: 33000, speed: 388, dLat: 0.13, dLon: 0.95 },
-  { reg: "N0E55P", type: "E55P", callsign: "N0E55P", heading: 190, altitude: 27000, speed: 351, dLat: -0.87, dLon: -0.24 },
-  { reg: "N0FA7X", type: "FA7X", callsign: "VJT003", heading: 305, altitude: 43000, speed: 471, dLat: 0.76, dLon: 0.62 },
-  { reg: "N0GL7T", type: "GL7T", callsign: "N0GL7T", heading: 118, altitude: 47000, speed: 503, dLat: -0.31, dLon: -1.02 },
-  { reg: "N0PC12", type: "PC12", callsign: "N0PC12", heading: 233, altitude: 19000, speed: 241, dLat: 0.22, dLon: -0.18 },
+  { reg: "I-0AVA", type: "E55P", callsign: "I-0AVA", heading: 190, altitude: 27000, speed: 351, dLat: -0.87, dLon: -0.24 },
+  { reg: "D-0FA7", type: "FA7X", callsign: "VJT003", heading: 305, altitude: 43000, speed: 471, dLat: 0.76, dLon: 0.62 },
+  { reg: "9H-0VJ", type: "GL7T", callsign: "VJT004", heading: 118, altitude: 47000, speed: 503, dLat: -0.31, dLon: -1.02 },
+  { reg: "HB-0PC", type: "PC12", callsign: "HB-0PC", heading: 233, altitude: 19000, speed: 241, dLat: 0.22, dLon: -0.18 },
   { reg: "N0B350", type: "B350", callsign: "N0B350", heading: 47, altitude: 21000, speed: 268, dLat: -0.66, dLon: 0.84 },
-  { reg: "N0C700", type: "C700", callsign: "N0C700", heading: 356, altitude: 39000, speed: 441, dLat: 0.95, dLon: -0.44 },
-  { reg: "N0HDJT", type: "HDJT", callsign: "N0HDJT", heading: 143, altitude: 28000, speed: 359, dLat: -0.11, dLon: 0.47 },
-  { reg: "N0GLEX", type: "GLEX", callsign: "N0GLEX", heading: 205, altitude: 44000, speed: 484, dLat: 0.53, dLon: 1.11 },
-  { reg: "N0TBM9", type: "TBM9", callsign: "N0TBM9", heading: 68, altitude: 16000, speed: 288, dLat: -0.94, dLon: -0.65 },
+  { reg: "M-0AVI", type: "C700", callsign: "M-0AVI", heading: 356, altitude: 39000, speed: 441, dLat: 0.95, dLon: -0.44 },
+  { reg: "VP-C0G", type: "HDJT", callsign: "VP-C0G", heading: 143, altitude: 28000, speed: 359, dLat: -0.11, dLon: 0.47 },
+  { reg: "G-0LEX", type: "GLEX", callsign: "G-0LEX", heading: 205, altitude: 44000, speed: 484, dLat: 0.53, dLon: 1.11 },
+  { reg: "F-H0TB", type: "TBM9", callsign: "F-H0TB", heading: 68, altitude: 16000, speed: 288, dLat: -0.94, dLon: -0.65 },
 ];
 
 const CYCLE_MS = 45 * 60 * 1000;
@@ -72,7 +80,9 @@ function build(t: DemoTemplate, centerLat: number, centerLon: number, now: numbe
   });
 
   return {
-    icao24: `f${t.reg.slice(1, 6).toLowerCase()}`.slice(0, 6).padEnd(6, "0"),
+    // Stable pseudo-hex per template; hyphenated registrations are not valid
+    // hex, so derive it from the index instead of the registration text.
+    icao24: `f0${(TEMPLATES.indexOf(t) + 1).toString(16).padStart(4, "0")}`,
     registration: t.reg,
     callsign: t.callsign,
     typeCode: t.type,

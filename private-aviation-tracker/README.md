@@ -56,8 +56,11 @@ GOOGLE_CSE_CX="..."
 ```
 
 To evaluate the interface with no keys at all, set `ADSB_PROVIDER="demo"`. Demo
-traffic uses deliberately invalid registrations (`N0GLF6` — an N-number cannot
-have a leading zero) and the UI shows a permanent **SIMULATED DATA** banner.
+traffic spans several registries (US, UK, Germany, Switzerland, Austria, Italy,
+France, Malta, Isle of Man, Cayman) and every registration is deliberately
+invalid in its own scheme — `N0GLF6` (an N-number cannot have a leading zero),
+`G-0LEX` (UK registrations are four letters) — so a simulated contact can never
+be mistaken for a real airframe. The UI shows a permanent **SIMULATED DATA** banner.
 Ownership research still runs for real against those tails and correctly reports
 that nothing was found.
 
@@ -190,6 +193,18 @@ fallback. Adding viewers costs no extra API calls.
 **Smooth movement without extra requests.** Between updates the client
 dead-reckons each aircraft from its last reported position using ground speed and
 track, capped at 45 s so a stale contact drifts slightly and then stops.
+
+**Every aircraft is drawn individually.** Contacts are not merged into count
+bubbles — set `NEXT_PUBLIC_MAP_CLUSTER=true` to enable clustering at low zoom if
+you are rendering very dense traffic. Aircraft layers are built on the map's
+`style.load`, so traffic still draws even when the basemap tiles cannot be
+fetched.
+
+**Photos** come from the Planespotters API first (an exact tail-number match)
+and fall back to Google Programmable Search in image mode for aircraft the
+aviation databases have not photographed. Set `PHOTO_PROVIDER` to `planespotters`
+or `google` to use only one. Google image results are hosted by third parties, so
+they are shown with the host credited and a link to the page they came from.
 
 **Ownership research.** Cache → FAA registry → web search across a set of tail-number
 queries → organisation-name extraction from titles and snippets → scoring by source
