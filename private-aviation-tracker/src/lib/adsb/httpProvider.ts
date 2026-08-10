@@ -71,6 +71,22 @@ export class HttpAdsbProvider implements AdsbProvider {
         cache: "no-store",
       });
 
+      if (res.status === 429) {
+        // Rate limited. Honour Retry-After when the feed sends one so the
+        // backoff matches what the operator actually asked for.
+        const retryAfter = Number(res.headers.get("retry-after"));
+        const waitSec = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 0;
+        throw new AdsbError(
+          `Upstream rate limit reached at ${new URL(url).host}. ` +
+            (waitSec
+              ? `The feed asked us to wait ${waitSec}s.`
+              : "Polling will back off automatically."),
+          429,
+          this.name,
+          url,
+        );
+      }
+
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new AdsbError(
@@ -98,13 +114,31 @@ export class HttpAdsbProvider implements AdsbProvider {
     return payload.ac ?? payload.aircraft ?? [];
   }
 
+  /**
+   * Normalise the feed's clock to epoch milliseconds.
+   *
+   * ADS-B Exchange v2 reports `now` in milliseconds; readsb/tar1090 feeds
+   * (adsb.fi, adsb.lol, airplanes.live) report it in seconds. Taking the
+   * value at face value put every readsb timestamp in January 1970, which
+   * showed as "20655d ago", flagged a perfectly healthy feed as STALE and
+   * wrote nonsense observation times into the position history.
+   */
+  private clock(payload: RawFeedResponse): number {
+    const raw = payload.now;
+    if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return Date.now();
+    // Anything below this is far too small to be milliseconds since 1970.
+    const asMs = raw < 1e12 ? raw * 1000 : raw;
+    // A clock more than a day out is not usable either way.
+    return Math.abs(Date.now() - asMs) > 24 * 3600 * 1000 ? Date.now() : asMs;
+  }
+
   async fetchArea(lat: number, lon: number, radiusNm: number): Promise<LiveFeedResult> {
     const dist = Math.min(Math.max(Math.round(radiusNm), 1), config.adsb.maxRadiusNm);
     const payload = await this.request(
       `v2/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${dist}`,
     );
     const raws = this.records(payload);
-    const now = payload.now ?? Date.now();
+    const now = this.clock(payload);
     const aircraft = normalizeMany(raws, this.name, now);
     return {
       aircraft,

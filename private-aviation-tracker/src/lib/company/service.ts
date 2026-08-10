@@ -3,7 +3,8 @@ import { cache, cacheKeys } from "@/lib/cache";
 import { withDb } from "@/lib/db";
 import { nearestAirport } from "@/lib/history/airportLookup";
 import { getCurrentFlight, getLastLanding } from "@/lib/flight/currentFlight";
-import { findByRegistration } from "@/lib/live/recentIndex";
+import { findByRegistration, snapshot } from "@/lib/live/recentIndex";
+import { lookupAircraftDatabase } from "@/lib/ownership/aircraftDb";
 import { getLiveAircraft } from "@/lib/aircraft/service";
 import type {
   AirportActivity,
@@ -15,7 +16,7 @@ import type {
   FleetRole,
   OwnershipResult,
 } from "@/lib/types";
-import { companyMatchKey, companySlug, isCompanyName } from "./naming";
+import { companyMatchKey, companySlug, isCompanyName, nameMatchScore } from "./naming";
 
 /**
  * Company / operator intelligence.
@@ -111,6 +112,63 @@ export async function syncCompanyLinks(result: OwnershipResult): Promise<void> {
   );
 }
 
+/**
+ * Companies visible in live traffic right now.
+ *
+ * The stored Company table only exists when a database is configured, and it
+ * only fills once ownership has resolved for aircraft this deployment has
+ * seen. Without this fallback, a deployment with no DATABASE_URL could never
+ * return a single company — which is exactly how "company search does not
+ * work" looked. Here the aircraft currently being received are resolved
+ * through the keyless aircraft database and matched by name in memory.
+ */
+async function searchLiveCompanies(query: string, limit: number): Promise<CompanySummary[]> {
+  const live = snapshot()
+    .filter((a) => a.registration)
+    .slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
+  if (live.length === 0) return [];
+
+  const byCompany = new Map<string, { name: string; registrations: Set<string>; score: number }>();
+
+  // Bounded concurrency: these are cached lookups, but a cold viewport could
+  // otherwise fire dozens of upstream calls at once.
+  const CHUNK = 8;
+  for (let i = 0; i < live.length; i += CHUNK) {
+    await Promise.all(
+      live.slice(i, i + CHUNK).map(async (aircraft) => {
+        const record = await lookupAircraftDatabase(aircraft.registration!).catch(() => null);
+        const names = [record?.registeredOwner, aircraft.feedOperator].filter(
+          (n): n is string => isCompanyName(n),
+        );
+        for (const name of names) {
+          const score = nameMatchScore(query, name);
+          if (score <= 0) continue;
+          const slug = companySlug(name);
+          const entry = byCompany.get(slug) ?? { name, registrations: new Set<string>(), score };
+          entry.registrations.add(aircraft.registration!);
+          entry.score = Math.max(entry.score, score);
+          byCompany.set(slug, entry);
+        }
+      }),
+    );
+  }
+
+  return [...byCompany.entries()]
+    .map(([slug, v]) => ({
+      slug,
+      name: v.name,
+      aircraftCount: v.registrations.size,
+      website: null,
+      country: null,
+      exact: v.score >= 0.9,
+    }))
+    .sort((a, b) => Number(b.exact) - Number(a.exact) || b.aircraftCount - a.aircraftCount)
+    .slice(0, limit);
+}
+
+/** Cap on how many live aircraft are resolved per company search. */
+const MAX_LIVE_OWNERSHIP_LOOKUPS = 40;
+
 /** Companies matching a free-text query, best match first. */
 export async function searchCompanies(query: string, limit = 10): Promise<CompanySummary[]> {
   const q = query.trim();
@@ -135,17 +193,26 @@ export async function searchCompanies(query: string, limit = 10): Promise<Compan
     "company:search",
   );
 
-  return rows
-    .map((row) => ({
+  const stored = rows
+    // Fuzzy so a typo still finds the company, and so partial names work.
+    .map((row) => ({ row, score: Math.max(nameMatchScore(q, row.name), row.matchKey === key ? 1 : 0) }))
+    .filter((x) => x.score > 0)
+    .map(({ row, score }) => ({
       slug: row.slug,
       name: row.name,
       aircraftCount: new Set(row.aircraft.map((a) => a.registration)).size,
       website: row.website,
       country: row.country,
-      exact: row.matchKey === key,
+      exact: score >= 0.9,
     }))
-    .sort((a, b) => Number(b.exact) - Number(a.exact) || b.aircraftCount - a.aircraftCount)
-    .slice(0, limit);
+    .sort((a, b) => Number(b.exact) - Number(a.exact) || b.aircraftCount - a.aircraftCount);
+
+  if (stored.length >= limit) return stored.slice(0, limit);
+
+  // Top up from live traffic, skipping anything already found on record.
+  const seen = new Set(stored.map((c) => c.slug));
+  const fromLive = (await searchLiveCompanies(q, limit)).filter((c) => !seen.has(c.slug));
+  return [...stored, ...fromLive].slice(0, limit);
 }
 
 interface FleetRow {
@@ -214,6 +281,67 @@ async function fleetEntry(row: FleetRow): Promise<CompanyFleetEntry> {
   };
 }
 
+/**
+ * Profile assembled from live traffic, for a company that has no stored row.
+ * Same shape as the persisted profile, but the sections that need recorded
+ * flights say so rather than showing zeros as though they were counts.
+ */
+async function liveCompanyProfile(slug: string): Promise<CompanyProfile | null> {
+  const live = snapshot().filter((a) => a.registration).slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
+  const matches: FleetRow[] = [];
+  let name: string | null = null;
+
+  const CHUNK = 8;
+  for (let i = 0; i < live.length; i += CHUNK) {
+    await Promise.all(
+      live.slice(i, i + CHUNK).map(async (aircraft) => {
+        const record = await lookupAircraftDatabase(aircraft.registration!).catch(() => null);
+        const owner = isCompanyName(record?.registeredOwner) ? record!.registeredOwner! : null;
+        const operator = isCompanyName(aircraft.feedOperator) ? aircraft.feedOperator! : null;
+
+        for (const [candidate, role] of [
+          [owner, "REGISTERED_OWNER"],
+          [operator, "OPERATOR"],
+        ] as const) {
+          if (!candidate || companySlug(candidate) !== slug) continue;
+          name ??= candidate;
+          matches.push({
+            registration: aircraft.registration!,
+            role,
+            confidence: role === "REGISTERED_OWNER" ? 74 : 60,
+            sourceUrl: null,
+            aircraft: {
+              typeCode: aircraft.typeCode,
+              manufacturer: aircraft.manufacturer,
+              model: aircraft.model,
+              category: aircraft.category,
+            },
+          });
+        }
+      }),
+    );
+  }
+
+  if (!name || matches.length === 0) return null;
+
+  const fleet = await Promise.all(matches.map(fleetEntry));
+  return {
+    slug,
+    name,
+    website: null,
+    country: null,
+    summary: null,
+    fleet,
+    stats: {
+      aircraft: fleet.length,
+      flying: fleet.filter((f) => f.status === "flying").length,
+      onGround: fleet.filter((f) => f.status === "on_ground").length,
+      unknown: fleet.filter((f) => f.status === "unknown").length,
+    },
+    note: "This fleet is assembled from aircraft currently being received, resolved through a public aircraft database. It shows only what is airborne in coverage right now — configure DATABASE_URL to build a persistent fleet, flight history and airport statistics.",
+  };
+}
+
 export async function getCompany(slug: string): Promise<CompanyProfile | null> {
   const row = await withDb(
     (db) =>
@@ -233,7 +361,9 @@ export async function getCompany(slug: string): Promise<CompanyProfile | null> {
     null,
     "company:get",
   );
-  if (!row) return null;
+  // No stored row — the database may be absent entirely, so fall back to what
+  // live traffic can tell us rather than returning a 404.
+  if (!row) return liveCompanyProfile(slug);
 
   // One entry per registration: an aircraft both owned and operated by the
   // same company should appear once, under its strongest role.

@@ -33,7 +33,7 @@ export async function GET(
       photos: items,
       note:
         items.length === 0
-          ? "No public photographs were found for this registration."
+          ? "No public photograph was found for this registration in the aviation photo databases. Coverage is thin for privately-held aircraft; configuring GOOGLE_CSE_API_KEY + GOOGLE_CSE_CX adds image search, which finds many tails the databases miss."
           : null,
     });
   } catch (error) {

@@ -30,6 +30,34 @@ interface CellState {
   lastError: string | null;
 }
 
+/**
+ * Upstream rate-limit backoff, shared across every cell.
+ *
+ * Community feeds rate-limit per client, and a 429 answered by simply retrying
+ * on the next poll makes it worse. When one arrives, every cell stops asking
+ * for a while and serves its last good payload instead — the map keeps showing
+ * traffic and the feed gets a chance to recover.
+ */
+const globalForLimit = globalThis as unknown as { __patRateLimit?: { until: number; strikes: number } };
+const rateLimit = (globalForLimit.__patRateLimit ??= { until: 0, strikes: 0 });
+
+const BACKOFF_BASE_MS = 20_000;
+const BACKOFF_MAX_MS = 5 * 60_000;
+
+function rateLimited(): boolean {
+  return Date.now() < rateLimit.until;
+}
+
+function noteRateLimit(): void {
+  rateLimit.strikes = Math.min(rateLimit.strikes + 1, 5);
+  rateLimit.until = Date.now() + Math.min(BACKOFF_BASE_MS * 2 ** (rateLimit.strikes - 1), BACKOFF_MAX_MS);
+}
+
+function noteSuccess(): void {
+  rateLimit.strikes = 0;
+  rateLimit.until = 0;
+}
+
 const globalForFeed = globalThis as unknown as { __patCells?: Map<string, CellState> };
 const cells: Map<string, CellState> = (globalForFeed.__patCells ??= new Map());
 const MAX_CELLS = 500;
@@ -74,6 +102,7 @@ async function refreshCell(
       state.result = result;
       state.fetchedAt = Date.now();
       state.lastError = null;
+      noteSuccess();
       recordObservations(result.aircraft);
       // History persistence must never delay the map response.
       void ingestObservations(result.aircraft).catch((err) =>
@@ -82,6 +111,8 @@ async function refreshCell(
       return result;
     })
     .catch((error: unknown) => {
+      if (error instanceof AdsbError && error.status === 429) noteRateLimit();
+
       const message =
         error instanceof AdsbError
           ? error.message
@@ -121,6 +152,25 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     result = await state.inflight;
   } else if (state.result && age < config.adsb.pollIntervalMs) {
     result = state.result;
+  } else if (rateLimited()) {
+    // Backing off after a 429. Keep showing the last good payload rather than
+    // adding to the load that triggered the limit in the first place.
+    const waitSec = Math.ceil((rateLimit.until - Date.now()) / 1000);
+    result = state.result
+      ? {
+          ...state.result,
+          stale: true,
+          error: `Upstream feed rate limit reached — pausing requests for ${waitSec}s and showing the last received positions.`,
+        }
+      : {
+          aircraft: [],
+          totalObserved: 0,
+          updatedAt: Date.now(),
+          source: getAdsbProvider().name,
+          simulated: false,
+          stale: true,
+          error: `Upstream feed rate limit reached. Retrying in ${waitSec}s. Community feeds limit how often a client may poll — raise ADSB_POLL_INTERVAL_MS, or set ADSBX_RAPIDAPI_KEY to use ADS-B Exchange instead.`,
+        };
   } else {
     result = await refreshCell(key, lat, lon, radiusNm);
   }
@@ -148,6 +198,8 @@ export function feedDiagnostics() {
     activeCells: cells.size,
     pollIntervalMs: config.adsb.pollIntervalMs,
     errors: [...cells.values()].filter((c) => c.lastError).length,
+    rateLimited: rateLimited(),
+    rateLimitStrikes: rateLimit.strikes,
   };
 }
 

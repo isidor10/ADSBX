@@ -87,3 +87,62 @@ export function isCompanyName(name: string | null | undefined): name is string {
   // organisation would over-filter, so only obvious placeholders are excluded.
   return true;
 }
+
+/**
+ * Fuzzy name matching.
+ *
+ * People type "Prince aviaton" and mean "Prince Aviation". Exact substring
+ * matching turns that into "nothing found", which reads as a broken feature
+ * rather than a typo. Matching is per token and tolerant of small spelling
+ * errors, while still requiring every token of the query to match something —
+ * so "Prince" does not match "Princess Yachts Aviation" by accident.
+ */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 2) return 3;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  const row = new Array<number>(b.length + 1);
+  for (let i = 1; i <= a.length; i += 1) {
+    row[0] = i;
+    for (let j = 1; j <= b.length; j += 1) {
+      row[j] = Math.min(
+        prev[j] + 1,
+        row[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+    for (let j = 0; j <= b.length; j += 1) prev[j] = row[j];
+  }
+  return prev[b.length];
+}
+
+/** Tolerance scales with word length: short words must match exactly. */
+function tokenMatches(queryToken: string, nameToken: string): boolean {
+  if (nameToken.startsWith(queryToken) || queryToken.startsWith(nameToken)) return true;
+  const allowed = queryToken.length >= 7 ? 2 : queryToken.length >= 4 ? 1 : 0;
+  return allowed > 0 && editDistance(queryToken, nameToken) <= allowed;
+}
+
+/** 0 = no match, 1 = exact. Every query token must find a home in the name. */
+export function nameMatchScore(query: string, name: string): number {
+  const q = companyMatchKey(query);
+  const n = companyMatchKey(name);
+  if (!q || !n) return 0;
+  if (q === n) return 1;
+  if (n.includes(q)) return 0.9;
+
+  const queryTokens = q.split(" ").filter((t) => t.length > 1);
+  const nameTokens = n.split(" ").filter(Boolean);
+  if (queryTokens.length === 0 || nameTokens.length === 0) return 0;
+
+  let matched = 0;
+  let fuzzy = false;
+  for (const token of queryTokens) {
+    const hit = nameTokens.find((nt) => tokenMatches(token, nt));
+    if (!hit) return 0;
+    if (hit !== token) fuzzy = true;
+    matched += 1;
+  }
+  const coverage = matched / queryTokens.length;
+  return Math.max(0.4, coverage * (fuzzy ? 0.72 : 0.85));
+}

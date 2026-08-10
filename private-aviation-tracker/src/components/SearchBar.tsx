@@ -327,8 +327,9 @@ export default function SearchBar({
 
       {open && !loading && query.trim().length >= 2 && rows.length === 0 && (
         <div className="absolute z-30 mt-1 w-full rounded-sm border border-edge bg-panel-2 px-3 py-3 text-xs text-ink-3">
-          Nothing found for “{query.trim()}”. Companies and owners appear here once ownership
-          research has resolved them for at least one aircraft.
+          Nothing found for “{query.trim()}”. Companies are matched against aircraft currently
+          in coverage and against ownership already resolved — an operator with nothing airborne
+          right now, and not yet researched, will not appear.
         </div>
       )}
     </div>
