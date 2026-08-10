@@ -81,8 +81,14 @@ npx vercel --cwd private-aviation-tracker            # preview deploy
 npx vercel --prod --cwd private-aviation-tracker     # production
 ```
 
-Framework detection, `prisma generate` (via `postinstall`) and the build all
-work with no extra configuration.
+`vercel.json` pins the framework to `nextjs`, and `prisma generate` runs via
+`postinstall`, so no other configuration is needed.
+
+> If a deployment fails with **`No Output Directory named "public" found`**, the
+> project's Framework Preset is set to "Other" — Vercel is treating the build as
+> a static site. `vercel.json` overrides that on the next deployment; to fix an
+> existing project by hand, set Framework Preset to **Next.js** under Settings →
+> General and redeploy.
 
 ### Environment variables to set in the project
 
