@@ -48,10 +48,13 @@ export default function SearchBar({
   onSelect,
   onCompanySelect,
   onAirportSelect,
+  viewport,
 }: {
   onSelect: (hit: SearchHit) => void;
   onCompanySelect?: (company: CompanySummary) => void;
   onAirportSelect?: (airport: AirportHit) => void;
+  /** What the user is looking at, so company search can fall back to it. */
+  viewport?: { lat: number; lon: number; radiusNm: number } | null;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GlobalSearchResults>(EMPTY);
@@ -86,7 +89,13 @@ export default function SearchBar({
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
+        const params = new URLSearchParams({ q: term });
+        if (viewport) {
+          params.set("lat", viewport.lat.toFixed(4));
+          params.set("lon", viewport.lon.toFixed(4));
+          params.set("radius", String(Math.round(viewport.radiusNm)));
+        }
+        const response = await fetch(`/api/search?${params}`, {
           signal: controller.signal,
         });
         const body = (await response.json()) as GlobalSearchResults;
@@ -104,7 +113,7 @@ export default function SearchBar({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, viewport?.lat, viewport?.lon, viewport?.radiusNm]);
 
   useEffect(() => {
     const onClickAway = (event: MouseEvent) => {

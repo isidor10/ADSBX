@@ -114,6 +114,7 @@ export default function TrackerApp() {
         onFiltersChange={setFilters}
         onSearchSelect={handleSearchSelect}
         onCompanySelect={handleCompanySelect}
+        searchViewport={viewport}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -150,7 +151,27 @@ export default function TrackerApp() {
           </div>
         )}
 
-        {feed.error && (
+        {/* Partial coverage: the view is wider than what was fetched. Said
+            plainly, because an empty edge otherwise reads as empty sky. */}
+        {!feed.error &&
+          feed.data?.coveredRadiusNm != null &&
+          feed.data.viewportRadiusNm != null &&
+          feed.data.coveredRadiusNm < feed.data.viewportRadiusNm * 0.95 && (
+            <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-sm border border-edge bg-panel/90 px-3 py-1.5 text-[10px] text-ink-3 backdrop-blur-md">
+              Showing the central {feed.data.coveredRadiusNm} NM of this view — zoom in for full
+              coverage.
+            </div>
+          )}
+
+        {/* A rate limit with data on screen is a notice, not a failure: the map
+            is still usable, so it must not be covered by a red box. */}
+        {feed.error && aircraft.length > 0 && (
+          <div className="absolute left-1/2 top-4 z-20 w-[min(92vw,560px)] -translate-x-1/2 rounded-sm border border-amber/40 bg-amber/10 px-3 py-2 text-[11px] leading-relaxed text-amber backdrop-blur-md">
+            {feed.error}
+          </div>
+        )}
+
+        {feed.error && aircraft.length === 0 && (
           <div className="absolute left-1/2 top-6 z-20 w-[min(92vw,560px)] -translate-x-1/2 rounded-sm border border-rose/40 bg-rose/12 px-4 py-3 backdrop-blur-md">
             <div className="text-[12px] font-semibold text-rose">{feed.error}</div>
             {feed.errorDetail && (

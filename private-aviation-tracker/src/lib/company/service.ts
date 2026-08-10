@@ -4,6 +4,7 @@ import { withDb } from "@/lib/db";
 import { nearestAirport } from "@/lib/history/airportLookup";
 import { getCurrentFlight, getLastLanding } from "@/lib/flight/currentFlight";
 import { findByRegistration, snapshot } from "@/lib/live/recentIndex";
+import { getViewportAircraft } from "@/lib/live/feedManager";
 import { lookupAircraftDatabase } from "@/lib/ownership/aircraftDb";
 import { getLiveAircraft } from "@/lib/aircraft/service";
 import type {
@@ -122,10 +123,21 @@ export async function syncCompanyLinks(result: OwnershipResult): Promise<void> {
  * work" looked. Here the aircraft currently being received are resolved
  * through the keyless aircraft database and matched by name in memory.
  */
-async function searchLiveCompanies(query: string, limit: number): Promise<CompanySummary[]> {
-  const live = snapshot()
-    .filter((a) => a.registration)
-    .slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
+async function searchLiveCompanies(
+  query: string,
+  limit: number,
+  viewport?: { lat: number; lon: number; radiusNm: number },
+): Promise<CompanySummary[]> {
+  // On serverless the in-process index belongs to whichever instance last
+  // polled, which is usually not the one answering this request — so it is
+  // routinely empty. When the caller knows what the user is looking at, fetch
+  // that viewport instead; it hits the same shared cell cache the map uses.
+  let live = snapshot().filter((a) => a.registration);
+  if (live.length === 0 && viewport) {
+    const feed = await getViewportAircraft({ ...viewport, filters: ["all"] }).catch(() => null);
+    live = (feed?.aircraft ?? []).filter((a) => a.registration);
+  }
+  live = live.slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
   if (live.length === 0) return [];
 
   const byCompany = new Map<string, { name: string; registrations: Set<string>; score: number }>();
@@ -170,7 +182,11 @@ async function searchLiveCompanies(query: string, limit: number): Promise<Compan
 const MAX_LIVE_OWNERSHIP_LOOKUPS = 40;
 
 /** Companies matching a free-text query, best match first. */
-export async function searchCompanies(query: string, limit = 10): Promise<CompanySummary[]> {
+export async function searchCompanies(
+  query: string,
+  limit = 10,
+  viewport?: { lat: number; lon: number; radiusNm: number },
+): Promise<CompanySummary[]> {
   const q = query.trim();
   if (q.length < 2) return [];
   const key = companyMatchKey(q);
@@ -211,7 +227,7 @@ export async function searchCompanies(query: string, limit = 10): Promise<Compan
 
   // Top up from live traffic, skipping anything already found on record.
   const seen = new Set(stored.map((c) => c.slug));
-  const fromLive = (await searchLiveCompanies(q, limit)).filter((c) => !seen.has(c.slug));
+  const fromLive = (await searchLiveCompanies(q, limit, viewport)).filter((c) => !seen.has(c.slug));
   return [...stored, ...fromLive].slice(0, limit);
 }
 
@@ -286,8 +302,16 @@ async function fleetEntry(row: FleetRow): Promise<CompanyFleetEntry> {
  * Same shape as the persisted profile, but the sections that need recorded
  * flights say so rather than showing zeros as though they were counts.
  */
-async function liveCompanyProfile(slug: string): Promise<CompanyProfile | null> {
-  const live = snapshot().filter((a) => a.registration).slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
+async function liveCompanyProfile(
+  slug: string,
+  viewport?: { lat: number; lon: number; radiusNm: number },
+): Promise<CompanyProfile | null> {
+  let all = snapshot().filter((a) => a.registration);
+  if (all.length === 0 && viewport) {
+    const feed = await getViewportAircraft({ ...viewport, filters: ["all"] }).catch(() => null);
+    all = (feed?.aircraft ?? []).filter((a) => a.registration);
+  }
+  const live = all.slice(0, MAX_LIVE_OWNERSHIP_LOOKUPS);
   const matches: FleetRow[] = [];
   let name: string | null = null;
 
@@ -342,7 +366,10 @@ async function liveCompanyProfile(slug: string): Promise<CompanyProfile | null> 
   };
 }
 
-export async function getCompany(slug: string): Promise<CompanyProfile | null> {
+export async function getCompany(
+  slug: string,
+  viewport?: { lat: number; lon: number; radiusNm: number },
+): Promise<CompanyProfile | null> {
   const row = await withDb(
     (db) =>
       db.company.findUnique({
@@ -363,7 +390,7 @@ export async function getCompany(slug: string): Promise<CompanyProfile | null> {
   );
   // No stored row — the database may be absent entirely, so fall back to what
   // live traffic can tell us rather than returning a 404.
-  if (!row) return liveCompanyProfile(slug);
+  if (!row) return liveCompanyProfile(slug, viewport);
 
   // One entry per registration: an aircraft both owned and operated by the
   // same company should appear once, under its strongest role.
