@@ -14,7 +14,8 @@
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "import:faa": "tsx scripts/import-faa.ts",
-    "import:airports": "tsx scripts/import-airports.ts"
+    "import:airports": "tsx scripts/import-airports.ts",
+    "verify:adsbx": "tsx scripts/verify-adsbx-sample.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

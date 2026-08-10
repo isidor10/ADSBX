@@ -39,7 +39,10 @@ export const config = {
     rapidApiKey: str("ADSBX_RAPIDAPI_KEY"),
     rapidApiHost: str("ADSBX_RAPIDAPI_HOST", "adsbexchange-com1.p.rapidapi.com"),
     directApiKey: str("ADSBX_API_KEY"),
-    directBaseUrl: str("ADSBX_BASE_URL", "https://adsbexchange.com/api/aircraft"),
+    // Documented direct/enterprise endpoint:
+    //   GET https://gateway.adsbexchange.com/api/aircraft/v2/icao/{icao}
+    //   header: api-auth: <key>
+    directBaseUrl: str("ADSBX_BASE_URL", "https://gateway.adsbexchange.com/api/aircraft"),
     readsbBaseUrl: str("ADSB_BASE_URL", "https://opendata.adsb.fi/api/v2"),
     pollIntervalMs: num("ADSB_POLL_INTERVAL_MS", 5000),
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),

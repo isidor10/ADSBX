@@ -29,6 +29,19 @@ No key is ever exposed to the browser. Every provider call happens in a route
 handler or a server module; the only `NEXT_PUBLIC_*` values are the map style
 and refresh interval.
 
+**If you hold a direct ADS-B Exchange data agreement** rather than a RapidAPI
+subscription, set `ADSB_PROVIDER=adsbx_direct` and `ADSBX_API_KEY` instead. That
+path follows the vendor's published sample call exactly — requests go to
+`https://gateway.adsbexchange.com/api/aircraft/v2/...` with the key in an
+`api-auth` request header:
+
+```http
+GET /api/aircraft/v2/icao/A465DF HTTP/1.1
+Host: gateway.adsbexchange.com
+Accept: application/json
+api-auth: YOUR_API_KEY
+```
+
 ---
 
 ## Quick start
