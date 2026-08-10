@@ -232,6 +232,32 @@ async function main() {
     );
   }
 
+  // --- 9. A rejected request must name the URL it asked for ----------------
+  const { AdsbError } = await import("../src/lib/adsb/types");
+  const wrongKey = new HttpAdsbProvider({
+    name: "readsb-test",
+    baseUrl: `http://127.0.0.1:${port}/api/v2`,
+    headers: { "api-auth": "wrong" },
+    configured: true,
+    trailingSlash: false,
+    hexPath: "hex",
+  });
+  const failure = await wrongKey.fetchArea(50, 8, 100).then(
+    () => null,
+    (e: unknown) => e,
+  );
+  assert.ok(failure instanceof AdsbError, "upstream rejection must raise AdsbError");
+  assert.equal(failure.status, 403);
+  assert.equal(failure.url, `http://127.0.0.1:${port}/api/v2/lat/50.0000/lon/8.0000/dist/100`);
+  assert.match(
+    failure.message,
+    /\(403\) for http:\/\/127\.0\.0\.1:\d+\/api\/v2\/lat\/50\.0000/,
+    "the operator must be able to see the exact URL that failed",
+  );
+
+  // --- 10. Every upstream call identifies the client -----------------------
+  assert.match(String(captured.at(-1)!.headers["user-agent"]), /PrivateAviationTracker/);
+
   server.close();
   console.log("ADS-B Exchange direct API contract: all checks passed");
 }

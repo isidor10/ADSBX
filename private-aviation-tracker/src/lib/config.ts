@@ -48,6 +48,12 @@ export const config = {
     maxRadiusNm: num("ADSB_MAX_RADIUS_NM", 250),
     requestTimeoutMs: num("ADSB_TIMEOUT_MS", 12000),
     /**
+     * Sent on every upstream call. Community feeds ask clients to identify
+     * themselves; set ADSB_USER_AGENT to add your contact details if you run
+     * this against one at any volume.
+     */
+    userAgent: str("ADSB_USER_AGENT", "PrivateAviationTracker/0.1 (+self-hosted)"),
+    /**
      * How long one SSE connection is held open before the server closes it
      * cleanly and the browser reconnects. Serverless platforms cap function
      * duration (Vercel: 60s on Hobby, 300s on Pro), so rotating just under the

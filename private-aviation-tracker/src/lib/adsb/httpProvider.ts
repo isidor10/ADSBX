@@ -55,11 +55,18 @@ export class HttpAdsbProvider implements AdsbProvider {
       );
     }
 
+    const url = this.url(path);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), config.adsb.requestTimeoutMs);
     try {
-      const res = await fetch(this.url(path), {
-        headers: { accept: "application/json", ...this.opts.headers },
+      const res = await fetch(url, {
+        headers: {
+          accept: "application/json",
+          // Community feeds ask clients to identify themselves, and an absent
+          // or generic agent is a common reason for a flat rejection.
+          "user-agent": config.adsb.userAgent,
+          ...this.opts.headers,
+        },
         signal: controller.signal,
         cache: "no-store",
       });
@@ -67,9 +74,11 @@ export class HttpAdsbProvider implements AdsbProvider {
       if (!res.ok) {
         const body = await res.text().catch(() => "");
         throw new AdsbError(
-          `Upstream ADS-B request failed (${res.status})${body ? `: ${body.slice(0, 200)}` : ""}`,
+          `Upstream ADS-B request failed (${res.status}) for ${url}` +
+            (body ? `: ${body.slice(0, 200)}` : " — empty response body"),
           res.status,
           this.name,
+          url,
         );
       }
       return (await res.json()) as RawFeedResponse;
@@ -77,9 +86,9 @@ export class HttpAdsbProvider implements AdsbProvider {
       if (error instanceof AdsbError) throw error;
       const message =
         (error as Error).name === "AbortError"
-          ? "Upstream ADS-B request timed out"
-          : `Upstream ADS-B request failed: ${(error as Error).message}`;
-      throw new AdsbError(message, undefined, this.name);
+          ? `Upstream ADS-B request timed out for ${url}`
+          : `Upstream ADS-B request failed for ${url}: ${(error as Error).message}`;
+      throw new AdsbError(message, undefined, this.name, url);
     } finally {
       clearTimeout(timer);
     }
