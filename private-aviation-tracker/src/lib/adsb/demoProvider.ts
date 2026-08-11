@@ -107,6 +107,7 @@ function build(t: DemoTemplate, centerLat: number, centerLon: number, now: numbe
     isBlocked: false,
     flightStatus: verticalRate > 300 ? "climbing" : verticalRate < -300 ? "descending" : "cruising",
     source: "demo",
+    positionSource: "ADSB",
     simulated: true,
   };
 }

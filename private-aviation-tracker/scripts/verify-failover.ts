@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 import type { AdsbProvider } from "../src/lib/adsb/types";
 import { AdsbError } from "../src/lib/adsb/types";
 import { fetchWithFailover, mergeAircraft, providerHealth, resetBreakers } from "../src/lib/adsb/manager";
+import { countByPositionSource, positionSourceFor } from "../src/lib/adsb/positionSource";
 import type { LiveAircraft, LiveFeedResult } from "../src/lib/types";
 
 function aircraft(over: Partial<LiveAircraft> & { icao24: string }): LiveAircraft {
@@ -168,6 +169,38 @@ async function main() {
   assert.equal(out.result.aircraft.length, 0);
   assert.equal(out.servedBy, "readsb", "the first provider to answer empty is credited");
   console.log("11. everyone agrees the area is empty -> reported as data");
+
+  // --- 12. Reception method survives the merge, and quality beats recency -
+  // A position the aircraft broadcast itself is worth more than a slightly
+  // fresher one computed from receiver timing, which can be hundreds of
+  // metres out.
+  const now = Date.now();
+  const byQuality = mergeAircraft([
+    [aircraft({ icao24: "gg7", seenAt: now, lat: 47, positionSource: "MLAT" })],
+    [aircraft({ icao24: "gg7", seenAt: now - 6_000, lat: 46, positionSource: "ADSB" })],
+  ]);
+  assert.equal(byQuality[0].lat, 46, "a broadcast position beats a marginally fresher computed one");
+  assert.equal(byQuality[0].positionSource, "ADSB", "the kept position's method is reported");
+
+  // Recency still wins once the gap is real rather than marginal.
+  const byRecency = mergeAircraft([
+    [aircraft({ icao24: "hh8", seenAt: now, lat: 47, positionSource: "MLAT" })],
+    [aircraft({ icao24: "hh8", seenAt: now - 90_000, lat: 46, positionSource: "ADSB" })],
+  ]);
+  assert.equal(byRecency[0].lat, 47, "a much older broadcast position must not be preferred");
+  assert.equal(byRecency[0].positionSource, "MLAT");
+
+  const counts = countByPositionSource([
+    { positionSource: "ADSB" }, { positionSource: "ADSB" },
+    { positionSource: "MLAT" }, {},
+  ]);
+  assert.equal(counts.ADSB, 2);
+  assert.equal(counts.MLAT, 1);
+  assert.equal(counts.UNKNOWN, 1, "a contact with no stated method is counted, not dropped");
+  assert.equal(positionSourceFor("tisb_trackfile"), "TISB");
+  assert.equal(positionSourceFor("adsb_icao_nt"), "ADSB");
+  assert.equal(positionSourceFor(undefined), "UNKNOWN");
+  console.log("12. position source: parsed, preferred by quality, counted");
 
   console.log("multi-provider failover: all checks passed");
 }

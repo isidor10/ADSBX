@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { ProviderHealth } from "@/lib/types";
+import {
+  POSITION_SOURCE_LABEL,
+  POSITION_SOURCE_ORDER,
+} from "@/lib/adsb/positionSource";
+import type { LiveFeedResult, PositionSource, ProviderHealth } from "@/lib/types";
 
 /**
  * Data-source health.
@@ -37,6 +41,7 @@ export default function DataSources({
   aircraftCount,
   degradedIdentityCount,
   lastKnownCount,
+  positionSources,
 }: {
   providers: ProviderHealth[];
   servedBy?: string | null;
@@ -45,6 +50,7 @@ export default function DataSources({
   aircraftCount: number;
   degradedIdentityCount?: number;
   lastKnownCount?: number;
+  positionSources?: LiveFeedResult["positionSources"];
 }) {
   const [open, setOpen] = useState(false);
   if (providers.length === 0) return null;
@@ -60,6 +66,21 @@ export default function DataSources({
       : freshnessSec !== null && freshnessSec < 30
         ? { label: "Good", color: "#4ade80" }
         : { label: "Stale", color: "#f5a524" };
+
+  const rows = positionSources
+    ? POSITION_SOURCE_ORDER.map((key) => ({
+        key,
+        shown: positionSources.shown[key] ?? 0,
+        received: positionSources.received[key] ?? 0,
+      })).filter((r) => r.received > 0)
+    : [];
+  const totalShown = rows.reduce((sum, r) => sum + r.shown, 0);
+  const totalReceived = rows.reduce((sum, r) => sum + r.received, 0);
+  // Positions the aircraft did not broadcast itself.
+  const COMPUTED: PositionSource[] = ["MLAT", "TISB", "ADSC"];
+  const mlatShare = rows
+    .filter((r) => COMPUTED.includes(r.key))
+    .reduce((sum, r) => sum + r.shown, 0);
 
   return (
     <div className="pointer-events-auto absolute bottom-6 left-4 z-20">
@@ -97,6 +118,42 @@ export default function DataSources({
               </div>
             </div>
           </div>
+
+          {/* How each contact is actually being received. ADS-B is broadcast by
+              the aircraft; MLAT is computed from receiver timing and is far
+              coarser. Rows with nothing in them are omitted rather than
+              padding the table with zeros. */}
+          {rows.length > 0 && (
+            <div className="mb-2 border-b border-edge pb-2">
+              <div className="mb-1 grid grid-cols-[1fr_auto_auto] gap-2 text-[9px] uppercase tracking-[0.1em] text-ink-3">
+                <span>Position source</span>
+                <span className="w-9 text-right">Shown</span>
+                <span className="w-9 text-right">In view</span>
+              </div>
+              {rows.map(({ key, shown, received }) => (
+                <div
+                  key={key}
+                  className="grid grid-cols-[1fr_auto_auto] gap-2 py-0.5 text-[10px]"
+                >
+                  <span className="truncate text-ink-2">{POSITION_SOURCE_LABEL[key]}</span>
+                  <span className="tabular w-9 text-right text-ink">{shown}</span>
+                  <span className="tabular w-9 text-right text-ink-3">{received}</span>
+                </div>
+              ))}
+              <div className="mt-1 grid grid-cols-[1fr_auto_auto] gap-2 border-t border-edge pt-1 text-[10px]">
+                <span className="uppercase tracking-[0.1em] text-ink-3">Total</span>
+                <span className="tabular w-9 text-right text-ink">{totalShown}</span>
+                <span className="tabular w-9 text-right text-ink-3">{totalReceived}</span>
+              </div>
+              {mlatShare > 0 && (
+                <p className="mt-1.5 text-[9px] leading-relaxed text-ink-3">
+                  {mlatShare} of the aircraft shown {mlatShare === 1 ? "is" : "are"} positioned by
+                  multilateration or radar relay, not by their own GPS broadcast — those markers can
+                  be a few hundred metres out.
+                </p>
+              )}
+            </div>
+          )}
 
           <ul className="space-y-1.5">
             {providers.map((p) => {

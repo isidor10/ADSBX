@@ -104,6 +104,28 @@ function isOpen(name: string): boolean {
  * type, so a position from OpenSky merged with identity from a readsb feed is
  * strictly better than either alone.
  */
+/**
+ * How much a position can be trusted, by how it was obtained. Only used to
+ * break ties between two sightings of the same aircraft.
+ */
+function broadcastQuality(a: LiveAircraft): number {
+  switch (a.positionSource) {
+    case "ADSB":
+      return 3;
+    case "ADSR":
+      return 2;
+    case "TISB":
+    case "MLAT":
+    case "ADSC":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/** How much fresher a lower-quality position must be to win on recency alone. */
+const POSITION_QUALITY_GRACE_MS = 20_000;
+
 export function mergeAircraft(groups: LiveAircraft[][]): LiveAircraft[] {
   const byIcao = new Map<string, LiveAircraft>();
 
@@ -115,10 +137,21 @@ export function mergeAircraft(groups: LiveAircraft[][]): LiveAircraft[] {
         continue;
       }
 
-      // Freshest position wins; identity fields are filled from whichever
-      // source has them rather than being overwritten with null.
-      const newer = incoming.seenAt > existing.seenAt ? incoming : existing;
-      const older = incoming.seenAt > existing.seenAt ? existing : incoming;
+      // Freshest position wins — except that a position the aircraft actually
+      // broadcast beats one computed from receiver timing, unless the computed
+      // one is meaningfully newer. A 5-second-old ADS-B fix is worth more than
+      // a 2-second-old MLAT fix that may be several hundred metres out.
+      const preferred =
+        broadcastQuality(incoming) !== broadcastQuality(existing) &&
+        Math.abs(incoming.seenAt - existing.seenAt) < POSITION_QUALITY_GRACE_MS
+          ? broadcastQuality(incoming) > broadcastQuality(existing)
+            ? incoming
+            : existing
+          : incoming.seenAt > existing.seenAt
+            ? incoming
+            : existing;
+      const newer = preferred;
+      const older = preferred === incoming ? existing : incoming;
 
       byIcao.set(incoming.icao24, {
         ...newer,
@@ -131,6 +164,9 @@ export function mergeAircraft(groups: LiveAircraft[][]): LiveAircraft[] {
         // A merged record is only degraded if neither side knew the type.
         category: newer.typeCode ? newer.category : (older.typeCode ? older.category : newer.category),
         identityDegraded: Boolean(newer.identityDegraded && older.identityDegraded),
+        // The reception method belongs to the position that was kept, not to
+        // whichever record happened to supply the registration.
+        positionSource: newer.positionSource,
       });
     }
   }

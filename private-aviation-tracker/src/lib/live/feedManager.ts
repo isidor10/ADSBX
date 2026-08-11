@@ -1,5 +1,6 @@
 import { getAdsbProvider, getProviderChain } from "@/lib/adsb";
 import { fetchWithFailover, providerHealth } from "@/lib/adsb/manager";
+import { countByPositionSource } from "@/lib/adsb/positionSource";
 import { distanceNm, projectPosition } from "@/lib/geo";
 import { AdsbError } from "@/lib/adsb/types";
 import { matchesFilters } from "@/lib/aircraft/classifier";
@@ -301,6 +302,10 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     ...result,
     aircraft: filtered,
     totalObserved: result.aircraft.length,
+    positionSources: {
+      shown: countByPositionSource(filtered),
+      received: countByPositionSource(result.aircraft),
+    },
     tilesRequested: tiles.length,
     coveredRadiusNm: Math.round(coveredRadiusNm),
     viewportRadiusNm: Math.round(query.radiusNm),
