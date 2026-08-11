@@ -36,6 +36,12 @@ export type SearchProviderName =
 export const config = {
   adsb: {
     provider: str("ADSB_PROVIDER", "adsbexchange") as AdsbProviderName,
+    /**
+     * True when the operator explicitly named a provider. An explicit choice
+     * outranks the failover chain for single-aircraft lookups — otherwise
+     * setting ADSB_PROVIDER would silently do nothing.
+     */
+    providerExplicit: Boolean(process.env.ADSB_PROVIDER),
     rapidApiKey: str("ADSBX_RAPIDAPI_KEY"),
     rapidApiHost: str("ADSBX_RAPIDAPI_HOST", "adsbexchange-com1.p.rapidapi.com"),
     directApiKey: str("ADSBX_API_KEY"),
@@ -79,6 +85,34 @@ export const config = {
      * cap turns a hard platform kill into an orderly hand-off.
      */
     streamLifetimeMs: num("ADSB_STREAM_LIFETIME_MS", 50_000),
+  },
+  /**
+   * Ordered provider chain. The first that answers serves the map; the rest
+   * are tried only on failure. Reorder with ADSB_PROVIDER_ORDER without
+   * touching code.
+   */
+  providers: {
+    order: str("ADSB_PROVIDER_ORDER", "airplanes_live,opensky,adsbexchange")
+      .split(",")
+      .map((p) => p.trim().toLowerCase())
+      .filter(Boolean),
+  },
+  airplanesLive: {
+    enabled: bool("AIRPLANES_LIVE_ENABLED", true),
+    baseUrl: str("AIRPLANES_LIVE_BASE_URL", "https://api.airplanes.live/v2"),
+    /** Optional; the public endpoint works without one, at a lower quota. */
+    apiKey: str("AIRPLANES_LIVE_API_KEY"),
+  },
+  opensky: {
+    enabled: bool("OPENSKY_ENABLED", true),
+    baseUrl: str("OPENSKY_BASE_URL", "https://opensky-network.org/api"),
+    tokenUrl: str(
+      "OPENSKY_TOKEN_URL",
+      "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token",
+    ),
+    /** Anonymous access works; credentials raise the quota substantially. */
+    clientId: str("OPENSKY_CLIENT_ID"),
+    clientSecret: str("OPENSKY_CLIENT_SECRET"),
   },
   route: {
     /**
@@ -194,19 +228,59 @@ export function selectedAdsbConfigured(): boolean {
   }
 }
 
-/** True when the selected provider is unusable but the open feed can stand in. */
+/**
+ * True when at least one member of the failover chain has what it needs to
+ * make a request. Computed from configuration alone so that config.ts stays
+ * free of imports from the provider layer (which imports config in turn).
+ */
+export function chainConfigured(): boolean {
+  return config.providers.order.some((name) => {
+    switch (name) {
+      case "airplanes_live":
+      case "airplaneslive":
+        return config.airplanesLive.enabled;
+      case "opensky":
+        return config.opensky.enabled;
+      case "adsbexchange":
+        return Boolean(config.adsb.rapidApiKey);
+      case "adsbx_direct":
+        return Boolean(config.adsb.directApiKey);
+      case "readsb":
+        return Boolean(config.adsb.readsbBaseUrl);
+      case "demo":
+        return true;
+      default:
+        return false;
+    }
+  });
+}
+
+/**
+ * True when the selected provider is unusable, no chain member can stand in,
+ * and the open feed is the last thing between the operator and an empty map.
+ *
+ * The chain check matters: airplanes.live is itself a keyless community feed
+ * and is first in the default order, so on a normal deployment the chain — not
+ * this fallback — is what covers a missing ADS-B Exchange key. The fallback is
+ * reserved for the case where every chain member has been turned off.
+ */
 export function usingOpenFeedFallback(): boolean {
   return (
     !selectedAdsbConfigured() &&
+    !chainConfigured() &&
     config.adsb.openFeedFallback &&
     Boolean(config.adsb.openFeedUrl) &&
     config.adsb.provider !== "demo"
   );
 }
 
-/** True when *some* provider can serve live data. */
+/**
+ * True when *some* provider can serve live data. The API routes fail closed on
+ * this, so it must consider the whole chain: a deployment with no ADS-B
+ * Exchange key but a live airplanes.live is working, not misconfigured.
+ */
 export function adsbConfigured(): boolean {
-  return selectedAdsbConfigured() || usingOpenFeedFallback();
+  return selectedAdsbConfigured() || chainConfigured() || usingOpenFeedFallback();
 }
 
 /**

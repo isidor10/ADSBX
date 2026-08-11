@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import AircraftPanel from "@/components/AircraftPanel";
+import DataSources from "@/components/DataSources";
 import TopBar from "@/components/TopBar";
 import type { MapViewport } from "@/components/MapView";
 import { useLiveFeed } from "@/hooks/useLiveFeed";
@@ -194,6 +195,15 @@ export default function TrackerApp() {
               : "No private or business aircraft in view — pan the map or widen the filters."}
           </div>
         )}
+
+        <DataSources
+          providers={feed.data?.providers ?? []}
+          servedBy={feed.data?.servedBy}
+          degraded={feed.data?.degraded}
+          updatedAt={feed.data?.updatedAt ?? null}
+          aircraftCount={aircraft.length}
+          degradedIdentityCount={feed.data?.degradedIdentityCount}
+        />
 
         {selection && (
           <AircraftPanel

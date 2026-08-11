@@ -66,6 +66,31 @@ export interface LiveAircraft {
   source: string;
   /** Set only when the provider is `demo`. */
   simulated?: boolean;
+  /**
+   * True when the source carries no registration or type designator (OpenSky
+   * state vectors). Such a contact cannot be classified by airframe, so the
+   * private/business filter is running blind for it and the UI says so.
+   */
+  identityDegraded?: boolean;
+}
+
+/** Live health of one aircraft data provider. */
+export interface ProviderHealth {
+  name: string;
+  /** 1 = primary. */
+  priority: number;
+  status: "LIVE" | "STANDBY" | "RATE_LIMITED" | "BACKING_OFF" | "DISABLED";
+  configured: boolean;
+  lastSuccessAt: string | null;
+  lastErrorAt: string | null;
+  lastError: string | null;
+  lastLatencyMs: number | null;
+  /** Aircraft returned by the last successful call. */
+  lastCount: number | null;
+  attempts: number;
+  failures: number;
+  /** Seconds until this provider is tried again, when backing off. */
+  retryInSec: number | null;
 }
 
 export type FlightPhase =
@@ -96,6 +121,14 @@ export interface LiveFeedResult {
   coveredRadiusNm?: number;
   /** How far the user can see. Larger than covered = partial coverage. */
   viewportRadiusNm?: number;
+  /** Which provider actually served this payload. */
+  servedBy?: string | null;
+  /** Health of every provider in the chain. */
+  providers?: ProviderHealth[];
+  /** True when the payload is cached because every provider failed. */
+  degraded?: boolean;
+  /** Contacts with no type/registration (OpenSky), so unclassifiable. */
+  degradedIdentityCount?: number;
 }
 
 // ------------------------------------------------------------ routes / flight

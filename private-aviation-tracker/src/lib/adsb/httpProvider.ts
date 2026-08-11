@@ -12,6 +12,13 @@ export interface HttpProviderOptions {
   trailingSlash: boolean;
   /** Path segment used for hex lookups: "hex" (adsb.lol) or "icao" (ADSBX). */
   hexPath: "hex" | "icao";
+  /**
+   * Area-query shape. readsb/ADSBX use lat/lon/dist segments; airplanes.live
+   * documents /point/{lat}/{lon}/{radius}. Same response body either way.
+   */
+  areaStyle?: "lat_lon_dist" | "point";
+  /** Sent as an api-key header when the provider supports one. */
+  apiKey?: string;
 }
 
 /**
@@ -134,9 +141,11 @@ export class HttpAdsbProvider implements AdsbProvider {
 
   async fetchArea(lat: number, lon: number, radiusNm: number): Promise<LiveFeedResult> {
     const dist = Math.min(Math.max(Math.round(radiusNm), 1), config.adsb.maxRadiusNm);
-    const payload = await this.request(
-      `v2/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${dist}`,
-    );
+    const path =
+      this.opts.areaStyle === "point"
+        ? `v2/point/${lat.toFixed(4)}/${lon.toFixed(4)}/${dist}`
+        : `v2/lat/${lat.toFixed(4)}/lon/${lon.toFixed(4)}/dist/${dist}`;
+    const payload = await this.request(path);
     const raws = this.records(payload);
     const now = this.clock(payload);
     const aircraft = normalizeMany(raws, this.name, now);

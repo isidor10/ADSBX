@@ -42,7 +42,12 @@ async function iconPixels(page: Page): Promise<number> {
 }
 
 async function main() {
-  const browser = await chromium.launch({ executablePath: CHROME });
+  // The dev server's own assets must not be routed through an outbound proxy
+  // inherited from the environment.
+  const browser = await chromium.launch({
+    executablePath: CHROME,
+    args: ["--no-proxy-server"],
+  });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const consoleErrors: string[] = [];
   page.on("console", (m) => {
@@ -87,12 +92,21 @@ async function main() {
     process.exit(1);
   }
 
-  await page.waitForTimeout(3500);
   const panel = page.locator("aside");
-  const panelText = (await panel.textContent()) ?? "";
+  // The panel fills in from several endpoints. Against `next dev` the first
+  // request to each route pays for its compile, so a fixed wait races the
+  // slowest one — poll for the last section to arrive instead.
+  const deadline = Date.now() + 30_000;
+  let panelText = "";
+  do {
+    await page.waitForTimeout(500);
+    panelText = (await panel.textContent()) ?? "";
+  } while (
+    Date.now() < deadline &&
+    !/Current flight|not currently transmitting a position/i.test(panelText)
+  );
 
   for (const section of [
-    "Current flight",
     "Last landing",
     "Next trip",
     "Ownership",
@@ -104,6 +118,16 @@ async function main() {
       new RegExp(section, "i").test(panelText),
       `panel has "${section}" section`,
     );
+  }
+
+  // "Current flight" is airborne-only by design — a contact with no live
+  // position has no current flight to describe, and inventing one would be a
+  // fabrication. Only assert it when the panel is showing a live position.
+  const airborne = !/not currently transmitting a position/i.test(panelText);
+  if (airborne) {
+    check(/Current flight/i.test(panelText), 'panel has "Current flight" section');
+  } else {
+    console.log("SKIP  \"Current flight\" — selected contact has no live position");
   }
   check(/Unknown|→|NM/.test(panelText), "panel states a destination or says unknown");
   await panel.screenshot({ path: `${OUT}/e2e-2-panel.png` });
@@ -144,6 +168,44 @@ async function main() {
     check(false, "track window selector present");
   }
 
+  // ---- 4b. data-source health panel ---------------------------------------
+  const sources = page.getByRole("button", { name: /Data sources|Live data degraded/i });
+  if (await sources.count()) {
+    await sources.first().click();
+    await page.waitForTimeout(600);
+    const sourcesText = (await page.locator("body").textContent()) ?? "";
+    check(/Visible/i.test(sourcesText), "data-source panel reports the visible count");
+    check(/Freshness/i.test(sourcesText), "data-source panel reports feed freshness");
+    check(/Coverage/i.test(sourcesText), "data-source panel reports coverage");
+    check(
+      /Live|Standby|Rate limited|Backing off|Disabled/i.test(sourcesText),
+      "data-source panel gives each provider a status",
+    );
+    await page.screenshot({ path: `${OUT}/e2e-6-sources.png` });
+    await sources.first().click();
+  } else {
+    check(false, "data-source panel is present");
+  }
+
+  // ---- 4c. zooming out must not hide or merge aircraft --------------------
+  // Clustering is off by design: every contact stays an individual marker at
+  // every zoom, so widening the view may only ever add aircraft.
+  const before = Number(/(\d+)\s*(PRIVATE )?AIRCRAFT/i.exec(
+    (await page.locator("header").textContent()) ?? "",
+  )?.[1] ?? 0);
+  await page.keyboard.press("Escape");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let i = 0; i < 4; i += 1) {
+    await page.keyboard.press("Minus");
+    await page.waitForTimeout(400);
+  }
+  await page.waitForTimeout(6000);
+  const after = Number(/(\d+)\s*(PRIVATE )?AIRCRAFT/i.exec(
+    (await page.locator("header").textContent()) ?? "",
+  )?.[1] ?? 0);
+  check(after >= before, `zooming out keeps every aircraft (${before} → ${after})`);
+  await page.screenshot({ path: `${OUT}/e2e-7-zoomed-out.png` });
+
   // ---- 5. global search: company -----------------------------------------
   await page.keyboard.press("Escape");
   const search = page.getByLabel("Search aircraft, companies, owners and airports");
@@ -169,7 +231,9 @@ async function main() {
   // ---- 6. selecting the company filters the map ---------------------------
   await search.fill(company.name.split(" ")[0]);
   await page.waitForTimeout(1200);
-  await page.getByRole("button", { name: new RegExp(company.name, "i") }).first().click();
+  // By accessible name, not visible text: an aircraft matched on its owner
+  // renders that owner's name too, so a text match hits the wrong row.
+  await page.getByRole("button", { name: `Company ${company.name}`, exact: true }).click();
   await page.waitForTimeout(2500);
   const banner = await page.locator("text=Company page").isVisible().catch(() => false);
   check(banner, "selecting a company pins the map to its fleet");

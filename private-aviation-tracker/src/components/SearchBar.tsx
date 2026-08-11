@@ -212,6 +212,12 @@ export default function SearchBar({
                   onMouseEnter={() => setHighlight(index)}
                   onClick={() => choose(row)}
                   className={rowClass(index)}
+                  // Rows are named by kind because the visible text alone is
+                  // ambiguous: an aircraft matched on its owner reads exactly
+                  // like the company row below it.
+                  aria-label={`Aircraft ${
+                    hit.registration ?? hit.callsign ?? hit.icao24?.toUpperCase() ?? "unknown"
+                  }`}
                 >
                   <span className="min-w-0">
                     <span className="tabular block truncate text-sm text-ink">
@@ -255,6 +261,7 @@ export default function SearchBar({
                   onMouseEnter={() => setHighlight(index)}
                   onClick={() => choose(row)}
                   className={rowClass(index)}
+                  aria-label={`Company ${company.name}`}
                 >
                   <span className="min-w-0">
                     <span className="block truncate text-sm text-ink">{company.name}</span>
@@ -284,6 +291,13 @@ export default function SearchBar({
                     onMouseEnter={() => setHighlight(index)}
                     onClick={() => choose(row)}
                     className={rowClass(index)}
+                    aria-label={`${
+                      row.value.role === "owner"
+                        ? "Owner"
+                        : row.value.role === "management"
+                          ? "Management company"
+                          : "Operator"
+                    } ${row.value.name}`}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm text-ink">{row.value.name}</span>
@@ -314,6 +328,7 @@ export default function SearchBar({
                   onMouseEnter={() => setHighlight(index)}
                   onClick={() => choose(row)}
                   className={rowClass(index)}
+                  aria-label={`Airport ${airport.icao}${airport.name ? ` ${airport.name}` : ""}`}
                 >
                   <span className="min-w-0">
                     <span className="tabular block truncate text-sm text-ink">
