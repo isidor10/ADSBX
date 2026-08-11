@@ -94,6 +94,146 @@ never rendered as owning it.
 
 ---
 
+## Run it on a Mac, step by step
+
+Running locally is the fastest way to get the parts that need a database —
+flight history, company fleets, cost totals, base detection. On your own
+machine you control Postgres, and leaving the app running is what builds the
+history up.
+
+Open **Terminal** (⌘-Space, type "Terminal") and work through these in order.
+Each block is one copy-paste.
+
+**1. Install the tools.** Homebrew first — skip if `brew --version` already
+answers:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Follow the "Next steps" it prints at the end (on Apple Silicon it asks you to
+add Homebrew to your PATH). Then:
+
+```bash
+brew install node postgresql@16 git
+brew services start postgresql@16
+```
+
+**2. Get the code.**
+
+```bash
+git clone https://github.com/isidor10/instagram-scraper.git
+cd instagram-scraper/private-aviation-tracker
+npm install
+```
+
+**3. Create the database.**
+
+```bash
+createdb private_aviation
+```
+
+If that says `command not found`, Homebrew has not linked Postgres onto your
+PATH yet:
+
+```bash
+echo 'export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+createdb private_aviation
+```
+
+**4. Configure it.** This writes a `.env.local` with everything needed to run
+with no API keys at all — `whoami` fills in your Mac username, which is the
+Postgres user Homebrew creates:
+
+```bash
+cat > .env.local <<EOF
+DATABASE_URL="postgresql://$(whoami)@localhost:5432/private_aviation"
+ADSB_PROVIDER="readsb"
+ADSB_BASE_URL="https://opendata.adsb.fi/api/v2"
+ADSB_POLL_INTERVAL_MS="10000"
+PERSIST_POSITIONS="true"
+EOF
+```
+
+**5. Create the tables.**
+
+```bash
+npx prisma migrate deploy
+```
+
+**6. Start it.**
+
+```bash
+npm run dev
+```
+
+Leave that Terminal window open — closing it stops the app. Open
+**http://localhost:3000** in Safari or Chrome.
+
+### What you should see
+
+Aircraft on the map within a few seconds. Click one and the panel opens with
+its type, owner, photos and estimated cost.
+
+**History starts empty and fills as you leave it running.** The app records
+what it observes; it cannot back-fill flights from before you started it. After
+an hour you will have an hour of history, after a day a day. That is why the
+FLIGHT HISTORY section shows a coverage percentage.
+
+### Stopping and restarting
+
+Stop the app with `Ctrl-C` in that Terminal window. To start it again later:
+
+```bash
+cd instagram-scraper/private-aviation-tracker
+npm run dev
+```
+
+Postgres keeps running in the background across restarts and reboots, so the
+history you have built up is still there. To stop it entirely:
+`brew services stop postgresql@16`.
+
+### Optional extras
+
+More airports, so departure and arrival fields resolve for small private
+strips (the built-in list covers ~270 airports):
+
+```bash
+npm run import:airports
+```
+
+Owner research, news and a wider photo search need a Google Programmable Search
+key — add to `.env.local` and restart:
+
+```bash
+SEARCH_PROVIDER="google_cse"
+GOOGLE_CSE_API_KEY="..."
+GOOGLE_CSE_CX="..."
+```
+
+Serbian register and AOC data, once you have downloaded the published tables
+from the Directorate of Civil Aviation and saved them as CSV:
+
+```bash
+npm run import:dcv -- --aircraft ./register.csv --operators ./operators.csv --dry-run
+```
+
+Drop `--dry-run` once it reports the columns it mapped correctly.
+
+### If something goes wrong
+
+| Symptom | Fix |
+|---|---|
+| `command not found: brew` | Homebrew was not added to PATH — re-run the "Next steps" it printed, or open a new Terminal window. |
+| `Can't reach database server` | `brew services start postgresql@16` |
+| `database "private_aviation" does not exist` | `createdb private_aviation` |
+| `Port 3000 is in use` | `npm run dev -- -p 3001`, then open http://localhost:3001 |
+| Map loads but no aircraft | Pan to Europe or the US east coast — the open feed's coverage is thin elsewhere. |
+| `Upstream feed rate limit reached` | Raise `ADSB_POLL_INTERVAL_MS` to `20000` in `.env.local` and restart. |
+
+---
+
 ## Quick start
 
 ```bash
