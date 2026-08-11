@@ -14,6 +14,10 @@ import CostedHistorySection from "@/components/CostedHistory";
 import RegistrySection from "@/components/RegistrySection";
 import PhotoGallery from "@/components/PhotoGallery";
 import WebNews from "@/components/WebNews";
+import {
+  POSITION_SOURCE_ACCURACY,
+  POSITION_SOURCE_LABEL,
+} from "@/lib/adsb/positionSource";
 import { CategoryBadge, Divider, EmptyNote, Field, SectionTitle } from "@/components/ui";
 import {
   flightStatusLabel,
@@ -331,6 +335,20 @@ export default function AircraftPanel({
             <Field label="Latitude" value={formatCoordinate(position.lat, "lat")} />
             <Field label="Longitude" value={formatCoordinate(position.lon, "lon")} />
             <Field label="Last seen" value={formatRelative(position.seenAt)} mono={false} />
+            <Field
+              label="Position source"
+              value={POSITION_SOURCE_LABEL[position.positionSource ?? "UNKNOWN"]}
+              mono={false}
+            />
+            {/* Where the position did not come from the aircraft's own GPS
+                broadcast, say what that means for the marker on the map. A
+                position drawn to four decimal places implies a precision that
+                MLAT and radar relay do not have. */}
+            {POSITION_SOURCE_ACCURACY[position.positionSource ?? "UNKNOWN"] && (
+              <p className="col-span-3 -mt-1 rounded-sm border border-amber/30 bg-amber/8 px-2 py-1.5 text-[10px] leading-relaxed text-amber/90">
+                {POSITION_SOURCE_ACCURACY[position.positionSource ?? "UNKNOWN"]}
+              </p>
+            )}
           </div>
         ) : detail?.lastKnownPosition ? (
           <div className="px-4 pb-1">

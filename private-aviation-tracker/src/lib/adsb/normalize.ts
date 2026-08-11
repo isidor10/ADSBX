@@ -2,6 +2,7 @@ import { classify } from "@/lib/aircraft/classifier";
 import { normalizeIcao24, normalizeRegistration } from "@/lib/aircraft/registration";
 import { lookupType } from "@/lib/aircraft/typeDatabase";
 import type { FlightPhase, LiveAircraft } from "@/lib/types";
+import { positionSourceFor } from "./positionSource";
 import type { RawAircraft } from "./types";
 
 function toNumber(value: unknown): number | null {
@@ -101,6 +102,7 @@ export function normalizeAircraft(raw: RawAircraft, source: string, now = Date.n
 
     flightStatus: flightPhase(onGround, altBaroFt, verticalRateFpm),
     source,
+    positionSource: positionSourceFor(raw.type),
   };
 }
 

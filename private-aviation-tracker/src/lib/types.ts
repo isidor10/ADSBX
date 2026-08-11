@@ -64,6 +64,12 @@ export interface LiveAircraft {
 
   flightStatus: FlightPhase;
   source: string;
+  /**
+   * How the position was obtained — broadcast by the aircraft (ADS-B),
+   * computed from receiver timing (MLAT), relayed from radar (TIS-B), and so
+   * on. Governs how much the position can be trusted.
+   */
+  positionSource?: PositionSource;
   /** Set only when the provider is `demo`. */
   simulated?: boolean;
   /**
@@ -92,6 +98,20 @@ export interface ProviderHealth {
   /** Seconds until this provider is tried again, when backing off. */
   retryInSec: number | null;
 }
+
+/**
+ * Reception method for a position, as stated by the feed. See
+ * `lib/adsb/positionSource.ts` for what each one implies about accuracy.
+ */
+export type PositionSource =
+  | "ADSB"
+  | "ADSR"
+  | "TISB"
+  | "MLAT"
+  | "ADSC"
+  | "MODE_S"
+  | "OTHER"
+  | "UNKNOWN";
 
 export type FlightPhase =
   | "on_ground"
@@ -134,6 +154,15 @@ export interface LiveFeedResult {
    * viewport. Real observations, but older than a live poll — the UI says so.
    */
   lastKnownCount?: number;
+  /**
+   * How the contacts in this viewport were received, split by method. `shown`
+   * counts what is drawn after filtering; `received` counts everything the
+   * feeds returned for the view.
+   */
+  positionSources?: {
+    shown: Record<PositionSource, number>;
+    received: Record<PositionSource, number>;
+  };
 }
 
 // ------------------------------------------------------------ routes / flight

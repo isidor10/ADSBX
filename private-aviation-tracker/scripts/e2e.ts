@@ -181,6 +181,10 @@ async function main() {
       /Live|Standby|Rate limited|Backing off|Disabled/i.test(sourcesText),
       "data-source panel gives each provider a status",
     );
+    check(
+      /Position source/i.test(sourcesText) && /ADS-B/i.test(sourcesText),
+      "data-source panel breaks contacts down by reception method",
+    );
     await page.screenshot({ path: `${OUT}/e2e-6-sources.png` });
     await sources.first().click();
   } else {

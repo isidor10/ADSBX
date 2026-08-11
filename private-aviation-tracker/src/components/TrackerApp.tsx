@@ -204,6 +204,7 @@ export default function TrackerApp() {
           aircraftCount={aircraft.length}
           degradedIdentityCount={feed.data?.degradedIdentityCount}
           lastKnownCount={feed.data?.lastKnownCount}
+          positionSources={feed.data?.positionSources}
         />
 
         {selection && (

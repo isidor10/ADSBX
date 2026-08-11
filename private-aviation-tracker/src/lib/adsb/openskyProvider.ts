@@ -1,6 +1,6 @@
 import { classify } from "@/lib/aircraft/classifier";
 import { config } from "@/lib/config";
-import type { LiveAircraft, LiveFeedResult } from "@/lib/types";
+import type { LiveAircraft, LiveFeedResult, PositionSource } from "@/lib/types";
 import { AdsbError, type AdsbProvider } from "./types";
 
 /**
@@ -38,7 +38,29 @@ const STATE_FIELDS = {
   verticalRate: 11,
   geoAltitude: 13,
   squawk: 14,
+  /** 0 ADS-B, 1 ASTERIX (radar), 2 MLAT, 3 FLARM. */
+  positionSource: 16,
 } as const;
+
+/**
+ * OpenSky states its reception method numerically. ASTERIX is a radar exchange
+ * format and FLARM is a glider beacon; neither maps onto an ADS-B category, so
+ * both are reported as "other" rather than being dressed up as something more
+ * precise than they are.
+ */
+function openSkyPositionSource(value: unknown): PositionSource {
+  switch (value) {
+    case 0:
+      return "ADSB";
+    case 2:
+      return "MLAT";
+    case 1:
+    case 3:
+      return "OTHER";
+    default:
+      return "UNKNOWN";
+  }
+}
 
 type StateVector = Array<number | string | boolean | null>;
 
@@ -113,6 +135,7 @@ function normaliseState(state: StateVector, now: number): LiveAircraft | null {
             ? "descending"
             : "cruising",
     source: "opensky",
+    positionSource: openSkyPositionSource(state[STATE_FIELDS.positionSource]),
     /** OpenSky state vectors carry no type or registration. */
     identityDegraded: true,
   };
