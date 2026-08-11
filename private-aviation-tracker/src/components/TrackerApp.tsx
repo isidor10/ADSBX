@@ -203,6 +203,7 @@ export default function TrackerApp() {
           updatedAt={feed.data?.updatedAt ?? null}
           aircraftCount={aircraft.length}
           degradedIdentityCount={feed.data?.degradedIdentityCount}
+          lastKnownCount={feed.data?.lastKnownCount}
         />
 
         {selection && (

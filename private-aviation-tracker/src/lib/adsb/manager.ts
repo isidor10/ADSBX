@@ -160,6 +160,11 @@ export async function fetchWithFailover(
   radiusNm: number,
 ): Promise<ChainResult> {
   const attempts: ChainResult["attempts"] = [];
+  // A provider that answers "nothing here" for a busy area is usually a feed
+  // with no receiver coverage there, not empty sky. It counts as a success for
+  // health purposes but does not stop the chain — a second opinion costs one
+  // request and only in the case where we would otherwise show an empty map.
+  let empty: ChainResult | null = null;
 
   for (const provider of providers) {
     if (!provider.configured) continue;
@@ -179,6 +184,10 @@ export async function fetchWithFailover(
       const latencyMs = Date.now() - startedAt;
       recordSuccess(provider.name, latencyMs, result.aircraft.length);
       attempts.push({ provider: provider.name, ok: true, latencyMs });
+      if (result.aircraft.length === 0) {
+        empty ??= { result, servedBy: provider.name, attempts };
+        continue;
+      }
       return { result, servedBy: provider.name, attempts };
     } catch (error) {
       const latencyMs = Date.now() - startedAt;
@@ -192,6 +201,10 @@ export async function fetchWithFailover(
       // Fall through to the next provider.
     }
   }
+
+  // Nobody had traffic. If at least one provider genuinely answered "empty",
+  // that is a real observation of empty sky — report it as data, not an outage.
+  if (empty) return { ...empty, attempts };
 
   return { result: null, servedBy: null, attempts };
 }

@@ -36,6 +36,7 @@ export default function DataSources({
   updatedAt,
   aircraftCount,
   degradedIdentityCount,
+  lastKnownCount,
 }: {
   providers: ProviderHealth[];
   servedBy?: string | null;
@@ -43,16 +44,22 @@ export default function DataSources({
   updatedAt: number | null;
   aircraftCount: number;
   degradedIdentityCount?: number;
+  lastKnownCount?: number;
 }) {
   const [open, setOpen] = useState(false);
   if (providers.length === 0) return null;
 
   const freshnessSec = updatedAt ? Math.round((Date.now() - updatedAt) / 1000) : null;
-  const coverage = degraded
-    ? { label: "Degraded", color: "#f5a524" }
-    : freshnessSec !== null && freshnessSec < 30
-      ? { label: "Good", color: "#4ade80" }
-      : { label: "Stale", color: "#f5a524" };
+  // Retention is its own state, not just "degraded": the positions on screen
+  // are real but were not refreshed on this poll, and that distinction is the
+  // difference between trusting the map and being misled by it.
+  const coverage = lastKnownCount
+    ? { label: "Last known", color: "#f5a524" }
+    : degraded
+      ? { label: "Degraded", color: "#f5a524" }
+      : freshnessSec !== null && freshnessSec < 30
+        ? { label: "Good", color: "#4ade80" }
+        : { label: "Stale", color: "#f5a524" };
 
   return (
     <div className="pointer-events-auto absolute bottom-6 left-4 z-20">
@@ -135,6 +142,14 @@ export default function DataSources({
               );
             })}
           </ul>
+
+          {lastKnownCount ? (
+            <p className="mt-2 border-t border-edge pt-2 text-[9px] leading-relaxed text-amber">
+              No source answered for this view. {lastKnownCount} aircraft
+              {lastKnownCount === 1 ? " is" : " are"} drawn at the last position actually received —
+              not a live fix. Each aircraft&apos;s own timestamp is in its panel.
+            </p>
+          ) : null}
 
           {degradedIdentityCount ? (
             <p className="mt-2 border-t border-edge pt-2 text-[9px] leading-relaxed text-ink-3">

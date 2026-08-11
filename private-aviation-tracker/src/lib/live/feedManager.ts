@@ -1,12 +1,19 @@
 import { getAdsbProvider, getProviderChain } from "@/lib/adsb";
 import { fetchWithFailover, providerHealth } from "@/lib/adsb/manager";
-import { projectPosition } from "@/lib/geo";
+import { distanceNm, projectPosition } from "@/lib/geo";
 import { AdsbError } from "@/lib/adsb/types";
 import { matchesFilters } from "@/lib/aircraft/classifier";
 import { config, usingOpenFeedFallback } from "@/lib/config";
 import { ingestObservations } from "@/lib/history/ingest";
-import type { FilterKey, LiveFeedResult } from "@/lib/types";
-import { recordObservations } from "./recentIndex";
+import type { FilterKey, LiveAircraft, LiveFeedResult } from "@/lib/types";
+import { indexSize, recordObservations, snapshot } from "./recentIndex";
+
+/**
+ * How old a retained position may be before it is dropped rather than shown.
+ * Long enough to ride out a provider outage, short enough that nothing on the
+ * map is meaningfully wrong about where an aircraft is.
+ */
+const LAST_KNOWN_MAX_AGE_MS = 5 * 60_000;
 
 /**
  * Shared upstream polling.
@@ -33,32 +40,15 @@ interface CellState {
 }
 
 /**
- * Upstream rate-limit backoff, shared across every cell.
+ * Rate limits are handled per provider, in the failover manager's circuit
+ * breakers — not here.
  *
- * Community feeds rate-limit per client, and a 429 answered by simply retrying
- * on the next poll makes it worse. When one arrives, every cell stops asking
- * for a while and serves its last good payload instead — the map keeps showing
- * traffic and the feed gets a chance to recover.
+ * There used to be one global backoff shared by every cell and every provider:
+ * a 429 anywhere stopped the whole map from fetching. That directly contradicts
+ * the point of the provider chain. A rate limit at one vendor must sideline
+ * that vendor and nothing else, which is exactly what `fetchWithFailover` does,
+ * so the map keeps being served by whoever is healthy.
  */
-const globalForLimit = globalThis as unknown as { __patRateLimit?: { until: number; strikes: number } };
-const rateLimit = (globalForLimit.__patRateLimit ??= { until: 0, strikes: 0 });
-
-const BACKOFF_BASE_MS = 20_000;
-const BACKOFF_MAX_MS = 5 * 60_000;
-
-function rateLimited(): boolean {
-  return Date.now() < rateLimit.until;
-}
-
-function noteRateLimit(): void {
-  rateLimit.strikes = Math.min(rateLimit.strikes + 1, 5);
-  rateLimit.until = Date.now() + Math.min(BACKOFF_BASE_MS * 2 ** (rateLimit.strikes - 1), BACKOFF_MAX_MS);
-}
-
-function noteSuccess(): void {
-  rateLimit.strikes = 0;
-  rateLimit.until = 0;
-}
 
 const globalForFeed = globalThis as unknown as { __patCells?: Map<string, CellState> };
 const cells: Map<string, CellState> = (globalForFeed.__patCells ??= new Map());
@@ -175,7 +165,6 @@ async function refreshCell(
         state.result = enriched;
         state.fetchedAt = Date.now();
         state.lastError = null;
-        noteSuccess();
         recordObservations(result.aircraft);
         // History persistence must never delay the map response.
         void ingestObservations(result.aircraft).catch((err) =>
@@ -184,10 +173,7 @@ async function refreshCell(
         return enriched;
       }
 
-      // Every provider failed.
-      const rateLimited = attempts.some((a) => /rate limit|429/i.test(a.error ?? ""));
-      if (rateLimited) noteRateLimit();
-
+      // Every provider failed. Each one is already backing off individually.
       const detail = attempts
         .map((a) => `${a.provider}: ${a.ok ? "ok" : (a.error ?? "failed")}`)
         .join(" · ");
@@ -235,30 +221,30 @@ async function tileResult(
     result = await state.inflight;
   } else if (state.result && age < config.adsb.pollIntervalMs) {
     result = state.result;
-  } else if (rateLimited()) {
-    // Backing off after a 429. Keep showing the last good payload rather than
-    // adding to the load that triggered the limit in the first place.
-    const waitSec = Math.ceil((rateLimit.until - Date.now()) / 1000);
-    result = state.result
-      ? {
-          ...state.result,
-          stale: true,
-          error: `Upstream feed rate limit reached — pausing requests for ${waitSec}s and showing the last received positions.`,
-        }
-      : {
-          aircraft: [],
-          totalObserved: 0,
-          updatedAt: Date.now(),
-          source: getAdsbProvider().name,
-          simulated: false,
-          stale: true,
-          error: `Upstream feed rate limit reached. Retrying in ${waitSec}s. Community feeds limit how often a client may poll — raise ADSB_POLL_INTERVAL_MS, or set ADSBX_RAPIDAPI_KEY to use ADS-B Exchange instead.`,
-        };
   } else {
     result = await refreshCell(key, lat, lon, radiusNm);
   }
 
   return result;
+}
+
+/**
+ * Positions observed recently anywhere, narrowed to this viewport.
+ *
+ * The per-cell cache is keyed by quantised centre and radius, so panning or
+ * zooming lands on a cell that has never been fetched. If upstream is failing
+ * at that moment the map blanks — even though the aircraft the user was just
+ * looking at were received seconds ago and are still in memory. This is the
+ * retention layer for that: real observations, none of them invented, each
+ * carrying its own `seenAt` so the UI can age them honestly.
+ */
+function lastKnownWithin(query: ViewportQuery, maxAgeMs: number): LiveAircraft[] {
+  const cutoff = Date.now() - maxAgeMs;
+  return snapshot().filter(
+    (a) =>
+      a.seenAt >= cutoff &&
+      distanceNm(query.lat, query.lon, a.lat, a.lon) <= query.radiusNm,
+  );
 }
 
 /** Fetch (or reuse) the feed for a viewport and apply the caller's filters. */
@@ -276,8 +262,22 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     }
   }
 
-  const merged = [...byIcao.values()];
+  let merged = [...byIcao.values()];
   const errored = results.find((r) => r.error);
+
+  // Nothing came back for this viewport and upstream is unhappy. Fall back to
+  // what was genuinely observed in the last few minutes rather than showing an
+  // empty map: an empty map is indistinguishable from empty sky, which is a
+  // worse lie than a labelled stale position.
+  let lastKnownCount = 0;
+  if (merged.length === 0 && errored) {
+    const retained = lastKnownWithin(query, LAST_KNOWN_MAX_AGE_MS);
+    if (retained.length > 0) {
+      merged = retained;
+      lastKnownCount = retained.length;
+    }
+  }
+
   const degradedIdentityCount = merged.filter((a) => a.identityDegraded).length;
   const result: LiveFeedResult = {
     aircraft: merged,
@@ -287,10 +287,13 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     simulated: results[0]?.simulated ?? false,
     // Partial coverage is still useful; only flag stale when nothing succeeded.
     stale: results.every((r) => r.stale),
+    // With positions on screen this is a notice, not a failure — the UI shows
+    // a red blocking box only when there is genuinely nothing to look at.
     error: merged.length === 0 ? errored?.error : undefined,
     servedBy: results.find((r) => r.servedBy)?.servedBy ?? null,
-    degraded: results.every((r) => r.degraded === true),
+    degraded: results.every((r) => r.degraded === true) || lastKnownCount > 0,
     degradedIdentityCount,
+    lastKnownCount: lastKnownCount || undefined,
   };
 
   const filtered = result.aircraft.filter((a) => matchesFilters(a, query.filters));
@@ -302,11 +305,16 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     coveredRadiusNm: Math.round(coveredRadiusNm),
     viewportRadiusNm: Math.round(query.radiusNm),
     providers: providerHealth(getProviderChain()),
-    notice: usingOpenFeedFallback()
-      ? `Live data from the open community feed at ${new URL(config.adsb.openFeedUrl).host} — ` +
-        `no ${config.adsb.provider === "adsbx_direct" ? "ADSBX_API_KEY" : "ADSBX_RAPIDAPI_KEY"} ` +
-        "is set, so ADS-B Exchange is not in use. Coverage differs."
-      : undefined,
+    notice: lastKnownCount
+      ? `No source answered for this view — showing the last known position of ` +
+        `${lastKnownCount} aircraft, received within the last ` +
+        `${Math.round(LAST_KNOWN_MAX_AGE_MS / 60_000)} minutes. Each aircraft's own ` +
+        "timestamp is shown in its panel."
+      : usingOpenFeedFallback()
+        ? `Live data from the open community feed at ${new URL(config.adsb.openFeedUrl).host} — ` +
+          `no ${config.adsb.provider === "adsbx_direct" ? "ADSBX_API_KEY" : "ADSBX_RAPIDAPI_KEY"} ` +
+          "is set, so ADS-B Exchange is not in use. Coverage differs."
+        : undefined,
   };
 }
 
@@ -321,8 +329,9 @@ export function feedDiagnostics() {
     activeCells: cells.size,
     pollIntervalMs: config.adsb.pollIntervalMs,
     errors: [...cells.values()].filter((c) => c.lastError).length,
-    rateLimited: rateLimited(),
-    rateLimitStrikes: rateLimit.strikes,
+    // Rate limiting is per provider now — read it off provider health above,
+    // where it says which vendor is limited rather than just "something is".
+    retainedPositions: indexSize(),
   };
 }
 

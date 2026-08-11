@@ -94,7 +94,9 @@ async function main() {
 
   // --- 5. Circuit breaker: a failed provider is not hammered -------------
   resetBreakers();
-  const flaky = new FakeProvider("flaky", "error");
+  // Carries traffic, so that when it recovers it is chosen on its own merit
+  // rather than falling through as a provider with nothing to show.
+  const flaky = new FakeProvider("flaky", "error", [aircraft({ icao24: "ff6" })]);
   const backup = new FakeProvider("backup", "ok", [aircraft({ icao24: "dd4" })]);
   await fetchWithFailover([flaky, backup], 45, 20, 100);
   const callsAfterFirst = flaky.calls;
@@ -144,6 +146,28 @@ async function main() {
   assert.equal(merged[0].category, "business_jet", "classification survives the merge");
   assert.equal(merged[0].identityDegraded, false, "merged identity is no longer degraded");
   console.log("9. dedup by hex, fresher position + richer identity merged");
+
+  // --- 10. A provider with no coverage must not blank the map ------------
+  // Observed live: readsb answered "0 aircraft" for a busy region while
+  // airplanes.live had 141. A success with nothing in it is a coverage gap,
+  // not empty sky, so the chain asks the next provider before giving up.
+  resetBreakers();
+  const noCoverage = new FakeProvider("readsb", "ok", []);
+  const hasTraffic = new FakeProvider("airplanes.live", "ok", [aircraft({ icao24: "dd4" })]);
+  out = await fetchWithFailover([noCoverage, hasTraffic], 45, 20, 100);
+  assert.equal(out.servedBy, "airplanes.live", "an empty answer must not stop the chain");
+  assert.equal(out.result?.aircraft.length, 1);
+  assert.equal(noCoverage.calls, 1);
+  console.log("10. empty result falls through to a provider that has traffic");
+
+  // --- 11. Genuinely empty sky is data, not an outage --------------------
+  resetBreakers();
+  const alsoEmpty = new FakeProvider("opensky", "ok", []);
+  out = await fetchWithFailover([noCoverage, alsoEmpty], 45, 20, 100);
+  assert.ok(out.result, "an agreed-empty area must return a result, not null");
+  assert.equal(out.result.aircraft.length, 0);
+  assert.equal(out.servedBy, "readsb", "the first provider to answer empty is credited");
+  console.log("11. everyone agrees the area is empty -> reported as data");
 
   console.log("multi-provider failover: all checks passed");
 }

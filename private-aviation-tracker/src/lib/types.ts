@@ -129,6 +129,11 @@ export interface LiveFeedResult {
   degraded?: boolean;
   /** Contacts with no type/registration (OpenSky), so unclassifiable. */
   degradedIdentityCount?: number;
+  /**
+   * Positions being shown from retention because no provider answered for this
+   * viewport. Real observations, but older than a live poll — the UI says so.
+   */
+  lastKnownCount?: number;
 }
 
 // ------------------------------------------------------------ routes / flight
