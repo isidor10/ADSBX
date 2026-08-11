@@ -1,4 +1,5 @@
-import { getAdsbProvider } from "@/lib/adsb";
+import { getAdsbProvider, getProviderChain } from "@/lib/adsb";
+import { fetchWithFailover, providerHealth } from "@/lib/adsb/manager";
 import { projectPosition } from "@/lib/geo";
 import { AdsbError } from "@/lib/adsb/types";
 import { matchesFilters } from "@/lib/aircraft/classifier";
@@ -162,42 +163,54 @@ async function refreshCell(
   radiusNm: number,
 ): Promise<LiveFeedResult> {
   const state = cellFor(key);
-  const provider = getAdsbProvider();
+  const chain = getProviderChain();
 
-  const promise = provider
-    .fetchArea(lat, lon, radiusNm)
-    .then((result) => {
-      state.result = result;
-      state.fetchedAt = Date.now();
-      state.lastError = null;
-      noteSuccess();
-      recordObservations(result.aircraft);
-      // History persistence must never delay the map response.
-      void ingestObservations(result.aircraft).catch((err) =>
-        console.warn("[history] ingest failed:", (err as Error).message),
-      );
-      return result;
-    })
-    .catch((error: unknown) => {
-      if (error instanceof AdsbError && error.status === 429) noteRateLimit();
+  // Walk the provider chain. A vendor that is out of credit, rate-limited or
+  // simply down is a normal condition here, not an error: the next provider
+  // takes over, and if none answer we serve the cache.
+  const promise = fetchWithFailover(chain, lat, lon, radiusNm)
+    .then(({ result, servedBy, attempts }) => {
+      if (result) {
+        const enriched: LiveFeedResult = { ...result, servedBy };
+        state.result = enriched;
+        state.fetchedAt = Date.now();
+        state.lastError = null;
+        noteSuccess();
+        recordObservations(result.aircraft);
+        // History persistence must never delay the map response.
+        void ingestObservations(result.aircraft).catch((err) =>
+          console.warn("[history] ingest failed:", (err as Error).message),
+        );
+        return enriched;
+      }
 
-      const message =
-        error instanceof AdsbError
-          ? error.message
-          : `Live aircraft data temporarily unavailable: ${(error as Error).message}`;
+      // Every provider failed.
+      const rateLimited = attempts.some((a) => /rate limit|429/i.test(a.error ?? ""));
+      if (rateLimited) noteRateLimit();
+
+      const detail = attempts
+        .map((a) => `${a.provider}: ${a.ok ? "ok" : (a.error ?? "failed")}`)
+        .join(" · ");
+      const message = `Live data degraded — no aircraft source responded (${detail}).`;
       state.lastError = message;
 
       if (state.result) {
-        // Serve the last good payload rather than an empty map.
-        return { ...state.result, stale: true, error: message } satisfies LiveFeedResult;
+        // The whole point of the chain: a dead vendor must not blank the map.
+        return {
+          ...state.result,
+          stale: true,
+          degraded: true,
+          error: message,
+        } satisfies LiveFeedResult;
       }
       return {
         aircraft: [],
         totalObserved: 0,
         updatedAt: Date.now(),
-        source: provider.name,
-        simulated: provider.simulated,
+        source: "none",
+        simulated: false,
         stale: true,
+        degraded: true,
         error: message,
       } satisfies LiveFeedResult;
     })
@@ -265,6 +278,7 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
 
   const merged = [...byIcao.values()];
   const errored = results.find((r) => r.error);
+  const degradedIdentityCount = merged.filter((a) => a.identityDegraded).length;
   const result: LiveFeedResult = {
     aircraft: merged,
     totalObserved: merged.length,
@@ -274,6 +288,9 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     // Partial coverage is still useful; only flag stale when nothing succeeded.
     stale: results.every((r) => r.stale),
     error: merged.length === 0 ? errored?.error : undefined,
+    servedBy: results.find((r) => r.servedBy)?.servedBy ?? null,
+    degraded: results.every((r) => r.degraded === true),
+    degradedIdentityCount,
   };
 
   const filtered = result.aircraft.filter((a) => matchesFilters(a, query.filters));
@@ -284,6 +301,7 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
     tilesRequested: tiles.length,
     coveredRadiusNm: Math.round(coveredRadiusNm),
     viewportRadiusNm: Math.round(query.radiusNm),
+    providers: providerHealth(getProviderChain()),
     notice: usingOpenFeedFallback()
       ? `Live data from the open community feed at ${new URL(config.adsb.openFeedUrl).host} — ` +
         `no ${config.adsb.provider === "adsbx_direct" ? "ADSBX_API_KEY" : "ADSBX_RAPIDAPI_KEY"} ` +
@@ -296,6 +314,7 @@ export async function getViewportAircraft(query: ViewportQuery): Promise<LiveFee
 export function feedDiagnostics() {
   const provider = getAdsbProvider();
   return {
+    providers: providerHealth(getProviderChain()),
     provider: provider.name,
     configured: provider.configured,
     simulated: provider.simulated,

@@ -48,13 +48,18 @@ const MAX_EXTRAPOLATION_SEC = 45;
 const FRAME_INTERVAL_MS = 100;
 
 /**
- * Clustering, on by default. Below `CLUSTER_MAX_ZOOM` nearby contacts collapse
- * into a count bubble, which is what lets a continent-wide view carry hundreds
- * of aircraft without turning into an unreadable pile of overlapping icons;
- * above it every aircraft is drawn individually. Set NEXT_PUBLIC_MAP_CLUSTER
- * to "false" to draw every contact separately at all zooms.
+ * Clustering is OFF by default: every aircraft is drawn as its own marker at
+ * every zoom level, which is what this product is for — a count bubble hides
+ * the traffic you came to look at.
+ *
+ * This is affordable because the markers are a single MapLibre symbol layer
+ * backed by one GeoJSON source, drawn on the GPU. There are no React elements
+ * or DOM markers per aircraft, so a few thousand contacts cost one buffer
+ * upload per frame rather than a few thousand layout operations.
+ *
+ * Set NEXT_PUBLIC_MAP_CLUSTER=true to opt back in for very dense views.
  */
-const CLUSTER_ENABLED = process.env.NEXT_PUBLIC_MAP_CLUSTER !== "false";
+const CLUSTER_ENABLED = process.env.NEXT_PUBLIC_MAP_CLUSTER === "true";
 const CLUSTER_MAX_ZOOM = Number(process.env.NEXT_PUBLIC_MAP_CLUSTER_MAX_ZOOM ?? 7);
 
 const GLYPHS =
@@ -414,9 +419,47 @@ export default function MapView({
         },
       });
 
-      map.on("click", "aircraft-icons", (event) => {
-        const feature = event.features?.[0] as MapGeoJSONFeature | undefined;
-        const icao = feature?.properties?.icao24 as string | undefined;
+      // Selection is deliberately forgiving. An aircraft icon is ~20 px across
+      // and moving, so requiring a pixel-exact hit makes the map feel broken —
+      // especially on a touch screen. Query a padded box around the tap and
+      // take the closest contact inside it.
+      const HIT_RADIUS_PX = 14;
+      map.on("click", (event) => {
+        const { x, y } = event.point;
+        // A click on a cluster bubble belongs to the cluster handler below.
+        if (
+          CLUSTER_ENABLED &&
+          map.getLayer("clusters") &&
+          map.queryRenderedFeatures(event.point, { layers: ["clusters"] }).length > 0
+        ) {
+          return;
+        }
+
+        const box: [[number, number], [number, number]] = [
+          [x - HIT_RADIUS_PX, y - HIT_RADIUS_PX],
+          [x + HIT_RADIUS_PX, y + HIT_RADIUS_PX],
+        ];
+        const hits = map.queryRenderedFeatures(box, {
+          layers: ["aircraft-icons"],
+        }) as MapGeoJSONFeature[];
+        if (hits.length === 0) return;
+
+        // Nearest to the actual tap point, so overlapping traffic resolves the
+        // way the user pointed rather than by draw order.
+        let best: MapGeoJSONFeature | null = null;
+        let bestDistance = Infinity;
+        for (const hit of hits) {
+          if (hit.geometry.type !== "Point") continue;
+          const [lon, lat] = hit.geometry.coordinates as [number, number];
+          const at = map.project([lon, lat]);
+          const distance = (at.x - x) ** 2 + (at.y - y) ** 2;
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            best = hit;
+          }
+        }
+
+        const icao = best?.properties?.icao24 as string | undefined;
         if (!icao) return;
         const match = aircraftRef.current.find((a) => a.icao24 === icao);
         if (match) onSelectRef.current(match);
