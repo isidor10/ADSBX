@@ -26,16 +26,66 @@ function providerZaUrl(url: string): "sqlite" | "postgresql" {
   );
 }
 
+/**
+ * Vercel Postgres i pojedine integracije ne kreiraju `DATABASE_URL` nego svoje
+ * nazive. Ako nađemo neki od njih, korisniku tačno kažemo šta da uradi umesto
+ * da ga pustimo u nerazumljivu Prisma grešku.
+ */
+const POZNATI_ALIJASI = [
+  "POSTGRES_PRISMA_URL",
+  "POSTGRES_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "DATABASE_URL_UNPOOLED",
+  "NEON_DATABASE_URL",
+];
+
+function prijaviNedostatak(): never {
+  const nadjeni = POZNATI_ALIJASI.filter((n) => process.env[n]);
+
+  const linije = [
+    "",
+    "═══════════════════════════════════════════════════════════════",
+    " DATABASE_URL nije podešen — build ne može da nastavi.",
+    "═══════════════════════════════════════════════════════════════",
+    "",
+  ];
+
+  if (nadjeni.length > 0) {
+    linije.push(
+      ` Pronađena je druga promenljiva sa vezom ka bazi: ${nadjeni.join(", ")}.`,
+      "",
+      " Aplikacija očekuje da se promenljiva zove tačno DATABASE_URL.",
+      " U Vercelu: Settings → Environment Variables → Add New",
+      `   Key:   DATABASE_URL`,
+      `   Value: ista vrednost koju ima ${nadjeni[0]}`,
+      " pa Deployments → Redeploy.",
+    );
+  } else {
+    linije.push(
+      " U Vercelu: Settings → Environment Variables → Add New",
+      "   Key:   DATABASE_URL",
+      "   Value: postgres://... (connection string vaše baze)",
+      " pa Deployments → Redeploy.",
+      "",
+      " Proverite i da je promenljiva označena za okruženje u kojem se",
+      " build izvršava (Production / Preview / Development).",
+      "",
+      " Za lokalni rad: kopirajte .env.example u .env i unesite vrednost.",
+    );
+  }
+
+  linije.push("═══════════════════════════════════════════════════════════════", "");
+  console.error(linije.join("\n"));
+  process.exit(1);
+}
+
 function main() {
   const url = process.env.DATABASE_URL;
 
-  if (!url) {
-    // Bez URL-a ne diramo šemu — build će ionako pući na jasnijem mestu.
-    console.log(
-      "[podesi-bazu] DATABASE_URL nije podešen; ostavljam schema.prisma kakva jeste.",
-    );
-    return;
-  }
+  // Ranije je ovde stajalo samo upozorenje, pa je build išao dalje i pucao na
+  // `prisma db push` sa porukom P1012 koja ne kaže šta korisnik treba da uradi.
+  // Bolje je stati odmah, na mestu gde znamo tačan uzrok.
+  if (!url) prijaviNedostatak();
 
   const zeljeni = providerZaUrl(url);
   const sema = readFileSync(PUTANJA, "utf-8");

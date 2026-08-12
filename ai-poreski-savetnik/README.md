@@ -114,6 +114,14 @@ idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 | `AI_EFFORT` | `high` (opciono) |
 | `WEB_SEARCH_ENABLED` | `true` (opciono) |
 
+> ⚠️ **Promenljiva mora da se zove tačno `DATABASE_URL`.** Vercel Postgres i
+> neke integracije kreiraju `POSTGRES_PRISMA_URL` ili `POSTGRES_URL` — to nije
+> dovoljno. Dodajte `DATABASE_URL` sa istom vrednošću. Ako to propustite, build
+> staje sa porukom koja vam kaže tačno šta nedostaje.
+>
+> Proverite i da je promenljiva označena za okruženje u kojem se build izvršava
+> (Production / Preview / Development).
+
 ### 4. Build komanda
 
 Vercel sam pokupi `vercel-build` iz `package.json`:
