@@ -116,7 +116,31 @@ if (!imaKljuc) {
   uredu("ANTHROPIC_API_KEY pronađen — radi i Razgovor");
 }
 
-console.log("  Otvorite: \x1b[36mhttp://localhost:3000\x1b[0m");
+// U Codespaces-u localhost ne znači ništa korisniku — aplikacija je dostupna
+// preko prosleđenog porta. Sastavljamo tačnu adresu da ne mora da je traži.
+const codespace = process.env.CODESPACE_NAME;
+const domen = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+
+if (codespace && domen) {
+  console.log(
+    [
+      "  \x1b[1mOtvorite ovu adresu:\x1b[0m",
+      `  \x1b[36mhttps://${codespace}-3000.${domen}\x1b[0m`,
+      "",
+      "  \x1b[2mAko se ne otvori sama: dole kartica PORTS → red 3000 →\x1b[0m",
+      "  \x1b[2mpređite mišem i kliknite ikonicu globusa.\x1b[0m",
+    ].join("\n"),
+  );
+} else {
+  console.log("  Otvorite: \x1b[36mhttp://localhost:3000\x1b[0m");
+}
+
 console.log("  Zaustavljanje: Ctrl+C\n");
 
-spawn("npx", ["next", "dev"], { stdio: "inherit", cwd: KOREN, shell: true });
+// `--hostname 0.0.0.0` je bitan: vezivanje samo za localhost ume da spreči
+// prosleđivanje porta u Codespaces-u i sličnim udaljenim okruženjima.
+spawn("npx", ["next", "dev", "--hostname", "0.0.0.0", "--port", "3000"], {
+  stdio: "inherit",
+  cwd: KOREN,
+  shell: true,
+});
