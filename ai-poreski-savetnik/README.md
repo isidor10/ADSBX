@@ -122,32 +122,31 @@ idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 > Proverite i da je promenljiva označena za okruženje u kojem se build izvršava
 > (Production / Preview / Development).
 
-### 4. Build komanda
+### 4. Build komanda — pravna baza se puni sama
 
 Vercel sam pokupi `vercel-build` iz `package.json`:
 
 ```
-tsx scripts/podesi-bazu.ts && prisma generate && prisma db push && next build
+podesi-bazu → prisma generate → prisma db push → seed → next build
 ```
+
+Seed je deo build-a, pa **nema ručnog koraka posle deploya**. Bezbedno je da se
+izvršava svaki put: sve ide kroz `upsert` po prirodnom ključu i dira isključivo
+pravni sadržaj — korisnici, profili firmi, razgovori i audit trag se ne diraju.
+Provereno sa tri uzastopna pokretanja: pravni sadržaj ostaje stabilan
+(`0 novih, 39 ažuriranih`), korisnički podaci netaknuti.
 
 `prisma db push` je namerno **bez** `--accept-data-loss`. Ako bi izmena šeme
 zahtevala brisanje podataka, build će pući sa jasnom porukom umesto da tiho
 obriše korisničke podatke. Kada do toga dođe, migraciju uradite svesno.
 
-### 5. Punjenje pravne baze — jednom, ručno
-
-Vercel build ne pokreće seed. Posle prvog uspešnog deploya, sa svog računara:
+Ako baš želite da seed pokrenete ručno sa svog računara:
 
 ```bash
-cd ai-poreski-savetnik
 DATABASE_URL="postgres://…" npm run seed:prod
 ```
 
-Bez ovog koraka aplikacija radi, ali je pravna baza prazna — pretraga propisa
-ne vraća ništa, a kalkulatori prijavljuju da parametri nedostaju (što je
-ispravno ponašanje, ali nije ono što želite).
-
-### 6. Ograničenja koja treba znati
+### 5. Ograničenja koja treba znati
 
 - `maxDuration` za `/api/chat` i `/api/dokumenti` je 300 s. Na **Hobby** planu
   limit je 60 s, pa složena pitanja sa web pretragom mogu da isteknu — za

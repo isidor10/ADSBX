@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "tsx --env-file-if-exists=.env scripts/podesi-bazu.ts && prisma generate && next build",
-    "vercel-build": "tsx --env-file-if-exists=.env scripts/podesi-bazu.ts && prisma generate && prisma db push && next build",
+    "vercel-build": "tsx --env-file-if-exists=.env scripts/podesi-bazu.ts && prisma generate && prisma db push && tsx --env-file-if-exists=.env scripts/seed.ts && next build",
     "seed:prod": "tsx scripts/seed.ts",
     "start": "next start",
     "postinstall": "prisma generate",
