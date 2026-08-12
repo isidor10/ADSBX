@@ -18,7 +18,9 @@ export function opisiGresku(greska: unknown): OpisGreske {
   if (greska instanceof Anthropic.AuthenticationError) {
     return {
       poruka:
-        "Podešeni ANTHROPIC_API_KEY nije prihvaćen. Proverite ključ u .env fajlu — ako ste kopirali .env.example, tamo stoji vrednost-šablon koju treba zameniti pravim ključem.",
+        "Podešeni ANTHROPIC_API_KEY nije prihvaćen. Proverite u fajlu .env " +
+        "da je upisan ceo ključ sa console.anthropic.com (počinje sa sk-ant-), " +
+        "bez navodnika i bez razmaka, pa ponovo pokrenite aplikaciju.",
       status: 503,
       ponoviti: false,
     };
@@ -73,7 +75,11 @@ export function opisiGresku(greska: unknown): OpisGreske {
   if (greska instanceof Error && greska.message.includes("ANTHROPIC_API_KEY")) {
     return {
       poruka:
-        "Nije podešen ANTHROPIC_API_KEY. Kopirajte .env.example u .env i unesite ključ, pa ponovo pokrenite aplikaciju.",
+        "Nije podešen ANTHROPIC_API_KEY, pa Razgovor ne može da radi. " +
+        "Otvorite fajl .env u korenu projekta, u red ANTHROPIC_API_KEY= " +
+        "upišite ključ sa console.anthropic.com (počinje sa sk-ant-), " +
+        "pa zaustavite aplikaciju sa Ctrl+C i pokrenite je ponovo. " +
+        "Kalkulatori, Propisi, Rokovi i Moja firma rade i bez ključa.",
       status: 503,
       ponoviti: false,
     };
