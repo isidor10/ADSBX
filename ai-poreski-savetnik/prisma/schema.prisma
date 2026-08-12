@@ -1,0 +1,439 @@
+// Pravna baza AI poreskog savetnika.
+//
+// Osnovno načelo: model ne pamti zakone — čita ih odavde. Jedinica citiranja i
+// jedinica pretrage je ODREDBA (član/stav/tačka), i svaka odredba ima period
+// važenja. Bez toga nema ni tačnog citata ni odgovora na pitanje "koliko je
+// bilo 2023. godine".
+//
+// Dev koristi SQLite. Za produkciju: provider = "postgresql" i pgvector za
+// OdredbaVektor (vidi TEHNICKI-PLAN.md, odeljak 3).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PROPISI
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Propis {
+  id          String @id @default(cuid())
+  naziv       String
+  skracenica  String
+  // ZAKON | PODZAKONSKI_AKT | UPUTSTVO | MISLJENJE | SUDSKA_PRAKSA | NACRT
+  tip         String
+  // PDV | DOBIT | DOHODAK | DOPRINOSI | RAD | RACUNOVODSTVO | EFAKTURE |
+  // FISKALIZACIJA | POSTUPAK | IMOVINA | PRIVREDA | DEVIZNO | OSTALO
+  kategorija  String
+  donosilac   String?
+
+  // Lista brojeva "Sl. glasnika RS" u kojima je propis objavljen sa izmenama.
+  // JSON niz stringova — SQLite nema native array tip.
+  sluzbeniGlasnik String @default("[]")
+
+  datumDonosenja        DateTime?
+  datumStupanjaNaSnagu  DateTime?
+  datumPrestankaVazenja DateTime?
+
+  izvorInstitucija String
+  izvorUrl         String
+  // 1 = Službeni glasnik … 9 = ostali stručni izvori (vidi zahtev 5)
+  prioritetIzvora  Int    @default(9)
+
+  // POTVRDJENO | DELIMICNO | NEPOTVRDJENO
+  verifikacija     String    @default("NEPOTVRDJENO")
+  poslednjaProvera DateTime?
+  napomena         String?
+
+  verzije    PropisVerzija[]
+  odredbe    Odredba[]
+  izmene     Izmena[]
+  rokovi     Rok[]
+  parametri  PoreskiParametar[]
+
+  kreiran DateTime @default(now())
+  azuriran DateTime @updatedAt
+
+  @@unique([skracenica])
+  @@index([kategorija])
+  @@index([tip])
+}
+
+/// Snapshot propisa kroz vreme — omogućava prikaz "2024 → 2025 → 2026".
+model PropisVerzija {
+  id             String    @id @default(cuid())
+  propisId       String
+  propis         Propis    @relation(fields: [propisId], references: [id], onDelete: Cascade)
+  oznakaVerzije  String
+  vaziOd         DateTime
+  vaziDo         DateTime?
+  sluzbeniGlasnik String?
+  opisIzmene     String?
+  izvorUrl       String?
+
+  odredbe Odredba[]
+
+  @@index([propisId, vaziOd])
+}
+
+/// JEDINICA CITIRANJA. Chunk granica je pravna granica (stav/tačka), ne
+/// proizvoljnih N karaktera — zato citat uvek pokazuje tačno na ono što je
+/// pronađeno.
+model Odredba {
+  id        String        @id @default(cuid())
+  propisId  String
+  propis    Propis        @relation(fields: [propisId], references: [id], onDelete: Cascade)
+  verzijaId String?
+  verzija   PropisVerzija? @relation(fields: [verzijaId], references: [id])
+
+  clan     String
+  stav     String?
+  tacka    String?
+  podtacka String?
+
+  naslov String?
+  tekst  String
+
+  vaziOd DateTime
+  vaziDo DateTime?
+
+  izvorUrl String
+  /// Link direktno na član kad izvor to podržava (zahtev 9).
+  deepLink String?
+
+  /// Ako je false, UI NE prikazuje broj člana kao potvrđen, već ispisuje
+  /// "Nisam uspeo da potvrdim tačan član propisa." (zahtev 3).
+  potvrdjenBrojClana Boolean @default(false)
+
+  /// Da li je `tekst` doslovan tekst propisa ili sažetak/parafraza.
+  /// Sažetak se nikada ne prikazuje pod navodnicima kao tekst zakona (zahtev 18).
+  doslovanTekst Boolean @default(false)
+
+  /// SHA-256 teksta — detekcija promene pri ponovnom ingestu.
+  hash String?
+
+  vektor    OdredbaVektor?
+  citati    Citat[]
+  izmene    Izmena[]
+  parametri PoreskiParametar[]
+  rokovi    Rok[]
+
+  kreirana DateTime @default(now())
+
+  @@index([propisId, clan])
+  @@index([vaziOd, vaziDo])
+}
+
+model OdredbaVektor {
+  id        String  @id @default(cuid())
+  odredbaId String  @unique
+  odredba   Odredba @relation(fields: [odredbaId], references: [id], onDelete: Cascade)
+  model     String
+  dimenzija Int
+  /// JSON niz brojeva. U produkciji na Postgresu — pgvector kolona.
+  vektor    String
+}
+
+/// Zahtev 16 i 25 — šta se promenilo, od kada, koga pogađa, šta treba uraditi.
+model Izmena {
+  id        String   @id @default(cuid())
+  propisId  String
+  propis    Propis   @relation(fields: [propisId], references: [id], onDelete: Cascade)
+  odredbaId String?
+  odredba   Odredba? @relation(fields: [odredbaId], references: [id])
+
+  naslov            String
+  staraOdredba      String?
+  novaOdredba       String?
+  odKadaSePrimenjuje DateTime
+  kogaPogadja       String
+  staTrebaUraditi   String
+  izvorUrl          String
+  sluzbeniGlasnik   String?
+
+  objavljena DateTime @default(now())
+
+  @@index([propisId, odKadaSePrimenjuje])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  POREZNI PARAMETRI — kalkulatori čitaju odavde, ne iz koda
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Kad se 1. februara promeni neoporezivi iznos, menja se jedan red — ne deploy.
+/// Temporalno važenje omogućava "koliki je bio porez 2024?" bez grananja u kodu.
+model PoreskiParametar {
+  id     String @id @default(cuid())
+  /// npr. "pdv.opsta_stopa", "zarada.neoporezivi_iznos", "doprinosi.pio.ukupno"
+  kljuc  String
+  naziv  String
+  /// Decimal se u SQLite čuva kao string da bi se izbegla greška zaokruživanja.
+  vrednost String
+  /// PROCENAT | RSD | EUR | DANA | KOEFICIJENT
+  jedinica String
+
+  vaziOd DateTime
+  vaziDo DateTime?
+
+  propisId  String?
+  propis    Propis?  @relation(fields: [propisId], references: [id])
+  odredbaId String?
+  odredba   Odredba? @relation(fields: [odredbaId], references: [id])
+
+  izvorUrl     String
+  napomena     String?
+  verifikacija String @default("NEPOTVRDJENO")
+
+  @@index([kljuc, vaziOd])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ROKOVI (zahtev 15)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Rok {
+  id    String @id @default(cuid())
+  naziv String
+  opis  String
+
+  /// JSON niz: ["DOO","PAUSALAC","KNJIGAS","AD","PREDUZETNIK_LICNA_ZARADA"]
+  vrsteObveznika String
+  /// MESECNO | KVARTALNO | GODISNJE | JEDNOKRATNO
+  ponavljanje    String
+  danUMesecu     Int?
+  mesec          Int?
+  /// Uslov koji mora da važi da bi se rok prikazao, npr. "pdvObveznik"
+  uslov          String?
+
+  obrazac String?
+
+  propisId  String?
+  propis    Propis?  @relation(fields: [propisId], references: [id])
+  odredbaId String?
+  odredba   Odredba? @relation(fields: [odredbaId], references: [id])
+  izvorUrl  String
+
+  verifikacija String @default("NEPOTVRDJENO")
+
+  @@index([ponavljanje])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  KORISNICI, FIRME, RAZGOVORI
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Korisnik {
+  id           String @id @default(cuid())
+  email        String @unique
+  lozinkaHash  String
+  ime          String?
+  /// KORISNIK | ADMIN
+  uloga        String @default("KORISNIK")
+
+  firme      Firma[]
+  sesije     Sesija[]
+  razgovori  Razgovor[]
+  dokumenti  Dokument[]
+  pracenja   Pracenje[]
+
+  kreiran DateTime @default(now())
+}
+
+model Sesija {
+  id         String   @id @default(cuid())
+  korisnikId String
+  korisnik   Korisnik @relation(fields: [korisnikId], references: [id], onDelete: Cascade)
+  tokenHash  String   @unique
+  istice     DateTime
+  kreirana   DateTime @default(now())
+
+  @@index([korisnikId])
+}
+
+/// Zahtev 12 — profil firme, da korisnik ne mora svaki put da ponavlja kontekst.
+model Firma {
+  id         String   @id @default(cuid())
+  korisnikId String
+  korisnik   Korisnik @relation(fields: [korisnikId], references: [id], onDelete: Cascade)
+
+  naziv           String
+  pib             String?
+  maticniBroj     String?
+  /// DOO | AD | PREDUZETNIK_PAUSALAC | PREDUZETNIK_KNJIGAS |
+  /// PREDUZETNIK_LICNA_ZARADA | FIZICKO_LICE | DRUGO_PRAVNO_LICE
+  pravnaForma     String
+  sifraDelatnosti String?
+  nazivDelatnosti String?
+  /// U_SISTEMU | VAN_SISTEMA | DOBROVOLJNO
+  pdvStatus       String   @default("VAN_SISTEMA")
+  /// MESECNI | KVARTALNI (poreski period za PDV)
+  pdvPeriod       String?
+  nacinOporezivanja String?
+  brojZaposlenih  Int      @default(0)
+  sediste         String?
+  /// JSON niz naziva poslovnih jedinica
+  poslovneJedinice String  @default("[]")
+  napomena        String?
+
+  razgovori Razgovor[]
+
+  kreirana DateTime @default(now())
+  azurirana DateTime @updatedAt
+
+  @@index([korisnikId])
+}
+
+model Razgovor {
+  id         String    @id @default(cuid())
+  korisnikId String?
+  korisnik   Korisnik? @relation(fields: [korisnikId], references: [id], onDelete: SetNull)
+  firmaId    String?
+  firma      Firma?    @relation(fields: [firmaId], references: [id], onDelete: SetNull)
+  naslov     String
+
+  poruke Poruka[]
+
+  kreiran  DateTime @default(now())
+  azuriran DateTime @updatedAt
+
+  @@index([korisnikId])
+}
+
+model Poruka {
+  id         String   @id @default(cuid())
+  razgovorId String
+  razgovor   Razgovor @relation(fields: [razgovorId], references: [id], onDelete: Cascade)
+  /// korisnik | asistent
+  uloga      String
+  sadrzaj    String
+
+  /// Ceo strukturirani odgovor (JSON) — kratak odgovor, objašnjenje, tretman…
+  strukturiraniOdgovor String?
+  /// VISOKA | POTREBNA_PROVERA | NEDOVOLJNO_PODATAKA
+  nivoPouzdanosti      String?
+
+  citati    Citat[]
+  audit     AuditZapis?
+  ocena     AdminOcena?
+
+  kreirana DateTime @default(now())
+
+  @@index([razgovorId])
+}
+
+/// Veza poruke ↔ odredbe. Ovo je razlog zašto broj člana ne može da bude
+/// halucinacija: UI renderuje član iz Odredbe, ne iz teksta modela.
+model Citat {
+  id        String  @id @default(cuid())
+  porukaId  String
+  poruka    Poruka  @relation(fields: [porukaId], references: [id], onDelete: Cascade)
+  odredbaId String?
+  odredba   Odredba? @relation(fields: [odredbaId], references: [id], onDelete: SetNull)
+
+  /// Za izvore sa weba koji nisu u bazi
+  spoljniNaziv String?
+  spoljniUrl   String?
+  institucija  String?
+  prioritet    Int     @default(9)
+
+  relevantnost String?
+  redosled     Int     @default(0)
+
+  @@index([porukaId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DOKUMENTI (zahtev 13)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Dokument {
+  id         String   @id @default(cuid())
+  korisnikId String?
+  korisnik   Korisnik? @relation(fields: [korisnikId], references: [id], onDelete: SetNull)
+
+  imeFajla  String
+  mimeTip   String
+  velicina  Int
+  /// Izvučen tekst dokumenta (ne čuvamo sam fajl duže nego što treba).
+  izvuceniTekst String?
+
+  analiza AnalizaDokumenta?
+
+  otpremljen DateTime @default(now())
+
+  @@index([korisnikId])
+}
+
+model AnalizaDokumenta {
+  id         String   @id @default(cuid())
+  dokumentId String   @unique
+  dokument   Dokument @relation(fields: [dokumentId], references: [id], onDelete: Cascade)
+
+  /// FAKTURA | UGOVOR | OBRACUN_ZARADE | PORESKA_PRIJAVA | RESENJE_PU |
+  /// IZVOD | RACUN | NEPOZNATO
+  vrstaDokumenta String
+  rezultat       String   // JSON: nalazi, rizici, šta uraditi, rokovi, nedostaje
+  nivoPouzdanosti String
+  kreirana       DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PRAĆENJE IZMENA, AUDIT, ADMIN
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Pracenje {
+  id         String   @id @default(cuid())
+  korisnikId String
+  korisnik   Korisnik @relation(fields: [korisnikId], references: [id], onDelete: Cascade)
+  kategorija String
+  kreirano   DateTime @default(now())
+
+  @@unique([korisnikId, kategorija])
+}
+
+/// Zahtev 33 — bez ovoga sistem nije upotrebljiv profesionalno.
+model AuditZapis {
+  id       String @id @default(cuid())
+  porukaId String @unique
+  poruka   Poruka @relation(fields: [porukaId], references: [id], onDelete: Cascade)
+
+  pitanje         String
+  /// JSON: [{ tip, odredbaId?, url, naziv, clan?, verzijaPropisa?, pristupljeno }]
+  koriscenIzvori  String
+  /// JSON: id-jevi odredbi koje su bile u kontekstu modela
+  kontekstOdredbi String
+  /// Citati koje je verifikator odbacio (halucinacije) — merilo kvaliteta.
+  odbaceniCitati  String   @default("[]")
+  webPretraga     Boolean  @default(false)
+  model           String
+  ciljniDatum     DateTime
+  trajanjeMs      Int?
+  kreiran         DateTime @default(now())
+}
+
+model AdminOcena {
+  id       String @id @default(cuid())
+  porukaId String @unique
+  poruka   Poruka @relation(fields: [porukaId], references: [id], onDelete: Cascade)
+  /// POUZDAN | POTREBNA_STRUCNA_PROVERA
+  ocena     String
+  komentar  String?
+  ocenio    String?
+  kreirana  DateTime @default(now())
+}
+
+/// Pitanja na koja sistem nije mogao da nađe pravni osnov — ulaz za admina
+/// i lista za dopunu pravne baze.
+model NeodgovorenoPitanje {
+  id       String   @id @default(cuid())
+  pitanje  String
+  razlog   String
+  oblast   String?
+  brojPuta Int      @default(1)
+  poslednji DateTime @default(now())
+}

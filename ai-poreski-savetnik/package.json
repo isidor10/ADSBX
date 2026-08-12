@@ -1,0 +1,43 @@
+{
+  "name": "ai-poreski-savetnik",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI poreski savetnik i računovođa za Republiku Srbiju — LLM + RAG + web pretraga + pravna baza.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "typecheck": "tsc --noEmit",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "seed": "tsx --env-file=.env scripts/seed.ts",
+    "ingest": "tsx --env-file=.env scripts/ingest-propise.ts",
+    "index": "tsx --env-file=.env scripts/build-index.ts",
+    "izmene": "tsx --env-file=.env scripts/detect-izmene.ts",
+    "verify:kalkulatori": "tsx --env-file=.env scripts/verify-kalkulatore.ts",
+    "verify:retrieval": "tsx --env-file=.env scripts/verify-retrieval.ts",
+    "verify:citati": "tsx --env-file=.env scripts/verify-citate.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
+    "@prisma/client": "^6.2.1",
+    "mammoth": "^1.8.0",
+    "next": "^16.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.7",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
+    "postcss": "^8.5.1",
+    "prisma": "^6.2.1",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
