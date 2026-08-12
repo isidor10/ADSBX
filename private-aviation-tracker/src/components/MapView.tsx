@@ -161,13 +161,37 @@ function clearRoute(map: maplibregl.Map) {
   source?.setData({ type: "FeatureCollection", features: [] });
 }
 
-function labelFor(a: LiveAircraft): string {
-  const lines = [a.registration ?? a.callsign ?? a.icao24.toUpperCase()];
-  if (a.typeCode) lines.push(a.typeCode);
-  if (a.altBaroFt !== null) {
-    lines.push(a.altBaroFt >= 18000 ? `FL${Math.round(a.altBaroFt / 100)}` : `${a.altBaroFt} ft`);
-  }
-  return lines.join("\n");
+/**
+ * Three label tiers, chosen by zoom in the layer's style expression.
+ *
+ * Building all three per aircraft costs a few string joins per frame and lets
+ * MapLibre switch between them on the GPU, which is far cheaper than rebuilding
+ * the source data every time the user zooms.
+ */
+function labelsFor(a: LiveAircraft, destination: string | null): {
+  labelId: string;
+  labelType: string;
+  labelFull: string;
+} {
+  const id = a.registration ?? a.callsign ?? a.icao24.toUpperCase();
+  const altitude =
+    a.altBaroFt === null
+      ? null
+      : a.altBaroFt >= 18000
+        ? `FL${Math.round(a.altBaroFt / 100)}`
+        : `${a.altBaroFt} ft`;
+
+  const typeLine = [a.typeCode, altitude].filter(Boolean).join("  ");
+  const speed = a.groundSpeedKt !== null ? `${Math.round(a.groundSpeedKt)} kt` : null;
+
+  const labelType = typeLine ? `${id}\n${typeLine}` : id;
+  const detail = [speed, destination ? `→ ${destination}` : null].filter(Boolean).join("  ");
+
+  return {
+    labelId: id,
+    labelType,
+    labelFull: detail ? `${labelType}\n${detail}` : labelType,
+  };
 }
 
 export default function MapView({
@@ -402,10 +426,21 @@ export default function MapView({
             10, 1.0,
             13, 1.25,
           ],
-          // Labels appear once individual aircraft are distinguishable.
-          "text-field": ["step", ["zoom"], "", 8, ["get", "label"]],
+          // Label density rises with zoom rather than switching on at one
+          // threshold. Far out, a registration next to every contact is an
+          // unreadable wall of text; close in, the aircraft is the subject of
+          // attention and the detail is what the user came for. Each tier is a
+          // separate pre-computed string so the GPU does no work per frame.
+          "text-field": [
+            "step",
+            ["zoom"],
+            "",
+            6.5, ["get", "labelId"],      // registration only
+            9, ["get", "labelType"],      // + type and altitude
+            11.5, ["get", "labelFull"],   // + speed and destination
+          ],
           "text-font": FONT,
-          "text-size": 10,
+          "text-size": ["interpolate", ["linear"], ["zoom"], 6, 9, 11, 10, 14, 11],
           "text-offset": [0, 1.5],
           "text-anchor": "top",
           "text-allow-overlap": false,
@@ -531,7 +566,14 @@ export default function MapView({
             registration: a.registration ?? "",
             icon: ensureIcon(map, a, a.icao24 === selectedRef.current),
             track: a.trackDeg ?? 0,
-            label: labelFor(a),
+            // Only the selected aircraft's destination is known to the map;
+            // the rest is per-aircraft data already in hand.
+            ...labelsFor(
+              a,
+              a.icao24 === selectedRef.current
+                ? (routeRef.current?.destination?.icao ?? null)
+                : null,
+            ),
           },
         };
       });

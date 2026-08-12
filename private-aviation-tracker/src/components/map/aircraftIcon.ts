@@ -5,6 +5,7 @@ import {
   type FamilyKey,
   type Silhouette,
 } from "@/lib/aircraft/silhouettes";
+import { STATUS_STYLE } from "@/lib/aircraft/operationalClass";
 import type { AircraftCategory, LiveAircraft } from "@/lib/types";
 
 /**
@@ -20,6 +21,11 @@ import type { AircraftCategory, LiveAircraft } from "@/lib/types";
 export const ICON_PIXELS = 108;
 const PIXEL_RATIO = 3;
 
+/**
+ * Fallback palette, by airframe. Only reached for a contact the classification
+ * engine has not reported on — normally nothing, since classification happens
+ * during normalisation.
+ */
 export const CATEGORY_COLORS: Record<AircraftCategory, string> = {
   business_jet: "#22d3ee",
   private_jet: "#22d3ee",
@@ -115,10 +121,23 @@ export function renderAircraftIcon(family: FamilyKey, color: string): ImageData 
   return ctx.getImageData(0, 0, ICON_PIXELS, ICON_PIXELS);
 }
 
+/**
+ * The marker colour.
+ *
+ * Deliberately keyed on data status rather than aircraft model. A user
+ * scanning the map is asking "which of these do we actually know something
+ * about?", and colouring by airframe answers a question nobody had — the
+ * silhouette already shows the airframe.
+ */
+export function colorFor(a: LiveAircraft): string {
+  if (a.dataStatus) return STATUS_STYLE[a.dataStatus].color;
+  return CATEGORY_COLORS[a.category] ?? CATEGORY_COLORS.unknown;
+}
+
 /** Stable icon id for an aircraft in a given selection state. */
 export function iconIdFor(a: LiveAircraft, selected: boolean): string {
   const { family } = silhouetteFor(a.typeCode, a.category);
-  return `${family}:${selected ? "selected" : a.category}`;
+  return `${family}:${selected ? "selected" : (a.dataStatus ?? a.category)}`;
 }
 
 interface IconHost {
@@ -135,7 +154,7 @@ export function ensureIcon(map: IconHost, a: LiveAircraft, selected: boolean): s
   if (map.hasImage(id)) return id;
 
   const { family } = silhouetteFor(a.typeCode, a.category);
-  const color = selected ? SELECTED_COLOR : (CATEGORY_COLORS[a.category] ?? CATEGORY_COLORS.unknown);
+  const color = selected ? SELECTED_COLOR : colorFor(a);
   const image = renderAircraftIcon(family, color);
   if (image) map.addImage(id, image, { pixelRatio: PIXEL_RATIO });
   return id;

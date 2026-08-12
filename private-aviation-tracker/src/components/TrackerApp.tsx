@@ -4,10 +4,18 @@ import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 import AircraftPanel from "@/components/AircraftPanel";
 import DataSources from "@/components/DataSources";
+import StatusLegend from "@/components/StatusLegend";
 import TopBar from "@/components/TopBar";
 import type { MapViewport } from "@/components/MapView";
 import { useLiveFeed } from "@/hooks/useLiveFeed";
-import type { CompanySummary, FilterKey, LiveAircraft, SearchHit, SelectedRoute } from "@/lib/types";
+import type {
+  CompanySummary,
+  DataStatus,
+  FilterKey,
+  LiveAircraft,
+  SearchHit,
+  SelectedRoute,
+} from "@/lib/types";
 
 // MapLibre touches `window` at import time, so the map is client-only.
 const MapView = dynamic(() => import("@/components/MapView"), {
@@ -44,18 +52,38 @@ export default function TrackerApp() {
     null,
   );
 
+  const [statusFilter, setStatusFilter] = useState<DataStatus | null>(null);
+
   const feed = useLiveFeed(viewport, filters);
   const allAircraft = useMemo(() => feed.data?.aircraft ?? [], [feed.data]);
+
+  // Counts for the legend, taken from everything in view before the status
+  // filter narrows it — otherwise selecting a status would zero the others and
+  // the legend would stop being a summary.
+  const statusCounts = useMemo(() => {
+    const counts: Partial<Record<DataStatus, number>> = {};
+    for (const a of allAircraft) {
+      const key = a.dataStatus ?? "UNKNOWN";
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [allAircraft]);
 
   // Company mode narrows the map to one fleet. Filtering happens here rather
   // than server-side so the live feed keeps streaming everything and toggling
   // the filter is instant.
   const aircraft = useMemo(() => {
-    if (!company) return allAircraft;
-    return allAircraft.filter(
-      (a) => a.registration && company.registrations.has(a.registration.toUpperCase()),
-    );
-  }, [allAircraft, company]);
+    let list = allAircraft;
+    if (company) {
+      list = list.filter(
+        (a) => a.registration && company.registrations.has(a.registration.toUpperCase()),
+      );
+    }
+    if (statusFilter) {
+      list = list.filter((a) => (a.dataStatus ?? "UNKNOWN") === statusFilter);
+    }
+    return list;
+  }, [allAircraft, company, statusFilter]);
 
   const selectedLive = useMemo(() => {
     if (!selection) return null;
@@ -196,16 +224,22 @@ export default function TrackerApp() {
           </div>
         )}
 
-        <DataSources
+        {/* Legend and data sources share the bottom-left stack: both answer
+            "can I trust what I am looking at", and keeping them together
+            leaves the rest of the map clear. */}
+        <div className="pointer-events-none absolute left-4 z-20 flex flex-col items-start gap-1.5 inset-bottom-safe">
+          <StatusLegend counts={statusCounts} onFilter={setStatusFilter} active={statusFilter} />
+          <DataSources
           providers={feed.data?.providers ?? []}
           servedBy={feed.data?.servedBy}
           degraded={feed.data?.degraded}
           updatedAt={feed.data?.updatedAt ?? null}
           aircraftCount={aircraft.length}
           degradedIdentityCount={feed.data?.degradedIdentityCount}
-          lastKnownCount={feed.data?.lastKnownCount}
-          positionSources={feed.data?.positionSources}
-        />
+            lastKnownCount={feed.data?.lastKnownCount}
+            positionSources={feed.data?.positionSources}
+          />
+        </div>
 
         {selection && (
           <AircraftPanel

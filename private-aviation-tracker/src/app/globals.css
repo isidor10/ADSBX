@@ -92,6 +92,93 @@ body {
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
+/* ---------------------------------------------------------------------------
+ * Glass surfaces.
+ *
+ * The map is the interface, so every panel floats over live content. A flat
+ * fill would either hide the traffic underneath or wash out against it; a
+ * blurred, slightly translucent surface with a single hairline edge and a soft
+ * top highlight reads as a physical pane over the chart. One inset highlight
+ * and one drop shadow — layering more of either is what makes dark UI look
+ * cheap rather than expensive.
+ * ------------------------------------------------------------------------- */
+.glass-panel {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-panel-2) 88%, transparent),
+    color-mix(in oklab, var(--color-panel) 92%, transparent)
+  );
+  border: 1px solid var(--color-edge);
+  border-radius: 10px;
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+.glass-chip {
+  background: color-mix(in oklab, var(--color-panel-2) 82%, transparent);
+  border: 1px solid var(--color-edge);
+  border-radius: 999px;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 6px 18px -8px rgba(0, 0, 0, 0.8);
+}
+
+/* Hairline rule that fades at both ends, for section breaks inside panels. */
+.hairline {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-edge-2), transparent);
+}
+
+/* ---------------------------------------------------------------------------
+ * Safe areas.
+ *
+ * On iPhone the map runs edge to edge under the notch and the home indicator.
+ * Controls have to sit inside the safe area or they end up untappable.
+ * ------------------------------------------------------------------------- */
+.pad-top-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pad-bottom-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.inset-bottom-safe {
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Bottom sheet: the mobile equivalent of the desktop side panel. */
+@keyframes sheet-in {
+  from {
+    transform: translateY(12%);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-sheet-in {
+  animation: sheet-in 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Momentum scrolling inside sheets, and no rubber-banding of the page behind. */
+.sheet-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-panel-in,
+  .animate-sheet-in,
+  .live-dot {
+    animation: none;
+  }
+}
+
 /* MapLibre chrome, restyled for the dark console. */
 .maplibregl-ctrl-attrib {
   background: rgba(4, 6, 12, 0.82) !important;

@@ -114,9 +114,31 @@ export function isBusinessAviation(a: Pick<LiveAircraft, "category">): boolean {
 export function matchesFilters(a: LiveAircraft, filters: FilterKey[]): boolean {
   if (filters.length === 0 || filters.includes("all")) return true;
 
+  // The operation class is decisive and overrides everything below it. A
+  // Turkish Airlines 737 does not reach a private-aviation map because its
+  // airframe happened to match a filter, and the only way to see one is to ask
+  // for airlines explicitly. This is the rule that keeps the map private-only.
+  const operation = a.operation;
+  if (operation === "AIRLINE") return filters.includes("airline");
+  if (operation === "CARGO") return filters.includes("cargo") || filters.includes("airline");
+  if (operation === "MILITARY") return filters.includes("military");
+  if (operation === "GENERAL_AVIATION") return filters.includes("general_aviation");
+  if (operation === "HELICOPTER") return filters.includes("helicopter");
+
   for (const f of filters) {
     switch (f) {
       case "business":
+        // Anything the engine puts in a private-aviation class belongs on the
+        // default map, even when the airframe is unrecognised — that is how a
+        // researched aircraft with an odd type code stays visible.
+        if (
+          operation === "PRIVATE" ||
+          operation === "CORPORATE" ||
+          operation === "BUSINESS_AVIATION" ||
+          operation === "CHARTER"
+        ) {
+          return true;
+        }
         if (isBusinessAviation(a)) return true;
         break;
       case "private_jet":
@@ -139,6 +161,15 @@ export function matchesFilters(a: LiveAircraft, filters: FilterKey[]): boolean {
         break;
       case "helicopter":
         if (a.category === "helicopter") return true;
+        break;
+      case "airline":
+        if (a.category === "airliner" || a.operation === "AIRLINE") return true;
+        break;
+      case "cargo":
+        if (a.operation === "CARGO") return true;
+        break;
+      case "general_aviation":
+        if (a.category === "light_ga" || a.operation === "GENERAL_AVIATION") return true;
         break;
     }
   }

@@ -1,4 +1,5 @@
 import { classify } from "@/lib/aircraft/classifier";
+import { classifyOperation } from "@/lib/aircraft/operationalClass";
 import { config } from "@/lib/config";
 import type { LiveAircraft, LiveFeedResult, PositionSource } from "@/lib/types";
 import { AdsbError, type AdsbProvider } from "./types";
@@ -138,6 +139,29 @@ function normaliseState(state: StateVector, now: number): LiveAircraft | null {
     positionSource: openSkyPositionSource(state[STATE_FIELDS.positionSource]),
     /** OpenSky state vectors carry no type or registration. */
     identityDegraded: true,
+    ...(() => {
+      // The engine still runs: a state vector carries a callsign, which is
+      // enough to recognise an airline and keep it off the map even though the
+      // airframe is unknown.
+      const r = classifyOperation({
+        registration: null,
+        icao24,
+        callsign,
+        typeCode: null,
+        airframe: classification.category,
+        feedOperator: null,
+        isMilitary: classification.isMilitary,
+        isSpecial: classification.isSpecial,
+        isBlocked: classification.isBlocked,
+        identityDegraded: true,
+      });
+      return {
+        operation: r.operation,
+        dataStatus: r.dataStatus,
+        statusConfidence: r.confidence,
+        statusReasons: r.reasons,
+      };
+    })(),
   };
 }
 

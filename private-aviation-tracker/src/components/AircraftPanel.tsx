@@ -14,6 +14,8 @@ import CostedHistorySection from "@/components/CostedHistory";
 import RegistrySection from "@/components/RegistrySection";
 import PhotoGallery from "@/components/PhotoGallery";
 import WebNews from "@/components/WebNews";
+import DataStatusCard, { CompletenessCard } from "@/components/DataStatusCard";
+import DetailSurface from "@/components/DetailSurface";
 import {
   POSITION_SOURCE_ACCURACY,
   POSITION_SOURCE_LABEL,
@@ -235,7 +237,7 @@ export default function AircraftPanel({
   const category = live?.category ?? identity?.category ?? "unknown";
 
   return (
-    <aside className="animate-panel-in panel-scroll pointer-events-auto absolute right-0 top-0 z-20 flex h-full w-full max-w-full flex-col overflow-y-auto border-l border-edge bg-panel/95 backdrop-blur-md sm:w-[420px]">
+    <DetailSurface open onClose={onClose}>
       <div className="sticky top-0 z-10 border-b border-edge bg-panel/95 px-4 py-3 backdrop-blur-md">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -392,6 +394,27 @@ export default function AircraftPanel({
         </div>
       </section>
 
+      {live && (
+        <>
+          <Divider />
+          <DataStatusCard live={live} />
+          <CompletenessCard
+            fields={[
+              { label: "Registration", present: Boolean(live.registration) },
+              { label: "Aircraft type", present: Boolean(live.typeCode) },
+              { label: "Manufacturer", present: Boolean(live.manufacturer ?? identity?.manufacturer) },
+              { label: "Operator", present: Boolean(ownership?.operator ?? live.feedOperator) },
+              { label: "Owner", present: Boolean(ownership?.owner) },
+              { label: "Management co.", present: Boolean(ownership?.managementCompany) },
+              { label: "Photo", present: photos.length > 0 },
+              { label: "Flight history", present: (history?.flights?.length ?? 0) > 0 },
+              { label: "Live position", present: true },
+              { label: "Registry entry", present: Boolean(identity?.serialNumber) },
+            ]}
+          />
+        </>
+      )}
+
       <RegistrySection registration={registration} />
 
       <Divider />
@@ -431,6 +454,6 @@ export default function AircraftPanel({
           </Link>
         </div>
       )}
-    </aside>
+    </DetailSurface>
   );
 }

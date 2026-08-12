@@ -18,6 +18,45 @@ export type AircraftCategory =
   | "unknown";
 
 /** Filter groups exposed in the UI. */
+/**
+ * What the aircraft is being used for. Decides whether it belongs on a
+ * private-aviation map at all — see `lib/aircraft/operationalClass.ts`.
+ */
+export type OperationClass =
+  | "PRIVATE"
+  | "CORPORATE"
+  | "BUSINESS_AVIATION"
+  | "CHARTER"
+  | "AIRLINE"
+  | "CARGO"
+  | "MILITARY"
+  | "HELICOPTER"
+  | "GENERAL_AVIATION"
+  | "UNKNOWN";
+
+/**
+ * How much is established about the aircraft's identity and ownership. This is
+ * what the map colours by: the colour reports the state of the research, not
+ * the aircraft model.
+ */
+export type DataStatus =
+  | "VERIFIED_PRIVATE"
+  | "CORPORATE"
+  | "CHARTER_AOC"
+  | "OPERATOR_KNOWN"
+  | "PARTIAL"
+  | "CONFLICT"
+  | "UNKNOWN";
+
+/** One piece of evidence behind a classification. */
+export interface StatusReason {
+  label: string;
+  detail: string;
+  /** Contribution to the confidence score, 0 when merely explanatory. */
+  weight: number;
+  source: "FEED" | "CALLSIGN" | "AIRFRAME" | "REGISTRY" | "RESEARCH" | "OPERATOR" | "COMPANY" | "AOC";
+}
+
 export type FilterKey =
   | "business"
   | "private_jet"
@@ -27,6 +66,9 @@ export type FilterKey =
   | "charter"
   | "military"
   | "helicopter"
+  | "airline"
+  | "cargo"
+  | "general_aviation"
   | "all";
 
 export interface LiveAircraft {
@@ -70,6 +112,15 @@ export interface LiveAircraft {
    * on. Governs how much the position can be trusted.
    */
   positionSource?: PositionSource;
+
+  /** What the aircraft is being used for. Drives default map visibility. */
+  operation?: OperationClass;
+  /** How much is established about it. Drives the marker colour. */
+  dataStatus?: DataStatus;
+  /** 0-100 confidence in the classification above. */
+  statusConfidence?: number;
+  /** The evidence behind it, shown in the panel. */
+  statusReasons?: StatusReason[];
   /** Set only when the provider is `demo`. */
   simulated?: boolean;
   /**
