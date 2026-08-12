@@ -40,6 +40,40 @@ nepotpun. Radije nepotpuno nego pogrešno.
 
 ## Pokretanje
 
+### Najlakše — u pregledaču, bez ičega instaliranog
+
+1. Otvorite repozitorijum na GitHub-u → zeleno dugme **Code** → kartica
+   **Codespaces** → **Create codespace on main**
+2. Sačekajte da se okruženje podigne (2–3 minuta, instalacija ide sama)
+3. U terminalu na dnu ekrana otkucajte:
+
+```bash
+cd ai-poreski-savetnik && npm run kreni
+```
+
+4. Kliknite **Open in Browser** kada iskoči
+
+Nema instalacije, baze, naloga ni podešavanja. Bez API ključa odmah rade
+**Kalkulatori, Propisi, Rokovi i Moja firma**; za **Razgovor** i **Analizu
+dokumenata** otvorite `.env` i upišite `ANTHROPIC_API_KEY=sk-ant-...`.
+
+### Na svom računaru
+
+Potreban je Node.js 20+:
+
+```bash
+git clone https://github.com/isidor10/ADSBX.git
+cd ADSBX/ai-poreski-savetnik
+npm install
+npm run kreni
+```
+
+`npm run kreni` napravi `.env` sa nasumičnim `SESSION_SECRET`, kreira SQLite
+bazu, napuni je proverenim propisima i pokrene aplikaciju na
+`http://localhost:3000`. Idempotentno je — ponovno pokretanje ne briše podatke.
+
+### Ručno, korak po korak
+
 ```bash
 npm install
 cp .env.example .env         # unesite ANTHROPIC_API_KEY

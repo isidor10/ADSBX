@@ -1,0 +1,26 @@
+{
+  "name": "AI Poreski savetnik",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+
+  // Instalacija se odradi dok se okruženje podiže, pa korisnik posle samo
+  // pokrene aplikaciju.
+  "postCreateCommand": "npm install",
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "AI Poreski savetnik",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["Prisma.prisma", "dbaeumer.vscode-eslint"]
+    }
+  },
+
+  "remoteEnv": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
