@@ -63,6 +63,93 @@ npm run izmene      # otkriva izmene i priprema obaveštenja
 `npm run ingest` **ništa ne upisuje ako dohvat ne uspe** i ne menja status
 verifikacije — neuspešan dohvat ostavlja bazu tačnom, samo nepotpunom.
 
+---
+
+## Deploy na Vercel
+
+Repozitorijum sadrži **više projekata** (Python scraper u korenu, plus dva
+Next.js projekta). Vercel zato mora da zna gde da gleda — inače pokupi koren
+ili prethodno podešen projekat.
+
+### 1. Root Directory — ovo je ključno
+
+Pri kreiranju Vercel projekta, u koraku **Configure Project**:
+
+> **Root Directory** → `ai-poreski-savetnik`
+
+Ako ste projekat već napravili: **Settings → General → Root Directory** →
+`ai-poreski-savetnik` → Save, pa **Deployments → Redeploy**.
+
+Bez toga Vercel gleda u koren repozitorijuma, gde je Python projekat i nema
+šta da se builduje, ili nastavlja sa podešavanjima prethodnog projekta.
+
+Napravite **poseban Vercel projekat** za ovu aplikaciju — nemojte menjati Root
+Directory na postojećem projektu `private-aviation-tracker`, jer biste time
+preusmerili njegov deploy.
+
+### 2. Baza podataka — SQLite ne radi na Vercelu
+
+Ovo je najvažnija stavka. Vercel funkcije imaju **efemeran fajl-sistem**: sve
+što se upiše nestaje pri sledećem pozivu. Sa SQLite bazom biste izgubili
+korisnike, profile firmi, razgovore i audit trag.
+
+Za produkciju je potreban **Postgres** (Vercel Postgres, Neon, Supabase ili
+bilo koji drugi). U Vercel projektu podesite `DATABASE_URL` na
+`postgres://...` i to je sve — `prisma/schema.prisma` se automatski usklađuje.
+
+Prisma ne dozvoljava `provider = env(...)`, pa bi inače morala da postoje dva
+schema fajla koja bi se s vremenom razišla. Umesto toga, `scripts/podesi-bazu.ts`
+pre svakog build-a postavi `provider` prema obliku `DATABASE_URL`-a. Skripta je
+idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
+
+### 3. Promenljive okruženja u Vercelu
+
+`.env` nije u gitu, pa ih unesite u **Settings → Environment Variables**:
+
+| Promenljiva | Vrednost |
+|---|---|
+| `ANTHROPIC_API_KEY` | vaš ključ |
+| `DATABASE_URL` | `postgres://…` |
+| `SESSION_SECRET` | `openssl rand -hex 32` |
+| `AI_EFFORT` | `high` (opciono) |
+| `WEB_SEARCH_ENABLED` | `true` (opciono) |
+
+### 4. Build komanda
+
+Vercel sam pokupi `vercel-build` iz `package.json`:
+
+```
+tsx scripts/podesi-bazu.ts && prisma generate && prisma db push && next build
+```
+
+`prisma db push` je namerno **bez** `--accept-data-loss`. Ako bi izmena šeme
+zahtevala brisanje podataka, build će pući sa jasnom porukom umesto da tiho
+obriše korisničke podatke. Kada do toga dođe, migraciju uradite svesno.
+
+### 5. Punjenje pravne baze — jednom, ručno
+
+Vercel build ne pokreće seed. Posle prvog uspešnog deploya, sa svog računara:
+
+```bash
+cd ai-poreski-savetnik
+DATABASE_URL="postgres://…" npm run seed:prod
+```
+
+Bez ovog koraka aplikacija radi, ali je pravna baza prazna — pretraga propisa
+ne vraća ništa, a kalkulatori prijavljuju da parametri nedostaju (što je
+ispravno ponašanje, ali nije ono što želite).
+
+### 6. Ograničenja koja treba znati
+
+- `maxDuration` za `/api/chat` i `/api/dokumenti` je 300 s. Na **Hobby** planu
+  limit je 60 s, pa složena pitanja sa web pretragom mogu da isteknu — za
+  ozbiljnu upotrebu potreban je Pro plan.
+- Region je podešen na `fra1` (Frankfurt), najbliži Srbiji.
+- Ograničavanje broja zahteva radi u memoriji instance. Na više instanci nije
+  deljeno — za produkciju sa više saobraćaja zamenite ga Redisom.
+
+---
+
 ### Provere
 
 ```bash

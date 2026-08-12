@@ -5,8 +5,13 @@
 // važenja. Bez toga nema ni tačnog citata ni odgovora na pitanje "koliko je
 // bilo 2023. godine".
 //
-// Dev koristi SQLite. Za produkciju: provider = "postgresql" i pgvector za
-// OdredbaVektor (vidi TEHNICKI-PLAN.md, odeljak 3).
+// Dev koristi SQLite, produkcija Postgres. `provider` ispod NE menjajte ručno —
+// `scripts/podesi-bazu.ts` ga pre svakog build-a usklađuje sa oblikom
+// DATABASE_URL-a, jer Prisma ne dozvoljava `provider = env(...)`. Dovoljno je
+// da u produkciji podesite DATABASE_URL na postgres://...
+//
+// Na Postgresu dodatno prebacite OdredbaVektor na pgvector kolonu
+// (vidi TEHNICKI-PLAN.md, odeljak 3).
 
 generator client {
   provider = "prisma-client-js"
