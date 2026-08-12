@@ -276,9 +276,36 @@ export const PROPISI: SeedPropis[] = [
     naziv: "Zakon o porezima na imovinu",
     tip: "ZAKON",
     kategorija: "IMOVINA",
+    sluzbeniGlasnik: ['"Sl. glasnik RS", br. 26/2001, sa izmenama'],
     izvorInstitucija: "Paragraf Lex",
-    izvorUrl: `${PARAGRAF}/zakon-o-porezima-na-imovinu.html`,
+    izvorUrl: `${PARAGRAF}/zakon_o_porezima_na_imovinu.html`,
     prioritetIzvora: 6,
-    verifikacija: "NEPOTVRDJENO",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    skracenica: "PRAVILNIK-TRANSFERNE-CENE",
+    naziv:
+      "Pravilnik o transfernim cenama i metodama koje se po principu „van dohvata ruke” primenjuju kod utvrđivanja cene transakcija među povezanim licima",
+    tip: "PODZAKONSKI_AKT",
+    kategorija: "DOBIT",
+    donosilac: "Ministar finansija",
+    izvorInstitucija: "Poreska uprava Republike Srbije",
+    izvorUrl:
+      "http://www.poreskauprava.gov.rs/sr/pravna-lica/pregled-propisa/pravilnici/917/pravilnik-o-transfernim-cenama-i-metodama-koje-se-po-principu-van-dohvata-ruke-primenjuju-kod-utvrdjivanja-cene-transakcija-medju-povezanim-licima-.html",
+    prioritetIzvora: 3,
+    verifikacija: "DELIMICNO",
+  },
+  {
+    skracenica: "UREDBA-FISKALIZACIJA-IZUZECI",
+    naziv:
+      "Uredba o određivanju delatnosti kod čijeg obavljanja ne postoji obaveza evidentiranja prometa na malo preko elektronskog fiskalnog uređaja",
+    tip: "PODZAKONSKI_AKT",
+    kategorija: "FISKALIZACIJA",
+    donosilac: "Vlada Republike Srbije",
+    izvorInstitucija: "Ministarstvo finansija",
+    izvorUrl:
+      "https://mfin.gov.rs/sr/aktivnosti-1/uredba-o-odredjivanju-delatnosti-kod-cijeg-obavljanja-ne-postoji-obaveza-evidentiranja-prometa-na-malo-preko-elektronskog-fiskalnog-uredjaja-1",
+    prioritetIzvora: 2,
+    verifikacija: "DELIMICNO",
   },
 ];

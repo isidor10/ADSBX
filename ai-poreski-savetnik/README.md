@@ -135,28 +135,40 @@ korpusom propisa. Razlog je opisan u tehničkom planu: u okruženju u kojem je
 projekat pisan mrežna politika blokira `paragraf.rs`, `purs.gov.rs` i
 `pravno-informacioni-sistem.rs`, pa puni tekstovi nisu mogli da se povuku.
 
-Provereno i uneto (sa izvorom i datumom važenja):
+Trenutno stanje: **24 propisa, 39 odredbi, 48 poreskih parametara, 12 rokova.**
 
-- PDV: opšta stopa 20%, posebna 10% (ZPDV čl. 23), odbitak prethodnog poreza
-  (čl. 28), isključenje za putničke automobile i izuzeci (čl. 29), mali obveznik
-  i prag od 8.000.000 RSD (čl. 33)
-- Porez na dobit 15% (ZPDPL čl. 39), porez po odbitku 20% / 25% (čl. 40),
-  amortizacione grupe (čl. 10b st. 3)
-- Zarade: neoporezivi iznos 34.221 RSD (od 1.2.2026), stopa 10%,
-  neoporezivi iznosi naknada — prevoz 5.782 RSD, dnevnica 3.471 RSD (ZPDG čl. 18)
-- Doprinosi: PIO 24% (14 + 10), zdravstvo 10,30% (5,15 + 5,15), nezaposlenost
-  0,75% (ZDOSO čl. 44); osnovice za 2026: najniža 51.297, najviša 732.820 RSD
-- Minimalna cena rada 2026: 371,00 RSD neto po radnom času
-- Paušal: limit 6.000.000 RSD (ZPDG čl. 40)
-- Istorijske vrednosti za 2025. godinu — da obračuni za raniji period rade
+Sa **potvrđenim brojem člana** (član proveren prema izvoru):
 
-Označeno kao **nepotvrđeno** (prikazuje se korisniku sa upozorenjem):
+| Propis | Članovi | Sadržaj |
+|---|---|---|
+| ZPDV | 23, 24, 25, 28, 29, 33, 48 | stope 20/10%, oslobođenja sa i bez prava na odbitak, odbitak prethodnog poreza, isključenje za putničke automobile i izuzeci, mali obveznik (prag 8.000.000), poreski period (prag 50.000.000) |
+| ZPDPL | 10b st. 3, 15 st. 6, 39, 40, 59, 60 | amortizacione grupe, reprezentacija 0,5%, stopa 15%, porez po odbitku 20/25%, transferne cene |
+| ZPDG | 15a, 18, 33, 40 | neoporezivi iznos zarade 34.221 RSD, neoporezive naknade (prevoz 5.782, dnevnica 3.471), osnovica samostalne delatnosti, paušal |
+| ZDOSO | 44 | PIO 24% (14+10), zdravstvo 10,30% (5,15+5,15), nezaposlenost 0,75% |
+| ZPPPA | 75 | kamata = referentna stopa NBS + 10 procentnih poena |
+| Odluka o min. ceni rada | 1 | 371,00 RSD neto po radnom času za 2026. |
 
-- broj člana za stopu poreza na zarade, godišnji porez na dohodak, osnovice
-  doprinosa i rok evidentiranja u SEF-u
-- stopa poreza na kapitalni dobitak
-- naknada za korišćenje sopstvenog automobila po kilometru — **namerno nije
-  seed-ovana**, pa taj deo obračuna prijavi da parametar nedostaje
+Sa **potvrđenom sadržinom, ali nepotvrđenim brojem člana** — prikazuje se uz
+poruku da član nije potvrđen:
+
+- stopa poreza na zarade 10%, godišnji porez na dohodak (prag 5.439.096 RSD,
+  stope 10/15%), dividende 15%, kapitalni dobitak 15%
+- rok PDV prijave (15 dana), rok prijave poreza na dobit i transfernih cena
+  (180 dana), rok evidentiranja PDV u SEF-u (10 dana), rok prihvatanja
+  e-fakture (15 dana, pa 5 dana → smatra se odbijenom)
+- Zakon o radu: godišnji odmor min. 20 radnih dana, prekovremeni rad min. +26%,
+  bolovanje do 30 dana 65% na teret poslodavca
+- Zakon o računovodstvu: razvrstavanje po 2 od 3 kriterijuma, rokovi APR
+  (31. mart / 30. jun / 31. jul)
+- fiskalizacija: ko je obveznik i obaveza evidentiranja svakog prometa na malo
+- porez na prenos apsolutnih prava 2,5%
+- osnovice doprinosa za 2026. (51.297 / 732.820 RSD)
+
+**Namerno nije uneto:** neoporezivi iznos naknade za korišćenje sopstvenog
+automobila po kilometru. Taj deo obračuna prijavi da parametar nedostaje umesto
+da izračuna iznos koji ne možemo da potkrepimo izvorom.
+
+Istorijske vrednosti za 2025. godinu su unete, pa obračuni za raniji period rade.
 
 Pokretanje `npm run ingest` kod korisnika, gde ti domeni nisu blokirani, popunjava
 doslovne tekstove i potvrđuje brojeve članova.

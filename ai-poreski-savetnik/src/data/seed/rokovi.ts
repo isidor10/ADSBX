@@ -128,6 +128,43 @@ export const ROKOVI: SeedRok[] = [
     verifikacija: "NEPOTVRDJENO",
   },
   {
+    naziv: "Izveštaj o transfernim cenama",
+    opis:
+      "Dostavljanje dokumentacije o transfernim cenama uz poreski bilans, u roku od 180 dana od isteka poreskog perioda. Za nedostavljanje je propisana novčana kazna od 100.000 do 2.000.000 dinara.",
+    vrsteObveznika: ["DOO", "AD", "DRUGO_PRAVNO_LICE"],
+    ponavljanje: "GODISNJE",
+    mesec: 6,
+    danUMesecu: 29,
+    propis: "ZPDPL",
+    izvorUrl:
+      "https://biznis.rs/preduzetnik/kompanije-mogu-da-budu-ostro-kaznjene-ako-ne-dostave-izvestaj-o-transfernim-cenama/",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    naziv: "Dokumentacija uz redovan godišnji finansijski izveštaj — APR",
+    opis:
+      "Dostavljanje dokumentacije uz redovan godišnji finansijski izveštaj, uključujući revizorski izveštaj za obveznike revizije.",
+    vrsteObveznika: ["DOO", "AD", "DRUGO_PRAVNO_LICE"],
+    ponavljanje: "GODISNJE",
+    mesec: 6,
+    danUMesecu: 30,
+    propis: "ZOR-RAC",
+    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/180325/180325-vest4.html",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    naziv: "Konsolidovani godišnji finansijski izveštaj — APR",
+    opis:
+      "Dostavljanje konsolidovanog godišnjeg finansijskog izveštaja Agenciji za privredne registre, za matična pravna lica koja sastavljaju konsolidovane izveštaje.",
+    vrsteObveznika: ["DOO", "AD", "DRUGO_PRAVNO_LICE"],
+    ponavljanje: "GODISNJE",
+    mesec: 7,
+    danUMesecu: 31,
+    propis: "ZOR-RAC",
+    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/180325/180325-vest4.html",
+    verifikacija: "DELIMICNO",
+  },
+  {
     naziv: "Godišnji porez na dohodak građana",
     opis:
       "Podnošenje prijave za godišnji porez na dohodak građana za dohodak ostvaren u prethodnoj kalendarskoj godini. Prijava se podnosi elektronski, samooporezivanjem.",

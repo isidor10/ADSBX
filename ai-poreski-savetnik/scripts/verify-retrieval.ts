@@ -169,6 +169,38 @@ async function main() {
     "odredba iz 2026. se ne prikazuje kao važeća za 2020. godinu",
   );
 
+  // ── Pokrivenost oblasti ───────────────────────────────────────────────────
+  // Svaka od ovih tema mora da nađe odredbu iz očekivanog propisa. Ako neko
+  // kasnije obriše ili preimenuje odredbu, ovde puca.
+  console.log("\nPokrivenost oblasti:");
+  const scenariji: Array<[string, string, string]> = [
+    ["oslobođenje od PDV sa pravom na odbitak izvoz", "ZPDV", "24"],
+    ["kada je poreski period za PDV tromesečje", "ZPDV", "48"],
+    ["koliko se priznaje troškova reprezentacije", "ZPDPL", "15"],
+    ["transferne cene povezana lica dokumentacija", "ZPDPL", "59"],
+    ["kamata na neblagovremeno plaćen porez", "ZPPPA", "75"],
+    ["rok za prihvatanje elektronske fakture", "ZEF", "—"],
+    ["ko je obveznik fiskalizacije promet na malo", "ZOF", "—"],
+    ["koliko dana godišnjeg odmora po zakonu", "ZOR", "—"],
+    ["rok za predaju finansijskih izveštaja APR", "ZOR-RAC", "—"],
+    ["porez na prenos apsolutnih prava stopa", "ZPI", "—"],
+    ["porez na dividendu fizičkom licu", "ZPDG", "—"],
+  ];
+
+  for (const [upit, ocekivanPropis, ocekivanClan] of scenariji) {
+    const r = await pretraziPravnuBazu({ upit, ciljniDatum: danas, limit: 8 });
+    const pogodak = r.some(
+      (o) =>
+        o.propisSkracenica === ocekivanPropis &&
+        (ocekivanClan === "—" || o.clan === ocekivanClan),
+    );
+    tvrdi(
+      pogodak,
+      `„${upit}" → ${ocekivanPropis}${ocekivanClan !== "—" ? ` čl. ${ocekivanClan}` : ""}`,
+      `nađeno: ${r.slice(0, 3).map((o) => `${o.propisSkracenica} ${o.clan}`).join(", ") || "ništa"}`,
+    );
+  }
+
   // ── Izvori i verifikacija ─────────────────────────────────────────────────
   console.log("\nIzvori:");
   tvrdi(

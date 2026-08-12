@@ -461,10 +461,175 @@ export const PARAMETRI: SeedParametar[] = [
     vaziOd: "2013-01-01",
     propis: "ZPDG",
     izvorUrl:
-      "https://www.paragraf.rs/propisi/zakon-o-porezu-na-dohodak-gradjana.html",
+      "https://mnp.rs/porez-na-kapitalnu-dobit-od-prodaje-akcija-i-porez-na-dividendu/",
     napomena:
-      "NIJE potvrđeno prema zvaničnom izvoru u ovoj verziji baze — obavezno proveriti pre oslanjanja na obračun.",
-    verifikacija: "NEPOTVRDJENO",
+      "Stopa potvrđena prema više izvora; broj člana kojim je propisana nije potvrđen.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "dividenda.stopa",
+    naziv: "Stopa poreza na dividendu (fizička lica)",
+    vrednost: "15",
+    jedinica: "PROCENAT",
+    vaziOd: "2013-01-01",
+    propis: "ZPDG",
+    izvorUrl: "https://zuniclaw.com/porez-po-odbitku-u-srbiji/",
+    napomena:
+      "Obračunava se na bruto iznos dividende. Kod nerezidenata može se primeniti niža stopa iz ugovora o izbegavanju dvostrukog oporezivanja.",
+    verifikacija: "DELIMICNO",
+  },
+
+  // ── PDV: poreski period i prijava ─────────────────────────────────────────
+  {
+    kljuc: "pdv.prag_tromesecnog_perioda",
+    naziv:
+      "Prag ukupnog prometa ispod kojeg je poreski period za PDV kalendarsko tromesečje",
+    vrednost: "50000000",
+    jedinica: "RSD",
+    vaziOd: "2013-01-01",
+    propis: "ZPDV",
+    odredba: "48",
+    izvorUrl:
+      "https://www.purs.gov.rs/sr/odnosi-s-javnoscu/novosti/10384/izmenjen-rok-za-promenu-pdv-poreskog-perioda-.html",
+    napomena: "Posmatra se ukupan promet u prethodnih 12 meseci.",
+    verifikacija: "POTVRDJENO",
+  },
+  {
+    kljuc: "pdv.rok_prijave_dana",
+    naziv: "Rok za podnošenje PDV prijave i plaćanje po isteku poreskog perioda",
+    vrednost: "15",
+    jedinica: "DANA",
+    vaziOd: "2013-01-01",
+    propis: "ZPDV",
+    izvorUrl: "https://www.purs.gov.rs/",
+    verifikacija: "DELIMICNO",
+  },
+
+  // ── Porez na dobit: reprezentacija, transferne cene, rok ──────────────────
+  {
+    kljuc: "reprezentacija.limit",
+    naziv:
+      "Limit priznavanja troškova reprezentacije (procenat ukupnog prihoda)",
+    vrednost: "0.5",
+    jedinica: "PROCENAT",
+    vaziOd: "2019-01-01",
+    propis: "ZPDPL",
+    odredba: "15|6",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_porezu_na_dobit_pravnih_lica.html",
+    napomena:
+      "Troškovi reklame i propagande priznaju se bez ovog ograničenja, po opštim pravilima.",
+    verifikacija: "POTVRDJENO",
+  },
+  {
+    kljuc: "dobit.rok_prijave_dana",
+    naziv:
+      "Rok za podnošenje poreske prijave, poreskog bilansa i dokumentacije o transfernim cenama",
+    vrednost: "180",
+    jedinica: "DANA",
+    vaziOd: "2013-01-01",
+    propis: "ZPDPL",
+    izvorUrl:
+      "https://biznis.rs/preduzetnik/kompanije-mogu-da-budu-ostro-kaznjene-ako-ne-dostave-izvestaj-o-transfernim-cenama/",
+    napomena: "Računa se od isteka poreskog perioda.",
+    verifikacija: "DELIMICNO",
+  },
+
+  // ── Rad ───────────────────────────────────────────────────────────────────
+  {
+    kljuc: "godisnji_odmor.minimum_dana",
+    naziv: "Zakonski minimum godišnjeg odmora (radnih dana)",
+    vrednost: "20",
+    jedinica: "DANA",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "prekovremeni.uvecanje_min",
+    naziv: "Najmanje uvećanje zarade za prekovremeni rad",
+    vrednost: "26",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    napomena:
+      "Ako se istovremeno stiče više osnova za uvećanje zarade, procenti se sabiraju.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "bolovanje.procenat_do_30_dana",
+    naziv:
+      "Naknada zarade za privremenu sprečenost za rad do 30 dana (na teret poslodavca)",
+    vrednost: "65",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    izvorUrl:
+      "https://www.pozakonu.rs/blog/radni-odnosi/kompletan-vodic-kroz-zakon-o-radu",
+    napomena:
+      "Od 31. dana naknadu snosi RFZO. Za povredu na radu i profesionalnu bolest propisan je viši procenat.",
+    verifikacija: "DELIMICNO",
+  },
+
+  // ── Poreski postupak ──────────────────────────────────────────────────────
+  {
+    kljuc: "kamata.uvecanje_procentnih_poena",
+    naziv:
+      "Uvećanje referentne stope NBS za obračun kamate na neblagovremeno plaćene javne prihode",
+    vrednost: "10",
+    jedinica: "PROCENAT",
+    vaziOd: "2013-01-01",
+    propis: "ZPPPA",
+    odredba: "75",
+    izvorUrl:
+      "https://www.kamata.rs/kamata-za-neplacene-i-neblagovremeno-placene-javne-prihode-zakonska-uredenost",
+    napomena:
+      "Kamatna stopa = godišnja referentna stopa NBS + 10 procentnih poena. Referentna stopa se menja — proveriti aktuelnu vrednost na sajtu NBS.",
+    verifikacija: "POTVRDJENO",
+  },
+
+  // ── eFakture ──────────────────────────────────────────────────────────────
+  {
+    kljuc: "efaktura.rok_prihvatanja_dana",
+    naziv: "Rok za prihvatanje ili odbijanje elektronske fakture",
+    vrednost: "15",
+    jedinica: "DANA",
+    vaziOd: "2022-07-01",
+    propis: "ZEF",
+    izvorUrl:
+      "https://www.paragraf.rs/kancelarko/obaveza-izdavanje-e-fakture-cesto-postavljana-pitanja.html",
+    napomena:
+      "Po isteku roka sledi ponovno obaveštenje; ako se ni tada ne postupi u roku od pet dana, faktura se smatra odbijenom.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "efaktura.rok_evidentiranja_pdv_dana",
+    naziv: "Rok za elektronsko evidentiranje obračuna PDV u SEF-u",
+    vrednost: "10",
+    jedinica: "DANA",
+    vaziOd: "2023-01-01",
+    propis: "PRAVILNIK-EF",
+    izvorUrl:
+      "https://www.paragraf.rs/baza-znanja/knjigovodstvo/rokovi-evidentiranja-pdv-i-ispravke-evidentiranog-pdv-u-sef-popdv.html",
+    napomena:
+      "Računa se po isteku poreskog perioda; ako deseti dan pada u neradni dan, rok se pomera na prvi naredni radni dan.",
+    verifikacija: "DELIMICNO",
+  },
+
+  // ── Imovina ───────────────────────────────────────────────────────────────
+  {
+    kljuc: "prenos_apsolutnih_prava.stopa",
+    naziv: "Stopa poreza na prenos apsolutnih prava",
+    vrednost: "2.5",
+    jedinica: "PROCENAT",
+    vaziOd: "2013-01-01",
+    propis: "ZPI",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_porezima_na_imovinu.html",
+    napomena:
+      "Stopa je jedinstvena. Od 1.1.2025. porez utvrđuju i naplaćuju jedinice lokalne samouprave.",
+    verifikacija: "DELIMICNO",
   },
 
   // ── Neoporezivi iznosi naknada ────────────────────────────────────────────
