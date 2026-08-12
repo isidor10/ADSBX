@@ -12,3 +12,8 @@ prisma/*.db-journal
 *.tsbuildinfo
 next-env.d.ts
 /uploads
+
+# Koren repozitorijuma je Python projekat, a njegov .gitignore sadrži pravilo
+# `lib/`. Ono je tiho izbacilo ceo src/lib — jezgro ove aplikacije — iz git-a:
+# lokalno je sve radilo, a na GitHub-u fajlova nije bilo. Vraćamo ih.
+!/src/lib/
