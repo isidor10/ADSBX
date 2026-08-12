@@ -325,6 +325,14 @@ export const BIZLINER_CAPABLE = new Set([
  * management flights. A callsign beginning with one of these is business
  * aviation even when the type lookup is inconclusive.
  */
+/**
+ * Business-aviation, charter and fractional operator callsign prefixes.
+ *
+ * Entries here promote an aircraft onto the private-aviation map, so a
+ * scheduled carrier listed by mistake shows up as business aviation. That is
+ * exactly what happened with SunExpress (SXS). Scheduled carriers belong in
+ * `airlineDatabase.ts`; nothing here may be one.
+ */
 export const BIZAV_OPERATOR_CALLSIGNS: Record<string, string> = {
   EJA: "NetJets Aviation (US)",
   EJM: "Executive Jet Management",
@@ -362,20 +370,16 @@ export const BIZAV_OPERATOR_CALLSIGNS: Record<string, string> = {
   KLJ: "K5 Aviation",
   QAJ: "Qatar Executive",
   SJU: "Saudia Private",
-  AUA9: "—",
   RSJ: "Royal Jet",
   ELJ: "Elit'Avia",
-  SVA9: "—",
   JEF: "Jet Executive",
   PVT: "Private flight",
-  EXC: "Executive Airlines",
   BJT: "Bookajet",
   VOL: "Volare Aviation",
   SPI: "Saudi Private Aviation",
   MLC: "Malinc",
   ZEU: "Zeusch Aviation",
   NVJ: "Novo Jet",
-  SXS: "SunExpress",
 };
 
 /** Military callsign prefixes, used when the feed does not set a military flag. */

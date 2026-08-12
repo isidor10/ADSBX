@@ -26,7 +26,8 @@
     "verify:registry": "tsx scripts/verify-registry.ts",
     "verify:tiling": "tsx scripts/verify-tiling.ts",
     "verify:failover": "tsx scripts/verify-failover.ts",
-    "verify:retention": "tsx scripts/verify-retention.ts"
+    "verify:retention": "tsx scripts/verify-retention.ts",
+    "verify:classification": "tsx scripts/verify-classification.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

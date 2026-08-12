@@ -2,6 +2,7 @@ import { classify } from "@/lib/aircraft/classifier";
 import { normalizeIcao24, normalizeRegistration } from "@/lib/aircraft/registration";
 import { lookupType } from "@/lib/aircraft/typeDatabase";
 import type { FlightPhase, LiveAircraft } from "@/lib/types";
+import { classifyOperation } from "@/lib/aircraft/operationalClass";
 import { positionSourceFor } from "./positionSource";
 import type { RawAircraft } from "./types";
 
@@ -103,6 +104,37 @@ export function normalizeAircraft(raw: RawAircraft, source: string, now = Date.n
     flightStatus: flightPhase(onGround, altBaroFt, verticalRateFpm),
     source,
     positionSource: positionSourceFor(raw.type),
+    ...operationalFields({
+      registration,
+      icao24,
+      callsign,
+      typeCode,
+      airframe: classification.category,
+      feedOperator: raw.ownOp?.trim() || classification.bizavOperator || null,
+      isMilitary: classification.isMilitary,
+      isSpecial: classification.isSpecial,
+      isBlocked: classification.isBlocked,
+    }),
+  };
+}
+
+/**
+ * Run the classification engine over one contact.
+ *
+ * Done at normalisation time so that every path into the app — live map,
+ * search, history ingest — sees the same verdict. Only feed-level evidence is
+ * available here; ownership research enriches it later via
+ * `reclassifyWithResearch`.
+ */
+function operationalFields(
+  evidence: Parameters<typeof classifyOperation>[0],
+): Pick<LiveAircraft, "operation" | "dataStatus" | "statusConfidence" | "statusReasons"> {
+  const result = classifyOperation(evidence);
+  return {
+    operation: result.operation,
+    dataStatus: result.dataStatus,
+    statusConfidence: result.confidence,
+    statusReasons: result.reasons,
   };
 }
 

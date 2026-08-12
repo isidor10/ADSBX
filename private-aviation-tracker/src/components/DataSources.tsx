@@ -83,14 +83,12 @@ export default function DataSources({
     .reduce((sum, r) => sum + r.shown, 0);
 
   return (
-    <div className="pointer-events-auto absolute bottom-6 left-4 z-20">
+    <div className="pointer-events-auto">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-2 rounded-sm border px-2 py-1 text-[10px] uppercase tracking-[0.12em] backdrop-blur-md transition-colors ${
-          degraded
-            ? "border-amber/50 bg-amber/15 text-amber"
-            : "border-edge bg-panel/85 text-ink-3 hover:text-ink"
+        className={`glass-chip flex items-center gap-2 px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] transition-colors ${
+          degraded ? "text-amber" : "text-ink-3 hover:text-ink"
         }`}
         aria-expanded={open}
       >
@@ -99,7 +97,7 @@ export default function DataSources({
       </button>
 
       {open && (
-        <div className="mt-1.5 w-[min(88vw,340px)] rounded-sm border border-edge bg-panel/95 p-3 backdrop-blur-md">
+        <div className="glass-panel mt-1.5 w-[min(88vw,340px)] p-3">
           <div className="mb-2 grid grid-cols-3 gap-2 border-b border-edge pb-2 text-[10px]">
             <div>
               <div className="uppercase tracking-[0.1em] text-ink-3">Visible</div>

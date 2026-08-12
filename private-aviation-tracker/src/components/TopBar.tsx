@@ -52,8 +52,8 @@ export default function TopBar({
   const live = connected && !stale;
 
   return (
-    <header className="relative z-30 shrink-0 border-b border-edge bg-ground/92 backdrop-blur-md">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5">
+    <header className="pad-top-safe relative z-30 shrink-0 border-b border-edge bg-ground/92 backdrop-blur-md">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center gap-2.5">
           <svg viewBox="0 0 24 24" className="h-5 w-5 text-cyan" aria-hidden>
             <path
@@ -62,10 +62,11 @@ export default function TopBar({
             />
           </svg>
           <div className="leading-none">
-            <div className="text-[13px] font-semibold tracking-[0.16em] text-ink">
-              PRIVATE AVIATION TRACKER
+            <div className="text-[12px] font-semibold tracking-[0.14em] text-ink sm:text-[13px] sm:tracking-[0.16em]">
+              <span className="sm:hidden">PRIVATE AVIATION</span>
+              <span className="hidden sm:inline">PRIVATE AVIATION TRACKER</span>
             </div>
-            <div className="mt-0.5 text-[10px] tracking-[0.14em] text-ink-3">
+            <div className="mt-0.5 hidden text-[10px] tracking-[0.14em] text-ink-3 sm:block">
               ADS-B · REGISTRY · OWNERSHIP INTELLIGENCE
             </div>
           </div>

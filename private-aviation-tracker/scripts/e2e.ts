@@ -210,6 +210,26 @@ async function main() {
   check(after >= before, `zooming out keeps every aircraft (${before} → ${after})`);
   await page.screenshot({ path: `${OUT}/e2e-7-zoomed-out.png` });
 
+  // ---- 4d. status legend --------------------------------------------------
+  const legend = page.getByRole("button", { name: "Status", exact: true });
+  if (await legend.count()) {
+    await legend.first().click();
+    await page.waitForTimeout(500);
+    const legendText = (await page.locator("body").textContent()) ?? "";
+    check(/Aircraft status/i.test(legendText), "map has an aircraft-status legend");
+    check(
+      /Verified private\/business/i.test(legendText) && /Data conflict/i.test(legendText),
+      "legend names every status class",
+    );
+    check(
+      /Colour shows what has been established/i.test(legendText),
+      "legend states that colour means data status, not aircraft type",
+    );
+    await legend.first().click();
+  } else {
+    check(false, "map has an aircraft-status legend");
+  }
+
   // ---- 5. global search: company -----------------------------------------
   await page.keyboard.press("Escape");
   const search = page.getByLabel("Search aircraft, companies, owners and airports");
@@ -252,6 +272,66 @@ async function main() {
   }
   check(/Currently flying/i.test(companyText), "company page shows live fleet status");
   await page.screenshot({ path: `${OUT}/e2e-5-company.png`, fullPage: true });
+
+  // ---- 7b. iPhone layout ---------------------------------------------------
+  // The map must stay the interface on a phone, and selecting an aircraft must
+  // open a sheet rather than a full-height desktop panel.
+  const phone = await browser.newPage({
+    viewport: { width: 393, height: 852 },     // iPhone 15 Pro
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+  await phone.goto(BASE, { waitUntil: "domcontentloaded" });
+  await phone.waitForTimeout(9000);
+
+  const phoneCanvas = phone.locator(".maplibregl-canvas");
+  check(await phoneCanvas.isVisible().catch(() => false), "iPhone: map renders");
+  const phoneBox = await phoneCanvas.boundingBox();
+  check(
+    !!phoneBox && phoneBox.width <= 393,
+    `iPhone: map fits the viewport (${Math.round(phoneBox?.width ?? 0)}px)`,
+  );
+
+  // No horizontal overflow — the classic mobile failure.
+  const overflow = await phone.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  check(overflow <= 1, `iPhone: no horizontal overflow (${overflow}px)`);
+
+  let phoneOpened = false;
+  outerPhone: for (let gx = 1; gx <= 9 && !phoneOpened; gx += 1) {
+    for (let gy = 2; gy <= 8; gy += 1) {
+      await phone.mouse.click(
+        phoneBox!.x + (phoneBox!.width * gx) / 10,
+        phoneBox!.y + (phoneBox!.height * gy) / 10,
+      );
+      await phone.waitForTimeout(250);
+      if ((await phone.locator("[data-detail-sheet]").count()) > 0) {
+        phoneOpened = true;
+        break outerPhone;
+      }
+    }
+  }
+  check(phoneOpened, "iPhone: selecting an aircraft opens a bottom sheet");
+
+  if (phoneOpened) {
+    // Let the open animation settle before measuring.
+    await phone.waitForTimeout(900);
+    // A sheet, not a full-screen takeover: the map has to stay visible above
+    // it. Measured in the page, since the sheet is a fixed-position element
+    // sized in dvh units.
+    const sheetHeight = await phone.evaluate(() => {
+      const el = document.querySelector("[data-detail-sheet]");
+      return el ? Math.round(el.getBoundingClientRect().height) : 0;
+    });
+    check(
+      sheetHeight > 100 && sheetHeight < 852 * 0.8,
+      `iPhone: sheet leaves the map visible (${sheetHeight}px of 852)`,
+    );
+    await phone.screenshot({ path: `${OUT}/e2e-8-iphone.png` });
+  }
+  await phone.close();
 
   // ---- 8. activity filter -------------------------------------------------
   const select = page.getByLabel("Filter by aircraft");
