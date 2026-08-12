@@ -40,6 +40,40 @@ nepotpun. Radije nepotpuno nego pogrešno.
 
 ## Pokretanje
 
+### Najlakše — u pregledaču, bez ičega instaliranog
+
+1. Otvorite repozitorijum na GitHub-u → zeleno dugme **Code** → kartica
+   **Codespaces** → **Create codespace on main**
+2. Sačekajte da se okruženje podigne (2–3 minuta, instalacija ide sama)
+3. U terminalu na dnu ekrana otkucajte:
+
+```bash
+cd ai-poreski-savetnik && npm run kreni
+```
+
+4. Kliknite **Open in Browser** kada iskoči
+
+Nema instalacije, baze, naloga ni podešavanja. Bez API ključa odmah rade
+**Kalkulatori, Propisi, Rokovi i Moja firma**; za **Razgovor** i **Analizu
+dokumenata** otvorite `.env` i upišite `ANTHROPIC_API_KEY=sk-ant-...`.
+
+### Na svom računaru
+
+Potreban je Node.js 20+:
+
+```bash
+git clone https://github.com/isidor10/ADSBX.git
+cd ADSBX/ai-poreski-savetnik
+npm install
+npm run kreni
+```
+
+`npm run kreni` napravi `.env` sa nasumičnim `SESSION_SECRET`, kreira SQLite
+bazu, napuni je proverenim propisima i pokrene aplikaciju na
+`http://localhost:3000`. Idempotentno je — ponovno pokretanje ne briše podatke.
+
+### Ručno, korak po korak
+
 ```bash
 npm install
 cp .env.example .env         # unesite ANTHROPIC_API_KEY
@@ -114,32 +148,39 @@ idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 | `AI_EFFORT` | `high` (opciono) |
 | `WEB_SEARCH_ENABLED` | `true` (opciono) |
 
-### 4. Build komanda
+> ⚠️ **Promenljiva mora da se zove tačno `DATABASE_URL`.** Vercel Postgres i
+> neke integracije kreiraju `POSTGRES_PRISMA_URL` ili `POSTGRES_URL` — to nije
+> dovoljno. Dodajte `DATABASE_URL` sa istom vrednošću. Ako to propustite, build
+> staje sa porukom koja vam kaže tačno šta nedostaje.
+>
+> Proverite i da je promenljiva označena za okruženje u kojem se build izvršava
+> (Production / Preview / Development).
+
+### 4. Build komanda — pravna baza se puni sama
 
 Vercel sam pokupi `vercel-build` iz `package.json`:
 
 ```
-tsx scripts/podesi-bazu.ts && prisma generate && prisma db push && next build
+podesi-bazu → prisma generate → prisma db push → seed → next build
 ```
+
+Seed je deo build-a, pa **nema ručnog koraka posle deploya**. Bezbedno je da se
+izvršava svaki put: sve ide kroz `upsert` po prirodnom ključu i dira isključivo
+pravni sadržaj — korisnici, profili firmi, razgovori i audit trag se ne diraju.
+Provereno sa tri uzastopna pokretanja: pravni sadržaj ostaje stabilan
+(`0 novih, 39 ažuriranih`), korisnički podaci netaknuti.
 
 `prisma db push` je namerno **bez** `--accept-data-loss`. Ako bi izmena šeme
 zahtevala brisanje podataka, build će pući sa jasnom porukom umesto da tiho
 obriše korisničke podatke. Kada do toga dođe, migraciju uradite svesno.
 
-### 5. Punjenje pravne baze — jednom, ručno
-
-Vercel build ne pokreće seed. Posle prvog uspešnog deploya, sa svog računara:
+Ako baš želite da seed pokrenete ručno sa svog računara:
 
 ```bash
-cd ai-poreski-savetnik
 DATABASE_URL="postgres://…" npm run seed:prod
 ```
 
-Bez ovog koraka aplikacija radi, ali je pravna baza prazna — pretraga propisa
-ne vraća ništa, a kalkulatori prijavljuju da parametri nedostaju (što je
-ispravno ponašanje, ali nije ono što želite).
-
-### 6. Ograničenja koja treba znati
+### 5. Ograničenja koja treba znati
 
 - `maxDuration` za `/api/chat` i `/api/dokumenti` je 300 s. Na **Hobby** planu
   limit je 60 s, pa složena pitanja sa web pretragom mogu da isteknu — za

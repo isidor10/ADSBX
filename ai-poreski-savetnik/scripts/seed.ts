@@ -27,6 +27,10 @@ function hash(tekst: string): string {
 async function main() {
   console.log("Popunjavanje pravne baze…\n");
 
+  // Seed se pokreće i u Vercel build-u, na svakom deployu. Bezbedno je jer sve
+  // ide kroz upsert po prirodnom ključu i dira isključivo pravni sadržaj —
+  // korisnici, firme, razgovori i audit trag se ne diraju.
+
   // ── Propisi ───────────────────────────────────────────────────────────────
   const idPropisa = new Map<string, string>();
   for (const p of PROPISI) {

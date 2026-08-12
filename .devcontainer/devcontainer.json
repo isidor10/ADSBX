@@ -1,0 +1,30 @@
+{
+  "name": "AI Poreski savetnik",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+
+  // Codespaces traži devcontainer isključivo u korenu repozitorijuma, a
+  // aplikacija je u podfolderu — zato se instalacija pokreće nad njim.
+  "postCreateCommand": "cd ai-poreski-savetnik && npm install",
+
+  // Terminal se otvara direktno u folderu aplikacije, da korisnik ne mora
+  // ništa da kuca pre `npm run kreni`.
+  "workspaceFolder": "/workspaces/ADSBX/ai-poreski-savetnik",
+
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "AI Poreski savetnik",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["Prisma.prisma"]
+    }
+  },
+
+  "remoteEnv": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
+}
