@@ -1,0 +1,404 @@
+@import "tailwindcss";
+
+/*
+  Poslovni, miran interfejs. Tamna osnova sa jednim akcentom, serif za naslove,
+  tabelarni brojevi za obračune. Namerno bez „chat igračaka" — ovo je alat koji
+  računovođa drži otvoren ceo dan.
+*/
+
+:root {
+  --pozadina: #fbfaf8;
+  --povrsina: #ffffff;
+  --povrsina-2: #f4f2ee;
+  --ivica: #e3ded6;
+  --ivica-jaka: #cec7bb;
+  --tekst: #1c1a17;
+  --tekst-prigusen: #6b6459;
+  --tekst-slab: #938b7e;
+
+  --akcenat: #1f4d3f;
+  --akcenat-svetli: #2e6b58;
+  --akcenat-pozadina: #e8f0ec;
+
+  --zelena: #1f6f43;
+  --zelena-pozadina: #e6f2ea;
+  --zuta: #8a5a00;
+  --zuta-pozadina: #fdf2dc;
+  --crvena: #9c2c1f;
+  --crvena-pozadina: #fbe9e6;
+
+  --senka: 0 1px 2px rgba(28, 26, 23, 0.04), 0 4px 12px rgba(28, 26, 23, 0.04);
+  --senka-jaka: 0 2px 4px rgba(28, 26, 23, 0.06), 0 12px 28px rgba(28, 26, 23, 0.08);
+
+  --radijus: 10px;
+  --serif: ui-serif, "Iowan Old Style", "Source Serif 4", Georgia, serif;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="svetla"]) {
+    --pozadina: #14161a;
+    --povrsina: #1a1d22;
+    --povrsina-2: #21252b;
+    --ivica: #2c313a;
+    --ivica-jaka: #3d444f;
+    --tekst: #e8e6e1;
+    --tekst-prigusen: #a3a49f;
+    --tekst-slab: #7b7d79;
+
+    --akcenat: #5fb99a;
+    --akcenat-svetli: #7fcfb2;
+    --akcenat-pozadina: #17302a;
+
+    --zelena: #5fb98a;
+    --zelena-pozadina: #16301f;
+    --zuta: #d9a33c;
+    --zuta-pozadina: #33280f;
+    --crvena: #e08072;
+    --crvena-pozadina: #331a16;
+
+    --senka: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+    --senka-jaka: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-tema="tamna"] {
+  --pozadina: #14161a;
+  --povrsina: #1a1d22;
+  --povrsina-2: #21252b;
+  --ivica: #2c313a;
+  --ivica-jaka: #3d444f;
+  --tekst: #e8e6e1;
+  --tekst-prigusen: #a3a49f;
+  --tekst-slab: #7b7d79;
+  --akcenat: #5fb99a;
+  --akcenat-svetli: #7fcfb2;
+  --akcenat-pozadina: #17302a;
+  --zelena: #5fb98a;
+  --zelena-pozadina: #16301f;
+  --zuta: #d9a33c;
+  --zuta-pozadina: #33280f;
+  --crvena: #e08072;
+  --crvena-pozadina: #331a16;
+  --senka: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --senka-jaka: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  background: var(--pozadina);
+  color: var(--tekst);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  margin: 0;
+}
+
+a {
+  color: var(--akcenat);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Brojevi u obračunima moraju da se poklapaju po kolonama. */
+.broj {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 0.94em;
+}
+
+/* ── Osnovni elementi ─────────────────────────────────────────────────────── */
+
+.kartica {
+  background: var(--povrsina);
+  border: 1px solid var(--ivica);
+  border-radius: var(--radijus);
+  box-shadow: var(--senka);
+}
+
+.dugme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: var(--akcenat);
+  color: #fff;
+  font-weight: 550;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 120ms ease, opacity 120ms ease;
+}
+.dugme:hover:not(:disabled) { background: var(--akcenat-svetli); }
+.dugme:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dugme-tiho {
+  background: transparent;
+  border-color: var(--ivica-jaka);
+  color: var(--tekst);
+}
+.dugme-tiho:hover:not(:disabled) { background: var(--povrsina-2); }
+
+.polje {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  background: var(--povrsina);
+  border: 1px solid var(--ivica-jaka);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.polje:focus {
+  border-color: var(--akcenat);
+  box-shadow: 0 0 0 3px var(--akcenat-pozadina);
+}
+
+.oznaka {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--tekst-prigusen);
+  margin-bottom: 6px;
+}
+
+.znacka {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.znacka-zelena { background: var(--zelena-pozadina); color: var(--zelena); }
+.znacka-zuta { background: var(--zuta-pozadina); color: var(--zuta); }
+.znacka-crvena { background: var(--crvena-pozadina); color: var(--crvena); }
+.znacka-siva { background: var(--povrsina-2); color: var(--tekst-prigusen); }
+
+/* ── Pravni osnov ─────────────────────────────────────────────────────────── */
+
+.pravni-osnov {
+  border: 1px solid var(--ivica-jaka);
+  border-left: 3px solid var(--akcenat);
+  border-radius: 8px;
+  background: var(--povrsina);
+  padding: 14px 16px;
+}
+.pravni-osnov-nepotvrdjen {
+  border-left-color: var(--zuta);
+  background: var(--zuta-pozadina);
+}
+
+.upozorenje {
+  border: 1px solid var(--zuta);
+  background: var(--zuta-pozadina);
+  color: var(--zuta);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.opasnost {
+  border: 1px solid var(--crvena);
+  background: var(--crvena-pozadina);
+  color: var(--crvena);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+/* ── Raspored ─────────────────────────────────────────────────────────────── */
+
+.ljuska {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+/* Treću kolonu rezerviše samo strana razgovora — jedina koja ima panel izvora. */
+.ljuska-sa-panelom {
+  grid-template-columns: 232px minmax(0, 1fr) 360px;
+}
+
+.bocna {
+  border-right: 1px solid var(--ivica);
+  background: var(--povrsina);
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.glavna {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+  Strana razgovora se ponaša kao aplikacija, ne kao dokument: visina je
+  fiksirana na ekran, poruke skroluju unutra, a polje za unos ostaje na dnu.
+  Bez ovoga polje za unos odlazi na kraj dugačkog dokumenta i na telefonu
+  završi ispod donje navigacije.
+*/
+.glavna-razgovor {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.panel-izvora {
+  border-left: 1px solid var(--ivica);
+  background: var(--povrsina);
+  padding: 20px 18px;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.nav-stavka {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--tekst-prigusen);
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 42px;
+}
+.nav-stavka:hover { background: var(--povrsina-2); text-decoration: none; }
+.nav-stavka-aktivna {
+  background: var(--akcenat-pozadina);
+  color: var(--akcenat);
+  font-weight: 600;
+}
+
+/* Donja navigacija — samo na telefonu. */
+.donja-nav { display: none; }
+
+@media (max-width: 1180px) {
+  .ljuska,
+  .ljuska-sa-panelom { grid-template-columns: 232px minmax(0, 1fr); }
+  .panel-izvora {
+    position: fixed;
+    inset: auto 0 0 0;
+    height: min(78dvh, 720px);
+    border-left: none;
+    border-top: 1px solid var(--ivica);
+    border-radius: 16px 16px 0 0;
+    box-shadow: var(--senka-jaka);
+    transform: translateY(100%);
+    transition: transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
+    z-index: 60;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+  .panel-izvora-otvoren { transform: translateY(0); }
+}
+
+@media (max-width: 780px) {
+  .ljuska,
+  .ljuska-sa-panelom { grid-template-columns: minmax(0, 1fr); }
+  .bocna { display: none; }
+  .glavna { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+  /* Donja navigacija zauzima dno ekrana — razgovor se skraćuje za tu visinu. */
+  .glavna-razgovor {
+    height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+    padding-bottom: 0;
+  }
+
+  .donja-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    inset: auto 0 0 0;
+    background: var(--povrsina);
+    border-top: 1px solid var(--ivica);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 50;
+  }
+  .donja-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 60px;
+    font-size: 11px;
+    font-weight: 550;
+    color: var(--tekst-prigusen);
+  }
+  .donja-nav a:hover { text-decoration: none; }
+  .donja-nav .aktivna { color: var(--akcenat); }
+  .donja-nav .ikona { font-size: 19px; line-height: 1; }
+}
+
+/* ── Sitno ────────────────────────────────────────────────────────────────── */
+
+.prigusen { color: var(--tekst-prigusen); }
+.slab { color: var(--tekst-slab); }
+.mali { font-size: 13px; }
+.sitni { font-size: 12px; }
+
+.razmak-y > * + * { margin-top: 14px; }
+.razmak-y-s > * + * { margin-top: 8px; }
+
+.tabela-obracuna {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.tabela-obracuna td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--ivica);
+  vertical-align: top;
+}
+.tabela-obracuna tr:last-child td { border-bottom: none; }
+.tabela-obracuna .desno { text-align: right; white-space: nowrap; }
+
+.skrol-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes pulsiranje {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+.ucitavanje { animation: pulsiranje 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
