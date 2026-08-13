@@ -5,6 +5,7 @@
   "description": "AI poreski savetnik i računovođa za Republiku Srbiju — LLM + RAG + web pretraga + pravna baza.",
   "scripts": {
     "kreni": "tsx scripts/kreni.ts",
+    "kljuc": "tsx scripts/kljuc.ts",
     "dev": "next dev",
     "build": "tsx --env-file-if-exists=.env scripts/podesi-bazu.ts && prisma generate && next build",
     "vercel-build": "tsx --env-file-if-exists=.env scripts/podesi-bazu.ts && prisma generate && prisma db push && tsx --env-file-if-exists=.env scripts/seed.ts && next build",
