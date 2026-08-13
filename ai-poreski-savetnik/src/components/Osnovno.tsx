@@ -29,7 +29,12 @@ export function jeVisokorizicno(tekst: string): boolean {
 const STRANE = [
   { put: "/", naziv: "Razgovor", ikona: "💬", mobilni: "Chat" },
   { put: "/firma", naziv: "Moja firma", ikona: "🏢", mobilni: "Firma" },
-  { put: "/kalkulator", naziv: "Kalkulatori", ikona: "📊", mobilni: "Kalkulator" },
+  {
+    put: "/kalkulator",
+    naziv: "Kalkulatori",
+    ikona: "📊",
+    mobilni: "Kalkulator",
+  },
   { put: "/propisi", naziv: "Propisi", ikona: "📚", mobilni: "Propisi" },
   { put: "/rokovi", naziv: "Rokovi", ikona: "📅", mobilni: "Rokovi" },
 ];
@@ -129,10 +134,7 @@ export function Navigacija() {
           </button>
         </div>
 
-        <p
-          className="sitni slab"
-          style={{ marginTop: 24, lineHeight: 1.5 }}
-        >
+        <p className="sitni slab" style={{ marginTop: 24, lineHeight: 1.5 }}>
           {DISCLAIMER}
         </p>
       </nav>
@@ -205,6 +207,12 @@ export interface Citat {
   tipTvrdnje?: string;
 }
 
+/** Isti nazivi vrsta tvrdnje koriste se i na ekranu i u nalazu za štampu. */
+export function opisTipaTvrdnje(tip?: string): string {
+  if (!tip) return "Nesvrstano";
+  return OPIS_TIPA[tip] ?? tip;
+}
+
 const OPIS_TIPA: Record<string, string> = {
   ZAKON: "Zakon",
   PODZAKONSKI_AKT: "Podzakonski akt",
@@ -235,7 +243,10 @@ export function KarticaPravnogOsnova({
           flexWrap: "wrap",
         }}
       >
-        <span className="sitni" style={{ fontWeight: 700, letterSpacing: "0.04em" }}>
+        <span
+          className="sitni"
+          style={{ fontWeight: 700, letterSpacing: "0.04em" }}
+        >
           📚 PRAVNI OSNOV{redni !== undefined ? ` ${redni}` : ""}
         </span>
         {citat.tipTvrdnje && (
@@ -372,7 +383,10 @@ export function Zaglavlje({
       <div>
         <h1 style={{ fontSize: 22 }}>{naslov}</h1>
         {opis && (
-          <p className="mali prigusen" style={{ margin: "5px 0 0", maxWidth: "62ch" }}>
+          <p
+            className="mali prigusen"
+            style={{ margin: "5px 0 0", maxWidth: "62ch" }}
+          >
             {opis}
           </p>
         )}
