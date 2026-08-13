@@ -153,7 +153,22 @@ const NATPIS: Record<StanjeGlasa, string> = {
 };
 
 export function DugmeGlasa({ glas }: { glas: UpravljanjeGlasom }) {
-  if (!glas.dostupno) return null;
+  // Kada pregledač ne podržava govor, dugme se ranije potpuno sklanjalo. To
+  // znači da korisnik ne vidi ni opciju ni razlog — pita se zašto je nema, a
+  // odgovora nigde. Bolje je ostaviti ga isključeno i reći šta nedostaje.
+  if (!glas.dostupno) {
+    return (
+      <button
+        type="button"
+        disabled
+        title="Prepoznavanje govora radi u Chrome-u i Edge-u. Otvorite aplikaciju tamo."
+        aria-label="Glas nije dostupan u ovom pregledaču"
+        className="dugme-glas"
+      >
+        🎙️
+      </button>
+    );
+  }
 
   const aktivno = glas.stanje === "slusam" || glas.stanje === "govorim";
 
@@ -172,7 +187,14 @@ export function DugmeGlasa({ glas }: { glas: UpravljanjeGlasom }) {
 }
 
 export function TrakaGlasa({ glas }: { glas: UpravljanjeGlasom }) {
-  if (!glas.dostupno) return null;
+  if (!glas.dostupno) {
+    return (
+      <div className="sitni slab" style={{ marginTop: 8 }}>
+        ⚠︎ Ovaj pregledač ne podržava prepoznavanje govora, pa je mikrofon
+        isključen. Radi u Chrome-u i Edge-u; u Safariju i Firefox-u ne.
+      </div>
+    );
+  }
 
   return (
     <div className="razmak-y-s" style={{ marginTop: 8 }}>
