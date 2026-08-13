@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { PORUKA_PRIJAVA, stanjePristupa } from "@/lib/pristup";
 import { db } from "@/lib/db";
 import { pokreniPipeline } from "@/lib/ai/pipeline";
 import { PROMPT_ANALIZE_DOKUMENTA } from "@/lib/ai/prompts";
@@ -66,11 +67,19 @@ async function izvuciTekst(
     return { tekst: delovi.join("\n"), direktnoModelu: false };
   }
 
-  return { tekst: bafer.toString("utf-8").slice(0, 200_000), direktnoModelu: false };
+  return {
+    tekst: bafer.toString("utf-8").slice(0, 200_000),
+    direktnoModelu: false,
+  };
 }
 
 export async function POST(zahtev: Request) {
   const korisnik = await trenutniKorisnik();
+
+  // Isto pravilo kao za razgovor: analiza dokumenta troši API ključ vlasnika.
+  if (!korisnik && stanjePristupa() === "zatvoren") {
+    return NextResponse.json({ greska: PORUKA_PRIJAVA }, { status: 401 });
+  }
 
   const limit = ogranici(
     `dok:${kljucKlijenta(zahtev, korisnik?.id)}`,
@@ -102,7 +111,9 @@ export async function POST(zahtev: Request) {
   }
   if (fajl.size > maksVelicina()) {
     return NextResponse.json(
-      { greska: `Fajl je veći od dozvoljenih ${process.env.MAX_UPLOAD_MB ?? 20} MB.` },
+      {
+        greska: `Fajl je veći od dozvoljenih ${process.env.MAX_UPLOAD_MB ?? 20} MB.`,
+      },
       { status: 413 },
     );
   }

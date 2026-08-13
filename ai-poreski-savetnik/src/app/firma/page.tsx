@@ -54,7 +54,9 @@ const prazna = {
 export default function StranaFirme() {
   const [prijavljen, postaviPrijavljen] = useState<boolean | null>(null);
   const [firme, postaviFirme] = useState<Firma[]>([]);
-  const [obrazac, postaviObrazac] = useState<typeof prazna & { id?: string }>(prazna);
+  const [obrazac, postaviObrazac] = useState<typeof prazna & { id?: string }>(
+    prazna,
+  );
   const [poruka, postaviPoruku] = useState<string | null>(null);
   const [greska, postaviGresku] = useState<string | null>(null);
   const [cuva, postaviCuva] = useState(false);
@@ -137,7 +139,12 @@ export default function StranaFirme() {
                       f.pravnaForma}
                   </div>
                   <div
-                    style={{ marginTop: 9, display: "flex", gap: 6, flexWrap: "wrap" }}
+                    style={{
+                      marginTop: 9,
+                      display: "flex",
+                      gap: 6,
+                      flexWrap: "wrap",
+                    }}
                   >
                     <span
                       className={`znacka ${
@@ -197,7 +204,11 @@ export default function StranaFirme() {
           </section>
         )}
 
-        <form onSubmit={sacuvaj} className="kartica" style={{ padding: 22, maxWidth: 720 }}>
+        <form
+          onSubmit={sacuvaj}
+          className="kartica"
+          style={{ padding: 22, maxWidth: 720 }}
+        >
           <h2 style={{ fontSize: 17 }}>
             {obrazac.id ? "Izmena profila firme" : "Novi profil firme"}
           </h2>
@@ -225,7 +236,9 @@ export default function StranaFirme() {
                 }
               >
                 {PRAVNE_FORME.map((p) => (
-                  <option key={p.v} value={p.v}>{p.n}</option>
+                  <option key={p.v} value={p.v}>
+                    {p.n}
+                  </option>
                 ))}
               </select>
             </div>
@@ -251,7 +264,9 @@ export default function StranaFirme() {
                 }
               >
                 {PDV_STATUSI.map((p) => (
-                  <option key={p.v} value={p.v}>{p.n}</option>
+                  <option key={p.v} value={p.v}>
+                    {p.n}
+                  </option>
                 ))}
               </select>
             </div>
@@ -272,12 +287,16 @@ export default function StranaFirme() {
             <Polje
               oznaka="Šifra delatnosti"
               vrednost={obrazac.sifraDelatnosti}
-              naPromenu={(v) => postaviObrazac({ ...obrazac, sifraDelatnosti: v })}
+              naPromenu={(v) =>
+                postaviObrazac({ ...obrazac, sifraDelatnosti: v })
+              }
             />
             <Polje
               oznaka="Naziv delatnosti"
               vrednost={obrazac.nazivDelatnosti}
-              naPromenu={(v) => postaviObrazac({ ...obrazac, nazivDelatnosti: v })}
+              naPromenu={(v) =>
+                postaviObrazac({ ...obrazac, nazivDelatnosti: v })
+              }
             />
             <Polje
               oznaka="Broj zaposlenih"
@@ -323,7 +342,11 @@ export default function StranaFirme() {
 
           <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
             <button className="dugme" disabled={cuva || !obrazac.naziv}>
-              {cuva ? "Čuvam…" : obrazac.id ? "Sačuvaj izmene" : "Sačuvaj firmu"}
+              {cuva
+                ? "Čuvam…"
+                : obrazac.id
+                  ? "Sačuvaj izmene"
+                  : "Sačuvaj firmu"}
             </button>
             {obrazac.id && (
               <button
@@ -375,9 +398,12 @@ function Polje({
 }
 
 function Prijava({ naUspeh }: { naUspeh: () => void }) {
-  const [akcija, postaviAkciju] = useState<"prijava" | "registracija">("prijava");
+  const [akcija, postaviAkciju] = useState<"prijava" | "registracija">(
+    "prijava",
+  );
   const [email, postaviEmail] = useState("");
   const [lozinka, postaviLozinku] = useState("");
+  const [kod, postaviKod] = useState("");
   const [greska, postaviGresku] = useState<string | null>(null);
   const [radi, postaviRadi] = useState(false);
 
@@ -389,7 +415,7 @@ function Prijava({ naUspeh }: { naUspeh: () => void }) {
       const odg = await fetch("/api/auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ akcija, email, lozinka }),
+        body: JSON.stringify({ akcija, email, lozinka, kod }),
       });
       const podaci = await odg.json();
       if (!odg.ok) {
@@ -403,13 +429,17 @@ function Prijava({ naUspeh }: { naUspeh: () => void }) {
   }
 
   return (
-    <form onSubmit={posalji} className="kartica" style={{ padding: 24, maxWidth: 420 }}>
+    <form
+      onSubmit={posalji}
+      className="kartica"
+      style={{ padding: 24, maxWidth: 420 }}
+    >
       <h2 style={{ fontSize: 17 }}>
         {akcija === "prijava" ? "Prijava" : "Registracija"}
       </h2>
       <p className="mali prigusen" style={{ marginTop: 6 }}>
         Profil firme, praćenje izmena propisa i istorija razgovora čuvaju se uz
-        korisnički nalog. Razgovor možete koristiti i bez prijave.
+        korisnički nalog.
       </p>
 
       <div style={{ marginTop: 18 }} className="razmak-y">
@@ -437,6 +467,23 @@ function Prijava({ naUspeh }: { naUspeh: () => void }) {
             Najmanje 8 znakova.
           </p>
         </div>
+
+        {akcija === "registracija" && (
+          <div>
+            <label className="oznaka">Pozivni kod</label>
+            <input
+              className="polje"
+              type="text"
+              value={kod}
+              onChange={(e) => postaviKod(e.target.value)}
+              autoComplete="off"
+            />
+            <p className="sitni slab" style={{ margin: "4px 0 0" }}>
+              Popunite samo ako ste ga dobili. Na objavljenoj aplikaciji kod
+              sprečava da nalog otvori bilo ko ko naiđe na adresu.
+            </p>
+          </div>
+        )}
 
         {greska && <div className="opasnost">{greska}</div>}
 

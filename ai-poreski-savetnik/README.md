@@ -146,7 +146,27 @@ schema fajla koja bi se s vremenom razišla. Umesto toga, `scripts/podesi-bazu.t
 pre svakog build-a postavi `provider` prema obliku `DATABASE_URL`-a. Skripta je
 idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 
-### 3. Promenljive okruženja u Vercelu
+### 3. Ko sme da koristi objavljenu aplikaciju
+
+**Ovo pročitajte pre nego što podelite adresu.** Svako pitanje troši vaš
+`ANTHROPIC_API_KEY`. Aplikacija objavljena bez ograničenja znači da svako ko
+sazna adresu troši vaš novac — a to se ne primeti dok ne stigne faktura.
+
+Zato je podrazumevano stanje obrnuto od uobičajenog: **lokalno otvoreno, u
+produkciji zatvoreno.** Zaboravljeno podešavanje zaključava vrata umesto da ih
+ostavi otvorena.
+
+| Promenljiva | Šta radi |
+|---|---|
+| `PRISTUP` | `zatvoren` traži prijavu (podrazumevano u produkciji), `otvoren` ne traži |
+| `KOD_ZA_REGISTRACIJU` | pozivni kod koji delite zaposlenima |
+| `DOZVOLJENI_DOMENI` | npr. `firma.rs` — nalog samo sa službene adrese |
+
+**Prvi korisnik je izuzet od oba filtera i postaje administrator.** Njemu kod
+nema ko da da, a bez tog izuzetka bi sveže objavljena aplikacija bila zaključana
+i za vlasnika. Zato prvo registrujte sebe, pa tek onda podelite adresu.
+
+### 4. Promenljive okruženja u Vercelu
 
 `.env` nije u gitu, pa ih unesite u **Settings → Environment Variables**:
 
@@ -157,6 +177,8 @@ idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 | `SESSION_SECRET` | `openssl rand -hex 32` |
 | `AI_EFFORT` | `high` (opciono) |
 | `WEB_SEARCH_ENABLED` | `true` (opciono) |
+| `KOD_ZA_REGISTRACIJU` | pozivni kod za zaposlene |
+| `DOZVOLJENI_DOMENI` | `firma.rs` (opciono) |
 
 > ⚠️ **Promenljiva mora da se zove tačno `DATABASE_URL`.** Vercel Postgres i
 > neke integracije kreiraju `POSTGRES_PRISMA_URL` ili `POSTGRES_URL` — to nije
@@ -166,7 +188,7 @@ idempotentna, menja tačno jednu liniju i ispisuje šta je uradila.
 > Proverite i da je promenljiva označena za okruženje u kojem se build izvršava
 > (Production / Preview / Development).
 
-### 4. Build komanda — pravna baza se puni sama
+### 5. Build komanda — pravna baza se puni sama
 
 Vercel sam pokupi `vercel-build` iz `package.json`:
 
@@ -190,7 +212,7 @@ Ako baš želite da seed pokrenete ručno sa svog računara:
 DATABASE_URL="postgres://…" npm run seed:prod
 ```
 
-### 5. Ograničenja koja treba znati
+### 6. Ograničenja koja treba znati
 
 - `maxDuration` za `/api/chat` i `/api/dokumenti` je 300 s. Na **Hobby** planu
   limit je 60 s, pa složena pitanja sa web pretragom mogu da isteknu — za
