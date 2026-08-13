@@ -5,7 +5,12 @@ import { pokreniPipeline } from "@/lib/ai/pipeline";
 import { opisiGresku } from "@/lib/ai/greske";
 import { PROMPT_DRUGO_MISLJENJE } from "@/lib/ai/prompts";
 import { zapisiOdgovor } from "@/lib/audit";
-import { kljucKlijenta, ogranici, trenutniKorisnik } from "@/lib/auth";
+import {
+  idGosta,
+  kljucKlijenta,
+  ogranici,
+  trenutniKorisnik,
+} from "@/lib/auth";
 import { proveriClanoveUTekstu } from "@/lib/ai/verifier";
 
 export const runtime = "nodejs";
@@ -27,6 +32,9 @@ export async function POST(zahtev: Request) {
   // u odgovoru o tome šta se desilo.
   try {
     const korisnik = await trenutniKorisnik();
+    // Neprijavljeni posetilac svejedno dobija svoju istoriju — vezanu za
+    // pregledač, ne za nalog.
+    const gost = korisnik ? null : await idGosta();
 
     const limit = ogranici(
       kljucKlijenta(zahtev, korisnik?.id),
@@ -70,7 +78,7 @@ export async function POST(zahtev: Request) {
       const postojeci = await db.razgovor.findFirst({
         where: {
           id: razgovorId,
-          ...(korisnik ? { korisnikId: korisnik.id } : { korisnikId: null }),
+          ...(korisnik ? { korisnikId: korisnik.id } : { gostId: gost }),
         },
       });
       if (!postojeci) razgovorId = undefined;
@@ -79,6 +87,7 @@ export async function POST(zahtev: Request) {
       const novi = await db.razgovor.create({
         data: {
           korisnikId: korisnik?.id ?? null,
+          gostId: gost,
           firmaId: firma?.id ?? null,
           naslov: ulaz.pitanje.slice(0, 80),
         },

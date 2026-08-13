@@ -16,6 +16,39 @@ const scryptAsync = promisify(scrypt);
 const NAZIV_KOLACICA = "aps_sesija";
 const TRAJANJE_SESIJE_MS = 30 * 24 * 60 * 60 * 1000; // 30 dana
 
+const KOLACIC_GOSTA = "aps_gost";
+const TRAJANJE_GOSTA_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Oznaka pregledača za neprijavljenog posetioca.
+ *
+ * Razgovori vođeni bez naloga svi imaju `korisnikId: null`. Da istorija ne bi
+ * jednom posetiocu pokazala tuđa pitanja — a poreska pitanja su po pravilu
+ * poverljiva — svaki pregledač dobija nasumičnu oznaku i vidi samo svoje.
+ * Nije zamena za nalog: ko obriše kolačiće, izgubi pristup toj istoriji.
+ */
+export async function idGosta(): Promise<string> {
+  const kolacici = await cookies();
+  const postojeci = kolacici.get(KOLACIC_GOSTA)?.value;
+  if (postojeci) return postojeci;
+
+  const nov = randomBytes(16).toString("hex");
+  kolacici.set(KOLACIC_GOSTA, nov, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: TRAJANJE_GOSTA_MS / 1000,
+  });
+  return nov;
+}
+
+/** Čita oznaku gosta bez postavljanja — za rute koje samo čitaju. */
+export async function idGostaBezStvaranja(): Promise<string | null> {
+  const kolacici = await cookies();
+  return kolacici.get(KOLACIC_GOSTA)?.value ?? null;
+}
+
 export async function hesirajLozinku(lozinka: string): Promise<string> {
   const so = randomBytes(16);
   const izvedeni = (await scryptAsync(lozinka, so, 64)) as Buffer;
