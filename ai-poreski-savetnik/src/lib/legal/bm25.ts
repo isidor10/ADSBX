@@ -102,7 +102,25 @@ export function normalizujSkorove(
 
   const maks = rezultati[0].skor;
   const min = rezultati[rezultati.length - 1].skor;
-  const raspon = maks - min || 1;
+  const raspon = maks - min;
+
+  /*
+   * Kada svi pogoci imaju isti skor — a najčešće zato što ga ima samo jedan —
+   * min-max bi svakome dao nulu, jer je brojilac `skor - min` tada nula.
+   *
+   * To je tiho gutalo najtačnije pretrage koje ovaj sistem uopšte može da
+   * napravi. Upit „bolovanje" pogađa tačno jedan član (ZOR 115); pošto je
+   * pogodak jedini, dobijao je nulu i završavao nerazlučiv od promašaja, pa
+   * je korisnik dobijao kamatu na javne prihode umesto naknade zarade. Što je
+   * pojam ređi i precizniji, to je veća šansa da pogodi samo jednu odredbu —
+   * i baš tada je rezultat nestajao.
+   *
+   * Pogodak je pogodak: ako se ne razlikuju međusobno, svi nose pun skor.
+   */
+  if (raspon === 0) {
+    for (const r of rezultati) mapa.set(r.id, 1);
+    return mapa;
+  }
 
   for (const r of rezultati) {
     mapa.set(r.id, (r.skor - min) / raspon);

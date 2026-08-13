@@ -372,38 +372,216 @@ export const ODREDBE: SeedOdredba[] = [
   },
 
   // ── Zakon o radu ──────────────────────────────────────────────────────────
+  /*
+   * Radno pravo je za računovođu poreska tema.
+   *
+   * Skoro svaki obračun zarade oslanja se na neki član ovog zakona: minuli rad
+   * i prekovremeni na 108, bolovanje na 115, prevoz i dnevnice na 118,
+   * otpremnina na 119 i 158. Ranije su ovde stajale tri odredbe bez ijednog
+   * potvrđenog broja člana, pa je aplikacija na pitanje o zaradi umela da
+   * odgovori tačno po sadržini, a bez osnova koji se sme citirati.
+   *
+   * Brojevi članova ispod provereni su prema stručnim pravnim izvorima koji
+   * broj navode zajedno sa sadržinom odredbe. Tekstovi su sažeci, ne doslovan
+   * tekst zakona — otud `doslovanTekst: false` na svakom zapisu.
+   */
   {
     propis: "ZOR",
-    clan: "—",
+    clan: "33",
+    naslov: "Sadržina ugovora o radu",
+    tekst:
+      "Ugovor o radu sadrži naziv i sedište poslodavca, lične podatke zaposlenog, vrstu i stepen stručne spreme, naziv i opis posla, mesto rada, vrstu radnog odnosa (na neodređeno ili određeno vreme), trajanje ugovora na određeno vreme, dan početka rada, radno vreme, novčani iznos osnovne zarade i elemente za utvrđivanje radnog učinka, naknade zarade, uvećane zarade i druga primanja, rokove za isplatu i trajanje dnevnog i nedeljnog odmora. Ugovor ne mora da sadrži elemente koji su utvrđeni zakonom, kolektivnim ugovorom ili pravilnikom o radu — u tom slučaju mora da uputi na akt kojim su ta prava utvrđena.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "36",
+    naslov: "Probni rad",
+    tekst:
+      "Ugovorom o radu može da se ugovori probni rad za obavljanje jednog ili više povezanih, odnosno srodnih poslova utvrđenih ugovorom o radu. Probni rad može da traje najduže šest meseci. Pre isteka vremena za koje je ugovoren probni rad, poslodavac ili zaposleni može da otkaže ugovor o radu uz otkazni rok koji ne može biti kraći od pet radnih dana; poslodavac je dužan da obrazloži otkaz.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "51",
+    naslov: "Puno radno vreme",
+    tekst:
+      "Puno radno vreme iznosi 40 časova nedeljno, ako ovim zakonom nije drukčije određeno. Opštim aktom može da se odredi da puno radno vreme bude kraće od 40 časova nedeljno, ali ne kraće od 36 časova nedeljno. Zaposleni koji radi kraće od 40 časova u tom slučaju ostvaruje sva prava iz radnog odnosa kao da radi puno radno vreme.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "53",
+    naslov: "Prekovremeni rad — uslovi i ograničenja",
+    tekst:
+      "Na zahtev poslodavca zaposleni je dužan da radi duže od punog radnog vremena u slučaju više sile, iznenadnog povećanja obima posla i u drugim slučajevima kada je neophodno da se u određenom roku završi posao koji nije planiran. Prekovremeni rad ne može da traje duže od osam časova nedeljno, niti duže od 12 časova dnevno uključujući i redovan rad. Uvećanje zarade po osnovu prekovremenog rada uređeno je članom 108.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "69",
     naslov: "Godišnji odmor — zakonski minimum",
     tekst:
-      "Zaposleni ima pravo na godišnji odmor u trajanju od najmanje 20 radnih dana u kalendarskoj godini. Pravo na godišnji odmor stiče se posle mesec dana neprekidnog rada. Minimum od 20 dana može se uvećati po osnovu doprinosa na radu, uslova rada, radnog iskustva, stručne spreme i drugih kriterijuma utvrđenih opštim aktom poslodavca ili kolektivnim ugovorom. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na godišnji odmor u svakoj kalendarskoj godini u trajanju utvrđenom opštim aktom i ugovorom o radu, a najmanje 20 radnih dana. Dužina godišnjeg odmora utvrđuje se tako što se zakonski minimum od 20 radnih dana uvećava po osnovu doprinosa na radu, uslova rada, radnog iskustva, stručne spreme zaposlenog i drugih kriterijuma utvrđenih opštim aktom ili ugovorom o radu.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
   {
     propis: "ZOR",
-    clan: "—",
-    naslov: "Prekovremeni rad i uvećana zarada",
+    clan: "108",
+    naslov: "Uvećana zarada — osnovi i procenti",
     tekst:
-      "Poslodavac može uvesti prekovremeni rad samo u slučaju više sile, iznenadnog povećanja obima posla i u drugim hitnim okolnostima. Zaposleni ima pravo na uvećanu zaradu za prekovremeni rad u iznosu od najmanje 26% osnovice. Ako se istovremeno stiče više osnova za uvećanje zarade, procenti se sabiraju. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na uvećanu zaradu u visini utvrđenoj opštim aktom i ugovorom o radu, i to: za rad na dan praznika koji je neradni dan — najmanje 110% od osnovice; za rad noću, ako takav rad nije vrednovan pri utvrđivanju osnovne zarade — najmanje 26% od osnovice; za prekovremeni rad — najmanje 26% od osnovice; po osnovu vremena provedenog na radu za svaku punu godinu rada ostvarenu u radnom odnosu kod poslodavca (minuli rad) — najmanje 0,4% od osnovice. Ako se istovremeno steknu uslovi po više osnova, procenat uvećane zarade ne može biti niži od zbira procenata po svakom od osnova. Osnovicu čini osnovna zarada utvrđena u skladu sa zakonom, opštim aktom i ugovorom o radu.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
   {
     propis: "ZOR",
-    clan: "—",
+    clan: "111",
+    naslov: "Pravo na minimalnu zaradu",
+    tekst:
+      "Zaposleni ima pravo na minimalnu zaradu za standardni učinak i vreme provedeno na radu. Minimalna zarada određuje se na osnovu minimalne cene rada utvrđene u skladu sa ovim zakonom, vremena provedenog na radu i poreza i doprinosa koji se plaćaju iz zarade. Zaposleni koji prima minimalnu zaradu ima pravo i na uvećanu zaradu iz člana 108, na naknadu troškova iz člana 118 i na druga primanja iz člana 119.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "112",
+    naslov: "Utvrđivanje minimalne cene rada",
+    tekst:
+      "Minimalna cena rada utvrđuje se odlukom socijalno-ekonomskog saveta osnovanog za teritoriju Republike Srbije. Utvrđuje se po radnom času bez poreza i doprinosa, za kalendarsku godinu, najkasnije do 15. septembra tekuće godine, a primenjuje se od 1. januara naredne godine. Ako socijalno-ekonomski savet ne donese odluku u roku od 15 dana od dana početka pregovora, odluku donosi Vlada u narednom roku od 15 dana. Odluka o minimalnoj ceni rada objavljuje se u „Službenom glasniku Republike Srbije”.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "115",
     naslov: "Naknada zarade za vreme privremene sprečenosti za rad (bolovanje)",
     tekst:
-      "Za privremenu sprečenost za rad do 30 dana naknadu zarade isplaćuje poslodavac, u visini od najmanje 65% osnovice. Počev od 31. dana naknadu snosi Republički fond za zdravstveno osiguranje. Za pojedine osnove sprečenosti (npr. povreda na radu ili profesionalna bolest) propisan je viši procenat. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na naknadu zarade za vreme odsustvovanja sa rada zbog privremene sprečenosti za rad do 30 dana, i to: najmanje 65% prosečne zarade u prethodnih 12 meseci pre meseca u kojem je nastupila sprečenost, ako je sprečenost prouzrokovana bolešću ili povredom van rada; najmanje 100% prosečne zarade u prethodnih 12 meseci, ako je sprečenost prouzrokovana povredom na radu ili profesionalnom bolešću. Naknada ne može biti niža od minimalne zarade utvrđene u skladu sa ovim zakonom. Počev od 31. dana naknadu snosi Republički fond za zdravstveno osiguranje, osim kod povrede na radu i profesionalne bolesti, gde je snosi poslodavac.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.pozakonu.rs/blog/radni-odnosi/kompletan-vodic-kroz-zakon-o-radu",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "118",
+    naslov: "Naknada troškova — prevoz, službeni put, ishrana, regres",
+    tekst:
+      "Zaposleni ima pravo na naknadu troškova u skladu sa opštim aktom i ugovorom o radu, i to: za dolazak i odlazak sa rada, u visini cene prevozne karte u javnom saobraćaju (stav 1 tačka 1); za vreme provedeno na službenom putu u zemlji i u inostranstvu; za smeštaj i ishranu za rad i boravak na terenu; za ishranu u toku rada i za regres za korišćenje godišnjeg odmora, ako ti troškovi nisu već uračunati u osnovnu zaradu. Poreski tretman ovih naknada (neoporezivi iznosi) uređen je Zakonom o porezu na dohodak građana.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "119",
+    naslov: "Druga primanja — otpremnina za penziju, pomoć, jubilarna nagrada",
+    tekst:
+      "Poslodavac je dužan da isplati zaposlenom otpremninu pri odlasku u penziju, najmanje u visini dve prosečne zarade u Republici Srbiji prema poslednjem objavljenom podatku republičkog organa nadležnog za statistiku (stav 1 tačka 1), kao i naknadu troškova pogrebnih usluga i naknadu štete zbog povrede na radu ili profesionalne bolesti. Poslodavac može zaposlenom da isplati i jubilarnu nagradu, solidarnu pomoć i druga primanja u skladu sa opštim aktom, pri čemu zaposleni koji prima minimalnu zaradu ima pravo na ta primanja pod istim uslovima.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "158",
+    naslov: "Otpremnina zbog prestanka radnog odnosa (tehnološki višak)",
+    tekst:
+      "Poslodavac je dužan da pre otkaza ugovora o radu zbog prestanka potrebe za radom zaposlenog usled tehnoloških, ekonomskih ili organizacionih promena isplati zaposlenom otpremninu. Visina otpremnine utvrđuje se opštim aktom ili ugovorom o radu, s tim što ne može biti niža od zbira trećine zarade zaposlenog za svaku navršenu godinu rada u radnom odnosu kod poslodavca kod koga ostvaruje pravo na otpremninu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "178",
+    naslov: "Otkaz ugovora o radu od strane zaposlenog",
+    tekst:
+      "Zaposleni ima pravo da poslodavcu otkaže ugovor o radu. Otkaz se dostavlja poslodavcu u pisanom obliku, najmanje 15 dana pre dana koji je zaposleni naveo kao dan prestanka radnog odnosa. Opštim aktom ili ugovorom o radu može se utvrditi duži otkazni rok, ali ne duži od 30 dana.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "179",
+    naslov: "Otkaz ugovora o radu od strane poslodavca",
+    tekst:
+      "Poslodavac može zaposlenom da otkaže ugovor o radu ako za to postoji opravdani razlog koji se odnosi na radnu sposobnost zaposlenog i njegovo ponašanje — ako ne ostvaruje rezultate rada ili nema potrebna znanja i sposobnosti za obavljanje poslova na kojima radi (stav 1 tačka 1), kao i u slučajevima povrede radne obaveze, nepoštovanja radne discipline i drugih zakonom propisanih razloga. Kod otkaza iz stava 1 tačke 1 poslodavac je dužan da zaposlenom prethodno dâ pisano obaveštenje o nedostacima u radu, uputstva i primeren rok za poboljšanje.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "189",
+    naslov: "Otkazni rok kod otkaza zbog neostvarivanja rezultata rada",
+    tekst:
+      "Zaposleni kome je ugovor o radu otkazan zato što ne ostvaruje potrebne rezultate rada, odnosno nema potrebna znanja i sposobnosti, ima pravo na otkazni rok koji se utvrđuje opštim aktom ili ugovorom o radu, u zavisnosti od staža osiguranja, a koji ne može biti kraći od osam niti duži od 30 dana. Otkazni rok počinje da teče narednog dana od dana dostavljanja rešenja o otkazu ugovora o radu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "196",
+    naslov: "Zastarelost novčanih potraživanja iz radnog odnosa",
+    tekst:
+      "Sva novčana potraživanja iz radnog odnosa zastarevaju u roku od tri godine od dana nastanka obaveze. Kod neisplaćene zarade dan nastanka obaveze je dan kada je zarada po ugovoru ili opštem aktu trebalo da bude isplaćena, i to za svaki mesec posebno. U slučaju prestanka radnog odnosa poslodavac je dužan da najkasnije u roku od 30 dana od dana prestanka radnog odnosa isplati sve neisplaćene zarade, naknade zarade i druga primanja, pa rok zastarelosti počinje da teče tek po isteku tog roka.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "197",
+    naslov: "Ugovor o privremenim i povremenim poslovima",
+    tekst:
+      "Poslodavac može za obavljanje poslova koji su po svojoj prirodi takvi da ne traju duže od 120 radnih dana u kalendarskoj godini da zaključi ugovor o obavljanju privremenih i povremenih poslova sa nezaposlenim licem, zaposlenim koji radi nepuno radno vreme (do punog radnog vremena) i korisnikom starosne penzije. Ugovor se zaključuje u pisanom obliku i njime se ne zasniva radni odnos. Rad van radnog odnosa uređen je članovima 197 do 202.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "199",
+    naslov: "Ugovor o delu",
+    tekst:
+      "Poslodavac može sa određenim licem da zaključi ugovor o delu radi obavljanja poslova koji su van delatnosti poslodavca, a koji imaju za predmet samostalnu izradu ili opravku određene stvari, samostalno izvršenje određenog fizičkog ili intelektualnog posla. Ugovor o delu može da se zaključi i sa licem koje obavlja umetničku ili drugu delatnost u oblasti kulture, u skladu sa zakonom. Ugovor se zaključuje u pisanom obliku. Uslov da poslovi budu van delatnosti poslodavca je bitno obeležje ovog ugovora — poslovi koji su sistematizovani kod poslodavca ne mogu biti predmet ugovora o delu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
 
   // ── Zakon o računovodstvu ─────────────────────────────────────────────────
