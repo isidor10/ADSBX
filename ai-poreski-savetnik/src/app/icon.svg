@@ -1,11 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="7" fill="#1f4d3f"/>
-  <!-- Tas vage: poreski savet počiva na propisu, a ne na proceni. -->
-  <g fill="none" stroke="#e8f0ec" stroke-width="2" stroke-linecap="round">
-    <path d="M16 7v18"/>
-    <path d="M9 9h14"/>
-    <path d="M6 20a4 4 0 0 0 6 0l-3-8z" stroke-linejoin="round"/>
-    <path d="M20 20a4 4 0 0 0 6 0l-3-8z" stroke-linejoin="round"/>
-    <path d="M11 26h10"/>
+  <!-- Štikla: „Đavo nosi Pradu”. Prepoznatljivost na 16px nosi raspored mase, ne
+       detalj: šiljat vrh levo na tlu, đon koji se u luku diže udesno, i tanka
+       potpetica koja se sa zadnjeg dela vraća na isto tlo. -->
+  <g fill="#e8f0ec">
+    <path d="M3.6 24.6 11 25c4.5-.4 8-2.4 10.2-6h2.4V8.6h-2.8c-.4 4-3.2 7-7.8 9-3.4 1.4-6.6 4-9.4 7z"/>
+    <path d="M20.2 18.4h3.4l-.5 6.6h-1.5z"/>
   </g>
 </svg>

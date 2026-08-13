@@ -2,11 +2,11 @@
 >
 > | Projekat | Šta je | Gde |
 > |---|---|---|
-> | **AI Poreski savetnik** | Poreski savetnik i računovođa za Republiku Srbiju | **[`ai-poreski-savetnik/`](./ai-poreski-savetnik/)** ← [uputstvo za pokretanje](./ai-poreski-savetnik/README.md) |
+> | **Miranda** 👠 | Poreski savetnik i računovođa za Republiku Srbiju | **[`ai-poreski-savetnik/`](./ai-poreski-savetnik/)** ← [uputstvo za pokretanje](./ai-poreski-savetnik/README.md) |
 > | Private Aviation Tracker | Praćenje privatnih letova | [`private-aviation-tracker/`](./private-aviation-tracker/) |
 > | instagram_scraper | Python scraper — original ovog repozitorijuma, opisan ispod | `igramscraper/` |
 >
-> **Pokretanje poreskog savetnika u pregledaču, bez instalacije:**
+> **Pokretanje Mirande u pregledaču, bez instalacije:**
 > zeleno dugme **Code** gore → kartica **Codespaces** → **Create codespace on master**,
 > pa u terminalu: `npm run kreni`
 >

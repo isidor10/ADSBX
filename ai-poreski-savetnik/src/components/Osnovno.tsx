@@ -66,18 +66,19 @@ export function Navigacija() {
           <div
             style={{
               fontFamily: "var(--serif)",
-              fontSize: 17,
+              fontSize: 22,
               fontWeight: 650,
               color: "var(--tekst)",
               lineHeight: 1.25,
             }}
           >
-            AI Poreski
-            <br />
-            savetnik
+            Miranda{" "}
+            <span role="img" aria-label="štikla" style={{ fontSize: 18 }}>
+              👠
+            </span>
           </div>
           <div className="sitni slab" style={{ marginTop: 4 }}>
-            Republika Srbija
+            Poreski savetnik · Republika Srbija
           </div>
         </Link>
 

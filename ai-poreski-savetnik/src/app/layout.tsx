@@ -4,7 +4,7 @@ import { Navigacija } from "@/components/Osnovno";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Poreski savetnik — Republika Srbija",
+  title: "Miranda 👠 — poreski savetnik za Republiku Srbiju",
   description:
     "Poreski savetnik, računovođa i finansijsko-administrativni asistent za poslovanje u Republici Srbiji. Odgovori sa tačnim pravnim osnovom i proverom važenja propisa.",
 };
