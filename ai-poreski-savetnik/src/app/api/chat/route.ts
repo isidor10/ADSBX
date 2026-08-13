@@ -12,6 +12,7 @@ import {
   trenutniKorisnik,
 } from "@/lib/auth";
 import { proveriClanoveUTekstu } from "@/lib/ai/verifier";
+import { PODRAZUMEVANI_STIL, STILOVI } from "@/lib/ai/stilovi";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -22,6 +23,8 @@ const Ulaz = z.object({
   firmaId: z.string().optional(),
   /** "drugo_misljenje" prebacuje na prompt za proveru tuđeg saveta. */
   rezim: z.enum(["standard", "drugo_misljenje"]).optional(),
+  /** Stil odgovaranja. Nepoznata vrednost pada na podrazumevani, ne na grešku. */
+  stil: z.enum(STILOVI).catch(PODRAZUMEVANI_STIL).optional(),
 });
 
 export async function POST(zahtev: Request) {
@@ -199,6 +202,7 @@ async function izracunaj(
           nacinOporezivanja: firma.nacinOporezivanja,
         }
       : undefined,
+    stil: ulaz.stil ?? PODRAZUMEVANI_STIL,
     dodatniPrompt:
       ulaz.rezim === "drugo_misljenje" ? PROMPT_DRUGO_MISLJENJE : undefined,
   });

@@ -21,7 +21,8 @@
     "izmene": "tsx --env-file-if-exists=.env scripts/detect-izmene.ts",
     "verify:kalkulatori": "tsx --env-file-if-exists=.env scripts/verify-kalkulatore.ts",
     "verify:retrieval": "tsx --env-file-if-exists=.env scripts/verify-retrieval.ts",
-    "verify:citati": "tsx --env-file-if-exists=.env scripts/verify-citate.ts"
+    "verify:citati": "tsx --env-file-if-exists=.env scripts/verify-citate.ts",
+    "verify:stilovi": "tsx scripts/verify-stilove.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

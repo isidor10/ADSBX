@@ -10,12 +10,16 @@ import {
   type Poruka,
   type WebIzvor,
 } from "@/components/Poruke";
+import { Citat, DISCLAIMER, KarticaPravnogOsnova } from "@/components/Osnovno";
+import { DugmeGlasa, TrakaGlasa, useGlas } from "@/components/Glas";
+import { tekstZaIzgovor } from "@/lib/glas";
 import {
-  Citat,
-  DISCLAIMER,
-  KarticaPravnogOsnova,
-} from "@/components/Osnovno";
-
+  jeStil,
+  OPISI_STILOVA,
+  PODRAZUMEVANI_STIL,
+  STILOVI,
+  type Stil,
+} from "@/lib/ai/stilovi";
 
 const BRZE_OPCIJE = [
   {
@@ -78,7 +82,11 @@ function Razgovor() {
   // koju dokument gubi: pregledači taj događaj umeju da okinu pre nego što
   // otisnu stranu, pa je izlazio prazan PDF. Na ekranu ga ionako nema.
   const [nalaz, postaviNalaz] = useState<PodaciNalaza | null>(null);
+  // Stil se pamti između poseta: ko jednom bira „Accountant", po pravilu to
+  // želi i sledeći put, a ponovno biranje pri svakom otvaranju je trošak.
+  const [stil, postaviStil] = useState<Stil>(PODRAZUMEVANI_STIL);
   const dno = useRef<HTMLDivElement>(null);
+  const glasRef = useRef<ReturnType<typeof useGlas> | null>(null);
 
   useEffect(() => {
     dno.current?.scrollIntoView({ behavior: "smooth" });
@@ -87,6 +95,16 @@ function Razgovor() {
   // Dolazak sa strane „Propisi" preko dugmeta „Pitaj AI o ovom članu" —
   // pitanje se prenosi kroz URL i unosi u polje, ali se NE šalje samo od sebe:
   // korisnik treba da vidi i po potrebi dopuni pitanje pre slanja.
+  useEffect(() => {
+    const sacuvan = localStorage.getItem("stil");
+    if (jeStil(sacuvan)) postaviStil(sacuvan);
+  }, []);
+
+  function promeniStil(s: Stil) {
+    postaviStil(s);
+    localStorage.setItem("stil", s);
+  }
+
   useEffect(() => {
     const iz = parametri.get("pitanje");
     if (iz) postaviUnos(iz);
@@ -110,7 +128,7 @@ function Razgovor() {
       const odgovor = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pitanje, razgovorId, rezim }),
+        body: JSON.stringify({ pitanje, razgovorId, rezim, stil }),
       });
 
       // Odgovor stiže kao tok NDJSON redova: faze dok traje, pa „gotovo" ili
@@ -206,6 +224,17 @@ function Razgovor() {
             ) {
               postaviPanel(true);
             }
+            // Govori se tek pošto je odgovor iscrtan: dok se čuje zaključak,
+            // pravni osnov sa članom i linkom već stoji na ekranu.
+            if (glasRef.current?.stanje === "obradjujem") {
+              glasRef.current.izgovoriOdgovor(
+                tekstZaIzgovor(
+                  dogadjaj.odgovor as never,
+                  (dogadjaj.citati as unknown[] | undefined)?.length ?? 0,
+                  (dogadjaj.upozorenja as unknown[] | undefined)?.length ?? 0,
+                ),
+              );
+            }
           }
         }
       }
@@ -234,6 +263,13 @@ function Razgovor() {
       postaviFazu("");
     }
   }
+
+  // Glas koristi isti `posalji` — pitanje izgovoreno naglas prolazi kroz isti
+  // tok kao otkucano, uključujući verifikator citata.
+  const glas = useGlas(posalji, ucitavanje);
+  // `posalji` je definisan pre hook-a, pa do glasa dolazi kroz ref — inače bi
+  // se u toku čitanja odgovora zvao glas iz prvog rendera.
+  glasRef.current = glas;
 
   /**
    * Priprema nalaz pa otvara štampu. React mora prvo da ga iscrta, inače bi
@@ -303,6 +339,9 @@ function Razgovor() {
           ucitavanje={ucitavanje}
           rezim={rezim}
           naRezim={postaviRezim}
+          stil={stil}
+          naStil={promeniStil}
+          glas={glas}
           brojIzvora={citati.length + webIzvori.length}
           naPanel={() => postaviPanel(true)}
         />
@@ -440,7 +479,6 @@ function PocetniEkran({ naPitanje }: { naPitanje: (t: string) => void }) {
   );
 }
 
-
 function Ucitavanje({ faza }: { faza?: string }) {
   return (
     <div className="kartica" style={{ padding: "16px 18px" }}>
@@ -454,8 +492,6 @@ function Ucitavanje({ faza }: { faza?: string }) {
   );
 }
 
-
-
 function UnosPitanja({
   vrednost,
   naPromenu,
@@ -463,6 +499,9 @@ function UnosPitanja({
   ucitavanje,
   rezim,
   naRezim,
+  stil,
+  naStil,
+  glas,
   brojIzvora,
   naPanel,
 }: {
@@ -472,6 +511,9 @@ function UnosPitanja({
   ucitavanje: boolean;
   rezim: "standard" | "drugo_misljenje";
   naRezim: (r: "standard" | "drugo_misljenje") => void;
+  stil: Stil;
+  naStil: (s: Stil) => void;
+  glas: ReturnType<typeof useGlas>;
   brojIzvora: number;
   naPanel: () => void;
 }) {
@@ -493,6 +535,25 @@ function UnosPitanja({
             flexWrap: "wrap",
           }}
         >
+          <label
+            className="sitni slab"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            Stil
+            <select
+              value={stil}
+              onChange={(e) => naStil(e.target.value as Stil)}
+              className="izbor-stila"
+              title={OPISI_STILOVA[stil].opis}
+            >
+              {STILOVI.map((s) => (
+                <option key={s} value={s}>
+                  {OPISI_STILOVA[s].naziv}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <button
             onClick={() =>
               naRezim(rezim === "standard" ? "drugo_misljenje" : "standard")
@@ -537,6 +598,8 @@ function UnosPitanja({
             className="polje"
             style={{ resize: "none", flex: 1, minHeight: 52 }}
           />
+          <DugmeGlasa glas={glas} />
+
           <button
             onClick={naSlanje}
             disabled={ucitavanje || vrednost.trim().length < 3}
@@ -546,6 +609,8 @@ function UnosPitanja({
             {ucitavanje ? "…" : "Pošalji"}
           </button>
         </div>
+
+        <TrakaGlasa glas={glas} />
       </div>
     </div>
   );
