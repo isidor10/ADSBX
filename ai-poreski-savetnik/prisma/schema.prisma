@@ -297,6 +297,9 @@ model Razgovor {
   id         String    @id @default(cuid())
   korisnikId String?
   korisnik   Korisnik? @relation(fields: [korisnikId], references: [id], onDelete: SetNull)
+  /// Oznaka pregledača kada razgovor nije vođen pod nalogom. Bez nje bi istorija
+  /// neprijavljenom posetiocu prikazala i tuđe razgovore.
+  gostId     String?
   firmaId    String?
   firma      Firma?    @relation(fields: [firmaId], references: [id], onDelete: SetNull)
   naslov     String
@@ -307,6 +310,7 @@ model Razgovor {
   azuriran DateTime @updatedAt
 
   @@index([korisnikId])
+  @@index([gostId])
 }
 
 model Poruka {

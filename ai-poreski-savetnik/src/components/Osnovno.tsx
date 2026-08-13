@@ -40,6 +40,7 @@ const STRANE = [
 ];
 
 const DODATNE = [
+  { put: "/istorija", naziv: "Istorija", ikona: "🕘" },
   { put: "/dokument", naziv: "Analiziraj dokument", ikona: "📄" },
   { put: "/izmene", naziv: "Izmene propisa", ikona: "🔔" },
   { put: "/admin", naziv: "Administracija", ikona: "⚙️" },
