@@ -167,9 +167,18 @@ export interface OpcijeSlusanja {
 
 const PORUKE_GRESAKA: Record<string, string> = {
   "not-allowed":
-    "Pristup mikrofonu nije dozvoljen. U adresnoj traci kliknite ikonicu katanca i dozvolite mikrofon za ovu stranu.",
+    "Pristup mikrofonu nije dozvoljen za ovu stranu. U adresnoj traci kliknite " +
+    "ikonicu levo od adrese i dozvolite mikrofon, pa osvežite stranu.",
+  // Ova greška najčešće NE znači pogrešan pregledač — u Chrome-u je gotovo
+  // uvek dozvola koju operativni sistem nije dao samom pregledaču. Poruka koja
+  // je slala „probajte u Chrome-u" bila je beskorisna čoveku koji je već u
+  // Chrome-u, pa prvo ide sistemska dozvola, a tek onda pregledač.
   "service-not-allowed":
-    "Pregledač je odbio uslugu prepoznavanja govora. Probajte u Chrome-u ili Edge-u.",
+    "Sistem nije dao mikrofon pregledaču. Na Mac-u: Podešavanja sistema → " +
+    "Privatnost i bezbednost → Mikrofon → uključite Chrome, pa zatvorite " +
+    "pregledač sa Cmd+Q i otvorite ga ponovo. Na Windows-u: Settings → " +
+    "Privacy → Microphone. U Safariju i Firefox-u prepoznavanje govora ne radi " +
+    "ni uz dozvolu.",
   "audio-capture":
     "Mikrofon nije pronađen. Proverite da li je priključen i izabran u podešavanjima sistema.",
   network:

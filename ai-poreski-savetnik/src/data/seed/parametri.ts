@@ -13,7 +13,15 @@ export interface SeedParametar {
   kljuc: string;
   naziv: string;
   vrednost: string;
-  jedinica: "PROCENAT" | "RSD" | "EUR" | "DANA" | "KOEFICIJENT";
+  jedinica:
+    | "PROCENAT"
+    | "RSD"
+    | "EUR"
+    | "DANA"
+    | "CASOVA"
+    | "MESECI"
+    | "GODINA"
+    | "KOEFICIJENT";
   vaziOd: string;
   vaziDo?: string;
   propis?: string;
@@ -32,6 +40,7 @@ const DOPRINOSI_URL =
   "https://purs.gov.rs/upload/media/2025/12/15/760519/Zakon_o_doprinosima_za_obavezno_socijalno_osiguranje_-_u_primeni_od_01012026.pdf";
 const NEOPOREZIVI_URL =
   "https://www.paragraf.rs/statistika/pregled_uskladjenih_neoporezivih_iznosa_po_zakonu_o_porezu_na_dohodak_gradjana.html";
+const RAD_URL = "https://www.paragraf.rs/propisi/zakon_o_radu.html";
 
 export const PARAMETRI: SeedParametar[] = [
   // ── PDV ───────────────────────────────────────────────────────────────────
@@ -543,7 +552,34 @@ export const PARAMETRI: SeedParametar[] = [
     jedinica: "DANA",
     vaziOd: "2014-07-29",
     propis: "ZOR",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    odredba: "69",
+    izvorUrl: RAD_URL,
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "radno_vreme.puno_casova_nedeljno",
+    naziv: "Puno radno vreme (časova nedeljno)",
+    vrednost: "40",
+    jedinica: "CASOVA",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "51",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Opštim aktom može biti kraće od 40, ali ne kraće od 36 časova nedeljno.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "prekovremeni.max_casova_nedeljno",
+    naziv: "Najviše prekovremenog rada (časova nedeljno)",
+    vrednost: "8",
+    jedinica: "CASOVA",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "53",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Uz to, prekovremeni rad ne sme preći 12 časova dnevno uključujući i redovan rad.",
     verifikacija: "DELIMICNO",
   },
   {
@@ -553,9 +589,48 @@ export const PARAMETRI: SeedParametar[] = [
     jedinica: "PROCENAT",
     vaziOd: "2014-07-29",
     propis: "ZOR",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    odredba: "108",
+    izvorUrl: RAD_URL,
     napomena:
       "Ako se istovremeno stiče više osnova za uvećanje zarade, procenti se sabiraju.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "nocni_rad.uvecanje_min",
+    naziv: "Najmanje uvećanje zarade za rad noću",
+    vrednost: "26",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "108",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Primenjuje se ako rad noću nije već vrednovan pri utvrđivanju osnovne zarade.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "rad_na_praznik.uvecanje_min",
+    naziv: "Najmanje uvećanje zarade za rad na dan praznika koji je neradni dan",
+    vrednost: "110",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "108",
+    izvorUrl: RAD_URL,
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "minuli_rad.uvecanje_po_godini",
+    naziv:
+      "Najmanje uvećanje zarade po osnovu minulog rada, za svaku punu godinu kod poslodavca",
+    vrednost: "0.4",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "108",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Računa se za godine rada ostvarene u radnom odnosu kod poslodavca, u skladu sa zakonom.",
     verifikacija: "DELIMICNO",
   },
   {
@@ -566,10 +641,89 @@ export const PARAMETRI: SeedParametar[] = [
     jedinica: "PROCENAT",
     vaziOd: "2014-07-29",
     propis: "ZOR",
-    izvorUrl:
-      "https://www.pozakonu.rs/blog/radni-odnosi/kompletan-vodic-kroz-zakon-o-radu",
+    odredba: "115",
+    izvorUrl: RAD_URL,
     napomena:
-      "Od 31. dana naknadu snosi RFZO. Za povredu na radu i profesionalnu bolest propisan je viši procenat.",
+      "Osnovica je prosečna zarada u prethodnih 12 meseci; naknada ne može biti niža od minimalne zarade. Od 31. dana naknadu snosi RFZO.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "bolovanje.procenat_povreda_na_radu",
+    naziv:
+      "Naknada zarade za sprečenost prouzrokovanu povredom na radu ili profesionalnom bolešću",
+    vrednost: "100",
+    jedinica: "PROCENAT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "115",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Kod povrede na radu i profesionalne bolesti naknadu snosi poslodavac za ceo period, a ne samo prvih 30 dana.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "otpremnina.penzija_prosecnih_zarada",
+    naziv: "Otpremnina pri odlasku u penziju (broj prosečnih zarada u RS)",
+    vrednost: "2",
+    jedinica: "KOEFICIJENT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "119|1",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Prema poslednjem objavljenom podatku republičkog organa nadležnog za statistiku. Do izmena iz 2014. minimum je bio tri prosečne zarade.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "otpremnina.tehnoloski_visak_deo_zarade",
+    naziv:
+      "Otpremnina za tehnološki višak — najmanji deo zarade po navršenoj godini rada kod poslodavca",
+    vrednost: "0.3333",
+    jedinica: "KOEFICIJENT",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "158",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Zakon propisuje trećinu zarade za svaku navršenu godinu rada u radnom odnosu kod poslodavca kod koga se ostvaruje pravo na otpremninu.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "probni_rad.max_meseci",
+    naziv: "Najduže trajanje probnog rada (meseci)",
+    vrednost: "6",
+    jedinica: "MESECI",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "36",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Otkazni rok tokom probnog rada ne može biti kraći od pet radnih dana.",
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "ppp.max_radnih_dana_godisnje",
+    naziv:
+      "Najviše radnih dana po ugovoru o privremenim i povremenim poslovima (godišnje)",
+    vrednost: "120",
+    jedinica: "DANA",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "197",
+    izvorUrl: RAD_URL,
+    verifikacija: "DELIMICNO",
+  },
+  {
+    kljuc: "zastarelost.potrazivanja_radni_odnos_godina",
+    naziv: "Zastarelost novčanih potraživanja iz radnog odnosa (godina)",
+    vrednost: "3",
+    jedinica: "GODINA",
+    vaziOd: "2014-07-29",
+    propis: "ZOR",
+    odredba: "196",
+    izvorUrl: RAD_URL,
+    napomena:
+      "Rok teče od dana nastanka obaveze. Kod prestanka radnog odnosa poslodavac isplaćuje sva dugovanja u roku od 30 dana, pa rok počinje tek po isteku tog roka.",
     verifikacija: "DELIMICNO",
   },
 

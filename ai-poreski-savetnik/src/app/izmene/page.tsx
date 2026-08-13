@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Podnozje, Zaglavlje } from "@/components/Osnovno";
+import { IkonaVeza } from "@/components/Ikone";
 
 interface Izmena {
   id: string;
@@ -82,12 +83,13 @@ export default function StranaIzmena() {
               <button
                 key={o.v}
                 onClick={() => prebaci(o.v)}
-                className={`znacka ${
+                className={`znacka znacka-dugme ${
                   pracene.includes(o.v) ? "znacka-zelena" : "znacka-siva"
                 }`}
-                style={{ border: "none", cursor: "pointer", minHeight: 36 }}
+                aria-pressed={pracene.includes(o.v)}
               >
-                {pracene.includes(o.v) ? "☑" : "☐"} {o.n}
+                {pracene.includes(o.v) && <span className="tacka" aria-hidden />}
+                {o.n}
               </button>
             ))}
           </div>
@@ -190,10 +192,11 @@ export default function StranaIzmena() {
                   href={i.izvorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mali"
-                  style={{ display: "inline-block", marginTop: 12, fontWeight: 600 }}
+                  className="osnov-radnja"
+                  style={{ marginTop: 8 }}
                 >
-                  🔗 Izvor
+                  <IkonaVeza velicina={15} />
+                  Izvor
                 </a>
               </article>
             ))}

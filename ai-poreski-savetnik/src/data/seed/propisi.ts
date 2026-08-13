@@ -47,6 +47,21 @@ export const PROPISI: SeedPropis[] = [
       "Ključne odredbe (stope, odbitak prethodnog poreza, mali obveznik) provereni. Pun tekst se dobija kroz ingest.",
   },
   {
+    skracenica: "PRAVILNIK-POPDV",
+    naziv:
+      "Pravilnik o obliku, sadržini i načinu vođenja evidencije o PDV i o obliku i sadržini pregleda obračuna PDV",
+    tip: "PODZAKONSKI_AKT",
+    kategorija: "PDV",
+    donosilac: "Ministar finansija",
+    sluzbeniGlasnik: ["90/2017", "75/2019 (prečišćen tekst)"],
+    izvorInstitucija: "Paragraf Lex",
+    izvorUrl: `${PARAGRAF}/pravilnik-o-obliku-sadrzini-i-nacinu-vodjenja-evidencije-o-pdv.html`,
+    prioritetIzvora: 6,
+    verifikacija: "DELIMICNO",
+    napomena:
+      "Propisuje obrazac POPDV koji svaki PDV obveznik podnosi uz poresku prijavu. U primeni od 1. januara 2018.",
+  },
+  {
     skracenica: "ZPDPL",
     naziv: "Zakon o porezu na dobit pravnih lica",
     tip: "ZAKON",
@@ -131,10 +146,23 @@ export const PROPISI: SeedPropis[] = [
     naziv: "Zakon o radu",
     tip: "ZAKON",
     kategorija: "RAD",
-    izvorInstitucija: "Ministarstvo za rad, zapošljavanje, boračka i socijalna pitanja",
-    izvorUrl: "https://www.minrzs.gov.rs/",
-    prioritetIzvora: 4,
-    verifikacija: "NEPOTVRDJENO",
+    donosilac: "Narodna skupština Republike Srbije",
+    sluzbeniGlasnik: [
+      "24/2005",
+      "61/2005",
+      "54/2009",
+      "32/2013",
+      "75/2014",
+      "13/2017 (odluka Ustavnog suda)",
+      "113/2017",
+      "95/2018 (autentično tumačenje)",
+    ],
+    izvorInstitucija: "Paragraf Lex",
+    izvorUrl: `${PARAGRAF}/zakon_o_radu.html`,
+    prioritetIzvora: 6,
+    verifikacija: "DELIMICNO",
+    napomena:
+      "Brojevi članova ključnih odredbi provereni prema stručnim pravnim izvorima. Doslovan tekst se dobija kroz ingest.",
   },
   {
     skracenica: "ODLUKA-MIN-CENA-RADA-2026",
@@ -150,7 +178,36 @@ export const PROPISI: SeedPropis[] = [
     verifikacija: "POTVRDJENO",
   },
 
+  {
+    skracenica: "ZFPPD",
+    naziv: "Zakon o finansijskoj podršci porodici sa decom",
+    tip: "ZAKON",
+    kategorija: "RAD",
+    donosilac: "Narodna skupština Republike Srbije",
+    sluzbeniGlasnik: ["113/2017", "50/2018", "79/2024"],
+    izvorInstitucija: "Paragraf Lex",
+    izvorUrl: `${PARAGRAF}/zakon-o-finansijskoj-podrsci-porodici-sa-decom.html`,
+    prioritetIzvora: 6,
+    verifikacija: "DELIMICNO",
+    napomena:
+      "Obračun naknade zarade za porodiljsko odsustvo — sadržina proverena, brojevi članova nisu potvrđeni.",
+  },
+
   // ── Računovodstvo ─────────────────────────────────────────────────────────
+  {
+    skracenica: "ZAG",
+    naziv: "Zakon o arhivskoj građi i arhivskoj delatnosti",
+    tip: "ZAKON",
+    kategorija: "RACUNOVODSTVO",
+    donosilac: "Narodna skupština Republike Srbije",
+    sluzbeniGlasnik: ["6/2020"],
+    izvorInstitucija: "Paragraf Lex",
+    izvorUrl: `${PARAGRAF}/zakon-o-arhivskoj-gradji-i-arhivskoj-delatnosti.html`,
+    prioritetIzvora: 6,
+    verifikacija: "DELIMICNO",
+    napomena:
+      "Obaveza koju firme najčešće previde: arhivska knjiga i prepis koji se dostavlja nadležnom arhivu. Sadržina proverena, brojevi članova nisu potvrđeni.",
+  },
   {
     skracenica: "ZOR-RAC",
     naziv: "Zakon o računovodstvu",

@@ -12,6 +12,16 @@ import {
 } from "@/components/Poruke";
 import { Citat, DISCLAIMER, KarticaPravnogOsnova } from "@/components/Osnovno";
 import { DugmeGlasa, TrakaGlasa, useGlas } from "@/components/Glas";
+import {
+  IkonaDokument,
+  IkonaFirma,
+  IkonaKalkulator,
+  IkonaPropisi,
+  IkonaRokovi,
+  IkonaPosalji,
+  IkonaStrelicaDesno,
+  IkonaZatvori,
+} from "@/components/Ikone";
 import { tekstZaIzgovor } from "@/lib/glas";
 import {
   jeStil,
@@ -21,42 +31,33 @@ import {
   type Stil,
 } from "@/lib/ai/stilovi";
 
-const BRZE_OPCIJE = [
-  {
-    ikona: "💰",
-    tekst: "Porezi",
-    upit: "Koje poreze plaća DOO u Srbiji i po kojim stopama?",
-  },
-  { ikona: "📚", tekst: "Zakoni", upit: "Šta kaže član 29 Zakona o PDV?" },
-  {
-    ikona: "🧾",
-    tekst: "Fakture",
-    upit: "Koji su rokovi za evidentiranje PDV u sistemu elektronskih faktura?",
-  },
-  {
-    ikona: "👨‍💼",
-    tekst: "Zarade",
-    upit: "Kako se obračunava zarada — koji su porez i doprinosi na bruto zaradu?",
-  },
-  {
-    ikona: "📊",
-    tekst: "Kalkulator",
-    upit: "Koliko je neto zarada ako je bruto 120.000 dinara?",
-  },
-  {
-    ikona: "📅",
-    tekst: "Rokovi",
-    upit: "Koji su moji poreski rokovi ovog meseca?",
-  },
-  {
-    ikona: "🔍",
-    tekst: "Proveri propis",
-    upit: "Da li je limit za paušalno oporezivanje i dalje 6.000.000 dinara?",
-  },
+/*
+ * Predlozi su cela pitanja, ne kategorije.
+ *
+ * „Porezi" ne kaže ništa o tome šta se sme pitati ni koliko detaljno. Napisano
+ * pitanje istovremeno pokazuje obim, ton i to da se sme pitati svakodnevnim
+ * jezikom — a klik na njega je prvi odgovor koji čovek dobije.
+ */
+const PREDLOZI = [
+  "Da li mogu da odbijem PDV za automobil?",
+  "Koliki je ukupan trošak zaposlenog sa neto platom od 120.000 dinara?",
+  "Da li je ovaj račun poreski priznat rashod?",
+  "Koji poreski rok imam ovog meseca?",
 ];
 
-const PRIMER =
-  "Imam DOO, nisam u PDV-u, kupujem automobil od 30.000 EUR. Direktor će ga koristiti privatno i poslovno. Kakav je poreski i računovodstveni tretman?";
+/* Prečice ka onome što nije pitanje nego alat — tiho, u jednom redu. */
+const BRZE_AKCIJE: Array<{
+  tekst: string;
+  Ikona: typeof IkonaKalkulator;
+  put?: string;
+  upit?: string;
+}> = [
+  { tekst: "Izračunaj", Ikona: IkonaKalkulator, put: "/kalkulator" },
+  { tekst: "Propisi", Ikona: IkonaPropisi, put: "/propisi" },
+  { tekst: "Rokovi", Ikona: IkonaRokovi, put: "/rokovi" },
+  { tekst: "Dokument", Ikona: IkonaDokument, put: "/dokument" },
+  { tekst: "Moja firma", Ikona: IkonaFirma, put: "/firma" },
+];
 
 export default function StranaRazgovora() {
   return (
@@ -292,6 +293,16 @@ function Razgovor() {
     <>
       {nalaz && <Nalaz podaci={nalaz} />}
       <main className="glavna glavna-razgovor">
+        <header className="zaglavlje-razgovora">
+          <div className="ime">
+            Miranda{" "}
+            <span role="img" aria-label="štikla" className="stikla">
+              👠
+            </span>
+          </div>
+          <div className="uloga">Poreski savetnik za Republiku Srbiju</div>
+        </header>
+
         <div style={{ flex: 1, overflowY: "auto", padding: "0 0 20px" }}>
           {poruke.length === 0 ? (
             <PocetniEkran naPitanje={posalji} />
@@ -359,122 +370,49 @@ function Razgovor() {
 
 function PocetniEkran({ naPitanje }: { naPitanje: (t: string) => void }) {
   return (
-    <div
-      style={{
-        maxWidth: 720,
-        margin: "0 auto",
-        padding: "64px 20px 0",
-        textAlign: "center",
-      }}
-    >
-      <h1 style={{ fontSize: 30 }}>
-        Miranda{" "}
-        <span role="img" aria-label="štikla">
-          👠
-        </span>
-      </h1>
-      <p className="prigusen" style={{ marginTop: 10, fontSize: 16 }}>
-        Kako mogu da vam pomognem?
-      </p>
+    <div className="pocetni">
+      <header className="pocetni-zaglavlje">
+        <h1 className="pocetni-naslov">Dobro došli.</h1>
+        <p className="pocetni-podnaslov">Šta danas rešavamo?</p>
+      </header>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 8,
-          justifyContent: "center",
-          marginTop: 30,
-        }}
-      >
-        {BRZE_OPCIJE.map((o) => (
-          <button
-            key={o.tekst}
-            onClick={() => naPitanje(o.upit)}
-            className="kartica"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "10px 14px",
-              minHeight: 44,
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            <span aria-hidden>{o.ikona}</span>
-            {o.tekst}
-          </button>
+      {/*
+        Primeri pitanja, ne dugmad sa ikonicama. Čovek koji prvi put otvori
+        aplikaciju ne zna šta sme da pita — a videti tuđe pitanje napisano do
+        kraja vredi više od kategorije koja mu ne kaže ništa o obimu.
+      */}
+      <ul className="predlozi">
+        {PREDLOZI.map((tekst) => (
+          <li key={tekst}>
+            <button type="button" onClick={() => naPitanje(tekst)}>
+              <span>{tekst}</span>
+              <IkonaStrelicaDesno velicina={16} className="predlog-strelica" />
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          justifyContent: "center",
-          marginTop: 10,
-          flexWrap: "wrap",
-        }}
-      >
-        <Link
-          href="/firma"
-          className="kartica"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "10px 14px",
-            minHeight: 44,
-            fontSize: 14,
-            fontWeight: 500,
-            color: "var(--tekst)",
-          }}
-        >
-          <span aria-hidden>🏢</span> Moja firma
-        </Link>
-        <Link
-          href="/dokument"
-          className="kartica"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "10px 14px",
-            minHeight: 44,
-            fontSize: 14,
-            fontWeight: 500,
-            color: "var(--tekst)",
-          }}
-        >
-          <span aria-hidden>📄</span> Analiziraj dokument
-        </Link>
-      </div>
+      <nav className="brze-akcije" aria-label="Brze akcije">
+        {BRZE_AKCIJE.map((a) =>
+          a.put ? (
+            <Link key={a.tekst} href={a.put}>
+              <a.Ikona velicina={17} />
+              {a.tekst}
+            </Link>
+          ) : (
+            <button
+              key={a.tekst}
+              type="button"
+              onClick={() => naPitanje(a.upit!)}
+            >
+              <a.Ikona velicina={17} />
+              {a.tekst}
+            </button>
+          ),
+        )}
+      </nav>
 
-      <button
-        onClick={() => naPitanje(PRIMER)}
-        className="kartica"
-        style={{
-          marginTop: 26,
-          padding: "16px 18px",
-          textAlign: "left",
-          cursor: "pointer",
-          width: "100%",
-          background: "var(--povrsina-2)",
-        }}
-      >
-        <div
-          className="sitni slab"
-          style={{ marginBottom: 6, fontWeight: 600 }}
-        >
-          PRIMER SLOŽENOG PITANJA
-        </div>
-        <div style={{ fontSize: 14.5, lineHeight: 1.55 }}>{PRIMER}</div>
-      </button>
-
-      <p className="sitni slab" style={{ marginTop: 30, lineHeight: 1.55 }}>
-        {DISCLAIMER}
-      </p>
+      <p className="pocetni-disklejmer">{DISCLAIMER}</p>
     </div>
   );
 }
@@ -535,11 +473,8 @@ function UnosPitanja({
             flexWrap: "wrap",
           }}
         >
-          <label
-            className="sitni slab"
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
-            Stil
+          <label className="izbor-stila-omot">
+            <span className="sr-samo">Stil odgovora</span>
             <select
               value={stil}
               onChange={(e) => naStil(e.target.value as Stil)}
@@ -555,31 +490,32 @@ function UnosPitanja({
           </label>
 
           <button
+            type="button"
             onClick={() =>
               naRezim(rezim === "standard" ? "drugo_misljenje" : "standard")
             }
-            className={`znacka ${
+            aria-pressed={rezim === "drugo_misljenje"}
+            className={`znacka znacka-dugme ${
               rezim === "drugo_misljenje" ? "znacka-zuta" : "znacka-siva"
             }`}
-            style={{ border: "none", cursor: "pointer", minHeight: 30 }}
           >
-            {rezim === "drugo_misljenje"
-              ? "✓ Režim: proveri moj odgovor"
-              : "Proveri moj odgovor"}
+            {rezim === "drugo_misljenje" && <span className="tacka" aria-hidden />}
+            Proveri moj odgovor
           </button>
 
           {brojIzvora > 0 && (
             <button
+              type="button"
               onClick={naPanel}
-              className="znacka znacka-siva"
-              style={{ border: "none", cursor: "pointer", minHeight: 30 }}
+              className="znacka znacka-dugme znacka-siva"
             >
-              📚 Izvori ({brojIzvora})
+              <IkonaPropisi velicina={14} />
+              Izvori ({brojIzvora})
             </button>
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <div className="unos-red">
           <textarea
             value={vrednost}
             onChange={(e) => naPromenu(e.target.value)}
@@ -594,19 +530,22 @@ function UnosPitanja({
                 ? "Unesite savet koji ste dobili, pa ću proveriti pravni osnov…"
                 : "Postavite pitanje…"
             }
-            rows={2}
-            className="polje"
-            style={{ resize: "none", flex: 1, minHeight: 52 }}
+            rows={1}
+            className="polje unos-polje"
+            /* enterKeyHint menja natpis na iOS tastaturi sa „return" na
+               „Pošalji" — sitnica koja se na telefonu odmah oseti. */
+            enterKeyHint="send"
+            autoCapitalize="sentences"
           />
           <DugmeGlasa glas={glas} />
 
           <button
             onClick={naSlanje}
             disabled={ucitavanje || vrednost.trim().length < 3}
-            className="dugme"
-            style={{ minHeight: 52, paddingInline: 20 }}
+            className="dugme dugme-posalji"
+            aria-label="Pošalji pitanje"
           >
-            {ucitavanje ? "…" : "Pošalji"}
+            <IkonaPosalji velicina={19} />
           </button>
         </div>
 
@@ -639,17 +578,12 @@ function PanelIzvora({
       >
         <h2 style={{ fontSize: 15, letterSpacing: "0.04em" }}>IZVORI</h2>
         <button
+          type="button"
           onClick={naZatvaranje}
-          className="mali prigusen"
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            minHeight: 32,
-          }}
+          className="dugme-zatvori"
           aria-label="Zatvori panel izvora"
         >
-          ✕
+          <IkonaZatvori velicina={19} />
         </button>
       </div>
 

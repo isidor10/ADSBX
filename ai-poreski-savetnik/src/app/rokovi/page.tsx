@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Podnozje, Zaglavlje } from "@/components/Osnovno";
+import { IkonaUpozorenje, IkonaVeza } from "@/components/Ikone";
 
 interface Rok {
   id: string;
@@ -125,8 +126,12 @@ export default function StranaRokova() {
         </div>
 
         {upozorenje && (
-          <div className="upozorenje" style={{ marginBottom: 18 }}>
-            ⚠︎ {upozorenje}
+          <div
+            className="upozorenje red-ikone red-ikone-vrh"
+            style={{ marginBottom: 18 }}
+          >
+            <IkonaUpozorenje velicina={16} className="ikona-nesabijena" />
+            <span>{upozorenje}</span>
           </div>
         )}
 
@@ -215,10 +220,10 @@ export default function StranaRokova() {
                         href={r.izvorUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="sitni"
-                        style={{ fontWeight: 600 }}
+                        className="osnov-radnja"
                       >
-                        🔗 Izvor
+                        <IkonaVeza velicina={14} />
+                        Izvor
                       </a>
                     </div>
                     {r.propis && (

@@ -183,18 +183,18 @@ export const OPIS_POUZDANOSTI: Record<
   { oznaka: string; boja: string; opis: string }
 > = {
   VISOKA: {
-    oznaka: "🟢 Visoka pouzdanost",
+    oznaka: "Visoka pouzdanost",
     boja: "zelena",
     opis: "Direktno potvrđeno važećim propisom iz zvaničnog izvora.",
   },
   POTREBNA_PROVERA: {
-    oznaka: "🟡 Potrebna dodatna provera",
+    oznaka: "Potrebna dodatna provera",
     boja: "zuta",
     opis:
       "Postoji više relevantnih propisa, moguće različito tumačenje ili sekundarni izvor.",
   },
   NEDOVOLJNO_PODATAKA: {
-    oznaka: "🔴 Nedovoljno podataka",
+    oznaka: "Nedovoljno podataka",
     boja: "crvena",
     opis:
       "Ne može se dati pouzdan odgovor bez dodatnih informacija ili potvrđenog pravnog osnova.",

@@ -120,7 +120,42 @@ async function main() {
       zapis.id,
     );
   }
-  console.log(`  Odredbe:    ${noveOdredbe} novih, ${azurirane} ažuriranih`);
+  /*
+   * Uklanjanje zastarelih rezervisanih zapisa.
+   *
+   * Kada se odredbi naknadno potvrdi broj člana, u seed-u nestaje stari zapis
+   * sa clan: "—", ali u bazi ostaje — pa korisnik na isto pitanje dobije i
+   * potvrđen član i njegov nepotvrđeni duplikat. To je gore nego da ispravke
+   * nije ni bilo: dva odgovora, jedan sa upozorenjem, o istoj stvari.
+   *
+   * Briše se usko i samo ono što je sigurno seed-ov trag: zapisi bez broja
+   * člana koje seed više ne sadrži. Ingest uvek upisuje stvaran broj člana i
+   * potvrdjenBrojClana: true, pa ovo ne može da dohvati ono što je on doneo.
+   * Citati u istoriji razgovora preživljavaju — veza je onDelete: SetNull.
+   */
+  const uSeedu = new Set(
+    ODREDBE.map((o) => `${o.propis}|${o.clan}|${o.naslov ?? ""}`),
+  );
+  const rezervisani = await db.odredba.findMany({
+    where: { clan: "—", potvrdjenBrojClana: false },
+    select: { id: true, naslov: true, propis: { select: { skracenica: true } } },
+  });
+  const zaBrisanje = rezervisani
+    .filter(
+      (o) => !uSeedu.has(`${o.propis.skracenica}|—|${o.naslov ?? ""}`),
+    )
+    .map((o) => o.id);
+
+  if (zaBrisanje.length > 0) {
+    await db.odredba.deleteMany({ where: { id: { in: zaBrisanje } } });
+  }
+
+  console.log(
+    `  Odredbe:    ${noveOdredbe} novih, ${azurirane} ažuriranih` +
+      (zaBrisanje.length > 0
+        ? `, ${zaBrisanje.length} zastarelih uklonjeno`
+        : ""),
+  );
 
   // ── Parametri ─────────────────────────────────────────────────────────────
   let noviParametri = 0;

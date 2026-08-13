@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Podnozje, Pouzdanost, Zaglavlje } from "@/components/Osnovno";
+import { IkonaUpozorenje } from "@/components/Ikone";
 
 interface Podaci {
   statistika: Record<string, number>;
@@ -302,16 +303,17 @@ export default function StranaAdmina() {
                         <button
                           onClick={() => oceni(p.id, "POUZDAN")}
                           className="dugme dugme-tiho"
-                          style={{ minHeight: 36, fontSize: 13 }}
+                          style={{ fontSize: 13 }}
                         >
-                          ✓ Pouzdan odgovor
+                          Pouzdan odgovor
                         </button>
                         <button
                           onClick={() => oceni(p.id, "POTREBNA_STRUCNA_PROVERA")}
                           className="dugme dugme-tiho"
-                          style={{ minHeight: 36, fontSize: 13 }}
+                          style={{ fontSize: 13 }}
                         >
-                          ⚠︎ Potrebna stručna provera
+                          <IkonaUpozorenje velicina={14} />
+                          Potrebna stručna provera
                         </button>
                       </>
                     )}

@@ -372,38 +372,216 @@ export const ODREDBE: SeedOdredba[] = [
   },
 
   // ── Zakon o radu ──────────────────────────────────────────────────────────
+  /*
+   * Radno pravo je za računovođu poreska tema.
+   *
+   * Skoro svaki obračun zarade oslanja se na neki član ovog zakona: minuli rad
+   * i prekovremeni na 108, bolovanje na 115, prevoz i dnevnice na 118,
+   * otpremnina na 119 i 158. Ranije su ovde stajale tri odredbe bez ijednog
+   * potvrđenog broja člana, pa je aplikacija na pitanje o zaradi umela da
+   * odgovori tačno po sadržini, a bez osnova koji se sme citirati.
+   *
+   * Brojevi članova ispod provereni su prema stručnim pravnim izvorima koji
+   * broj navode zajedno sa sadržinom odredbe. Tekstovi su sažeci, ne doslovan
+   * tekst zakona — otud `doslovanTekst: false` na svakom zapisu.
+   */
   {
     propis: "ZOR",
-    clan: "—",
+    clan: "33",
+    naslov: "Sadržina ugovora o radu",
+    tekst:
+      "Ugovor o radu sadrži naziv i sedište poslodavca, lične podatke zaposlenog, vrstu i stepen stručne spreme, naziv i opis posla, mesto rada, vrstu radnog odnosa (na neodređeno ili određeno vreme), trajanje ugovora na određeno vreme, dan početka rada, radno vreme, novčani iznos osnovne zarade i elemente za utvrđivanje radnog učinka, naknade zarade, uvećane zarade i druga primanja, rokove za isplatu i trajanje dnevnog i nedeljnog odmora. Ugovor ne mora da sadrži elemente koji su utvrđeni zakonom, kolektivnim ugovorom ili pravilnikom o radu — u tom slučaju mora da uputi na akt kojim su ta prava utvrđena.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "36",
+    naslov: "Probni rad",
+    tekst:
+      "Ugovorom o radu može da se ugovori probni rad za obavljanje jednog ili više povezanih, odnosno srodnih poslova utvrđenih ugovorom o radu. Probni rad može da traje najduže šest meseci. Pre isteka vremena za koje je ugovoren probni rad, poslodavac ili zaposleni može da otkaže ugovor o radu uz otkazni rok koji ne može biti kraći od pet radnih dana; poslodavac je dužan da obrazloži otkaz.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "51",
+    naslov: "Puno radno vreme",
+    tekst:
+      "Puno radno vreme iznosi 40 časova nedeljno, ako ovim zakonom nije drukčije određeno. Opštim aktom može da se odredi da puno radno vreme bude kraće od 40 časova nedeljno, ali ne kraće od 36 časova nedeljno. Zaposleni koji radi kraće od 40 časova u tom slučaju ostvaruje sva prava iz radnog odnosa kao da radi puno radno vreme.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "53",
+    naslov: "Prekovremeni rad — uslovi i ograničenja",
+    tekst:
+      "Na zahtev poslodavca zaposleni je dužan da radi duže od punog radnog vremena u slučaju više sile, iznenadnog povećanja obima posla i u drugim slučajevima kada je neophodno da se u određenom roku završi posao koji nije planiran. Prekovremeni rad ne može da traje duže od osam časova nedeljno, niti duže od 12 časova dnevno uključujući i redovan rad. Uvećanje zarade po osnovu prekovremenog rada uređeno je članom 108.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "69",
     naslov: "Godišnji odmor — zakonski minimum",
     tekst:
-      "Zaposleni ima pravo na godišnji odmor u trajanju od najmanje 20 radnih dana u kalendarskoj godini. Pravo na godišnji odmor stiče se posle mesec dana neprekidnog rada. Minimum od 20 dana može se uvećati po osnovu doprinosa na radu, uslova rada, radnog iskustva, stručne spreme i drugih kriterijuma utvrđenih opštim aktom poslodavca ili kolektivnim ugovorom. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na godišnji odmor u svakoj kalendarskoj godini u trajanju utvrđenom opštim aktom i ugovorom o radu, a najmanje 20 radnih dana. Dužina godišnjeg odmora utvrđuje se tako što se zakonski minimum od 20 radnih dana uvećava po osnovu doprinosa na radu, uslova rada, radnog iskustva, stručne spreme zaposlenog i drugih kriterijuma utvrđenih opštim aktom ili ugovorom o radu.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
   {
     propis: "ZOR",
-    clan: "—",
-    naslov: "Prekovremeni rad i uvećana zarada",
+    clan: "108",
+    naslov: "Uvećana zarada — osnovi i procenti",
     tekst:
-      "Poslodavac može uvesti prekovremeni rad samo u slučaju više sile, iznenadnog povećanja obima posla i u drugim hitnim okolnostima. Zaposleni ima pravo na uvećanu zaradu za prekovremeni rad u iznosu od najmanje 26% osnovice. Ako se istovremeno stiče više osnova za uvećanje zarade, procenti se sabiraju. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na uvećanu zaradu u visini utvrđenoj opštim aktom i ugovorom o radu, i to: za rad na dan praznika koji je neradni dan — najmanje 110% od osnovice; za rad noću, ako takav rad nije vrednovan pri utvrđivanju osnovne zarade — najmanje 26% od osnovice; za prekovremeni rad — najmanje 26% od osnovice; po osnovu vremena provedenog na radu za svaku punu godinu rada ostvarenu u radnom odnosu kod poslodavca (minuli rad) — najmanje 0,4% od osnovice. Ako se istovremeno steknu uslovi po više osnova, procenat uvećane zarade ne može biti niži od zbira procenata po svakom od osnova. Osnovicu čini osnovna zarada utvrđena u skladu sa zakonom, opštim aktom i ugovorom o radu.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.paragraf.rs/dnevne-vesti/270126/270126-vest4.html",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
   {
     propis: "ZOR",
-    clan: "—",
+    clan: "111",
+    naslov: "Pravo na minimalnu zaradu",
+    tekst:
+      "Zaposleni ima pravo na minimalnu zaradu za standardni učinak i vreme provedeno na radu. Minimalna zarada određuje se na osnovu minimalne cene rada utvrđene u skladu sa ovim zakonom, vremena provedenog na radu i poreza i doprinosa koji se plaćaju iz zarade. Zaposleni koji prima minimalnu zaradu ima pravo i na uvećanu zaradu iz člana 108, na naknadu troškova iz člana 118 i na druga primanja iz člana 119.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "112",
+    naslov: "Utvrđivanje minimalne cene rada",
+    tekst:
+      "Minimalna cena rada utvrđuje se odlukom socijalno-ekonomskog saveta osnovanog za teritoriju Republike Srbije. Utvrđuje se po radnom času bez poreza i doprinosa, za kalendarsku godinu, najkasnije do 15. septembra tekuće godine, a primenjuje se od 1. januara naredne godine. Ako socijalno-ekonomski savet ne donese odluku u roku od 15 dana od dana početka pregovora, odluku donosi Vlada u narednom roku od 15 dana. Odluka o minimalnoj ceni rada objavljuje se u „Službenom glasniku Republike Srbije”.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "115",
     naslov: "Naknada zarade za vreme privremene sprečenosti za rad (bolovanje)",
     tekst:
-      "Za privremenu sprečenost za rad do 30 dana naknadu zarade isplaćuje poslodavac, u visini od najmanje 65% osnovice. Počev od 31. dana naknadu snosi Republički fond za zdravstveno osiguranje. Za pojedine osnove sprečenosti (npr. povreda na radu ili profesionalna bolest) propisan je viši procenat. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
-    potvrdjenBrojClana: false,
+      "Zaposleni ima pravo na naknadu zarade za vreme odsustvovanja sa rada zbog privremene sprečenosti za rad do 30 dana, i to: najmanje 65% prosečne zarade u prethodnih 12 meseci pre meseca u kojem je nastupila sprečenost, ako je sprečenost prouzrokovana bolešću ili povredom van rada; najmanje 100% prosečne zarade u prethodnih 12 meseci, ako je sprečenost prouzrokovana povredom na radu ili profesionalnom bolešću. Naknada ne može biti niža od minimalne zarade utvrđene u skladu sa ovim zakonom. Počev od 31. dana naknadu snosi Republički fond za zdravstveno osiguranje, osim kod povrede na radu i profesionalne bolesti, gde je snosi poslodavac.",
+    potvrdjenBrojClana: true,
     doslovanTekst: false,
     vaziOd: "2014-07-29",
-    izvorUrl: "https://www.pozakonu.rs/blog/radni-odnosi/kompletan-vodic-kroz-zakon-o-radu",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "118",
+    naslov: "Naknada troškova — prevoz, službeni put, ishrana, regres",
+    tekst:
+      "Zaposleni ima pravo na naknadu troškova u skladu sa opštim aktom i ugovorom o radu, i to: za dolazak i odlazak sa rada, u visini cene prevozne karte u javnom saobraćaju (stav 1 tačka 1); za vreme provedeno na službenom putu u zemlji i u inostranstvu; za smeštaj i ishranu za rad i boravak na terenu; za ishranu u toku rada i za regres za korišćenje godišnjeg odmora, ako ti troškovi nisu već uračunati u osnovnu zaradu. Poreski tretman ovih naknada (neoporezivi iznosi) uređen je Zakonom o porezu na dohodak građana.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "119",
+    naslov: "Druga primanja — otpremnina za penziju, pomoć, jubilarna nagrada",
+    tekst:
+      "Poslodavac je dužan da isplati zaposlenom otpremninu pri odlasku u penziju, najmanje u visini dve prosečne zarade u Republici Srbiji prema poslednjem objavljenom podatku republičkog organa nadležnog za statistiku (stav 1 tačka 1), kao i naknadu troškova pogrebnih usluga i naknadu štete zbog povrede na radu ili profesionalne bolesti. Poslodavac može zaposlenom da isplati i jubilarnu nagradu, solidarnu pomoć i druga primanja u skladu sa opštim aktom, pri čemu zaposleni koji prima minimalnu zaradu ima pravo na ta primanja pod istim uslovima.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "158",
+    naslov: "Otpremnina zbog prestanka radnog odnosa (tehnološki višak)",
+    tekst:
+      "Poslodavac je dužan da pre otkaza ugovora o radu zbog prestanka potrebe za radom zaposlenog usled tehnoloških, ekonomskih ili organizacionih promena isplati zaposlenom otpremninu. Visina otpremnine utvrđuje se opštim aktom ili ugovorom o radu, s tim što ne može biti niža od zbira trećine zarade zaposlenog za svaku navršenu godinu rada u radnom odnosu kod poslodavca kod koga ostvaruje pravo na otpremninu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "178",
+    naslov: "Otkaz ugovora o radu od strane zaposlenog",
+    tekst:
+      "Zaposleni ima pravo da poslodavcu otkaže ugovor o radu. Otkaz se dostavlja poslodavcu u pisanom obliku, najmanje 15 dana pre dana koji je zaposleni naveo kao dan prestanka radnog odnosa. Opštim aktom ili ugovorom o radu može se utvrditi duži otkazni rok, ali ne duži od 30 dana.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "179",
+    naslov: "Otkaz ugovora o radu od strane poslodavca",
+    tekst:
+      "Poslodavac može zaposlenom da otkaže ugovor o radu ako za to postoji opravdani razlog koji se odnosi na radnu sposobnost zaposlenog i njegovo ponašanje — ako ne ostvaruje rezultate rada ili nema potrebna znanja i sposobnosti za obavljanje poslova na kojima radi (stav 1 tačka 1), kao i u slučajevima povrede radne obaveze, nepoštovanja radne discipline i drugih zakonom propisanih razloga. Kod otkaza iz stava 1 tačke 1 poslodavac je dužan da zaposlenom prethodno dâ pisano obaveštenje o nedostacima u radu, uputstva i primeren rok za poboljšanje.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "189",
+    naslov: "Otkazni rok kod otkaza zbog neostvarivanja rezultata rada",
+    tekst:
+      "Zaposleni kome je ugovor o radu otkazan zato što ne ostvaruje potrebne rezultate rada, odnosno nema potrebna znanja i sposobnosti, ima pravo na otkazni rok koji se utvrđuje opštim aktom ili ugovorom o radu, u zavisnosti od staža osiguranja, a koji ne može biti kraći od osam niti duži od 30 dana. Otkazni rok počinje da teče narednog dana od dana dostavljanja rešenja o otkazu ugovora o radu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "196",
+    naslov: "Zastarelost novčanih potraživanja iz radnog odnosa",
+    tekst:
+      "Sva novčana potraživanja iz radnog odnosa zastarevaju u roku od tri godine od dana nastanka obaveze. Kod neisplaćene zarade dan nastanka obaveze je dan kada je zarada po ugovoru ili opštem aktu trebalo da bude isplaćena, i to za svaki mesec posebno. U slučaju prestanka radnog odnosa poslodavac je dužan da najkasnije u roku od 30 dana od dana prestanka radnog odnosa isplati sve neisplaćene zarade, naknade zarade i druga primanja, pa rok zastarelosti počinje da teče tek po isteku tog roka.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "197",
+    naslov: "Ugovor o privremenim i povremenim poslovima",
+    tekst:
+      "Poslodavac može za obavljanje poslova koji su po svojoj prirodi takvi da ne traju duže od 120 radnih dana u kalendarskoj godini da zaključi ugovor o obavljanju privremenih i povremenih poslova sa nezaposlenim licem, zaposlenim koji radi nepuno radno vreme (do punog radnog vremena) i korisnikom starosne penzije. Ugovor se zaključuje u pisanom obliku i njime se ne zasniva radni odnos. Rad van radnog odnosa uređen je članovima 197 do 202.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
+  },
+  {
+    propis: "ZOR",
+    clan: "199",
+    naslov: "Ugovor o delu",
+    tekst:
+      "Poslodavac može sa određenim licem da zaključi ugovor o delu radi obavljanja poslova koji su van delatnosti poslodavca, a koji imaju za predmet samostalnu izradu ili opravku određene stvari, samostalno izvršenje određenog fizičkog ili intelektualnog posla. Ugovor o delu može da se zaključi i sa licem koje obavlja umetničku ili drugu delatnost u oblasti kulture, u skladu sa zakonom. Ugovor se zaključuje u pisanom obliku. Uslov da poslovi budu van delatnosti poslodavca je bitno obeležje ovog ugovora — poslovi koji su sistematizovani kod poslodavca ne mogu biti predmet ugovora o delu.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2014-07-29",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_radu.html",
   },
 
   // ── Zakon o računovodstvu ─────────────────────────────────────────────────
@@ -525,5 +703,209 @@ export const ODREDBE: SeedOdredba[] = [
     vaziOd: "2023-01-01",
     izvorUrl:
       "https://www.paragraf.rs/baza-znanja/knjigovodstvo/rokovi-evidentiranja-pdv-i-ispravke-evidentiranog-pdv-u-sef-popdv.html",
+  },
+  // ── Poreski postupak — zastarelost ────────────────────────────────────────
+  /*
+   * Dva roka koja odlučuju da li poreski dug uopšte postoji.
+   *
+   * Relativna zastarelost se prekida svakom radnjom poreskog organa, pa se u
+   * praksi pomera godinama; apsolutna ne. Ko pita „da li ovaj dug još važi",
+   * pita o jednom od ova dva roka — i pogrešan odgovor košta tačno onoliko
+   * koliko dug iznosi.
+   */
+  {
+    propis: "ZPPPA",
+    clan: "114",
+    naslov: "Zastarelost prava na utvrđivanje i naplatu poreza (relativna)",
+    tekst:
+      "Pravo Poreske uprave na utvrđivanje i naplatu poreza i sporednih poreskih davanja zastareva za pet godina od dana kada je zastarelost počela da teče. Zastarelost prava na utvrđivanje počinje da teče od prvog dana naredne godine od godine u kojoj je trebalo utvrditi porez, a zastarelost prava na naplatu od prvog dana naredne godine od godine u kojoj je obaveza dospela za plaćanje. Rok se prekida svakom radnjom poreskog organa preduzetom radi utvrđivanja ili naplate, pa posle prekida počinje da teče iznova.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2003-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-poreskom-postupku-i-poreskoj-administraciji.html",
+  },
+  {
+    propis: "ZPPPA",
+    clan: "114ž",
+    naslov: "Apsolutna zastarelost poreske obaveze",
+    tekst:
+      "Pravo na utvrđivanje, naplatu, povraćaj, poreski kredit, refakciju, refundaciju i namirenje dospelih obaveza putem preknjižavanja poreza uvek zastareva u roku od deset godina od isteka godine u kojoj je porez trebalo utvrditi ili naplatiti, odnosno u kojoj je izvršena preplata. Za razliku od relativne zastarelosti, ovaj rok se ne prekida radnjama poreskog organa. Po isteku deset godina nadležni poreski organ po službenoj dužnosti donosi rešenje o prestanku poreske obaveze zbog zastarelosti.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2003-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-poreskom-postupku-i-poreskoj-administraciji.html",
+  },
+
+  // ── Porezi na imovinu ─────────────────────────────────────────────────────
+  {
+    propis: "ZPI",
+    clan: "—",
+    naslov: "Stopa poreza na prenos apsolutnih prava",
+    tekst:
+      "Stopa poreza na prenos apsolutnih prava je proporcionalna i iznosi 2,5%. Porez se plaća kod prenosa uz naknadu prava svojine na nepokretnosti i drugih apsolutnih prava propisanih zakonom, ako na taj prenos nije plaćen PDV. Napomena sistema: stopa je proverena, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2005-01-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_porezima_na_imovinu.html",
+  },
+  {
+    propis: "ZPI",
+    clan: "—",
+    naslov: "Stope poreza na nasleđe i poklon",
+    tekst:
+      "Obveznici koji su u odnosu na ostavioca, odnosno poklonodavca, u drugom naslednom redu plaćaju porez na nasleđe i poklon po stopi od 1,5%. Obveznici koji su u trećem i daljem naslednom redu, kao i obveznici koji sa ostaviocem odnosno poklonodavcem nisu u srodstvu, plaćaju porez po stopi od 2,5%. Naslednici i poklonoprimci prvog naslednog reda, kao i supružnik, po pravilu su oslobođeni. Napomena sistema: stope su proverene, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2005-01-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_porezima_na_imovinu.html",
+  },
+
+  // ── Rokovi plaćanja u komercijalnim transakcijama ─────────────────────────
+  {
+    propis: "ZRINO",
+    clan: "—",
+    naslov: "Najduži ugovoreni rokovi plaćanja",
+    tekst:
+      "Kada je dužnik javni sektor, rok za izmirenje novčane obaveze ne može biti duži od 45 dana. Kada je dužnik Republički fond za zdravstveno osiguranje ili korisnik njegovih sredstava, može se ugovoriti rok do 90 dana. Kada je dužnik privredni subjekt, rok ne može biti duži od 60 dana; izuzetno se između privrednih subjekata može ugovoriti duži rok ako ugovorene obaveze zahtevaju plaćanje u ratama, ali ni tada duže od 90 dana. Napomena sistema: rokovi su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2013-03-31",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_rokovima_izmirenja_novcanih_obaveza_u_komercijalnim_transakcijama.html",
+  },
+
+  // ── Privredna društva ─────────────────────────────────────────────────────
+  {
+    propis: "ZPD",
+    clan: "—",
+    naslov: "Minimalni osnovni kapital društva sa ograničenom odgovornošću",
+    tekst:
+      "Minimalni osnovni kapital društva sa ograničenom odgovornošću iznosi 100 dinara, osim ako posebnim zakonom za određenu delatnost nije propisan veći iznos. Osnovni kapital je novčana vrednost upisanih uloga članova društva koja se registruje u skladu sa zakonom o registraciji. Ulog može biti novčani i nenovčani. Napomena sistema: iznos je proveren, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2012-02-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon-o-privrednim-drustvima.html",
+  },
+
+  // ── Sprečavanje pranja novca ──────────────────────────────────────────────
+  /*
+   * Ovo je jedini propis u bazi po kome je sam korisnik aplikacije obveznik:
+   * računovođa koji pruža usluge trećima ima obaveze poznavanja stranke i
+   * prijavljivanja sumnjivih transakcija. Zato stoji ovde, a ne kao tuđa tema.
+   */
+  {
+    propis: "ZSPNFT",
+    clan: "4",
+    naslov: "Obveznici zakona — računovođe, revizori i poreski savetnici",
+    tekst:
+      "Obveznici primene ovog zakona su finansijske i nefinansijske institucije taksativno navedene u ovom članu. Među njima su, pored ostalih, revizorska društva i samostalni revizori, preduzetnici i pravna lica koja se bave pružanjem računovodstvenih usluga, kao i poreski savetnici. Obveznik je dužan da sprovodi radnje i mere poznavanja i praćenja stranke, da odredi ovlašćeno lice i njegovog zamenika, izradi analizu rizika i prijavljuje gotovinske i sumnjive transakcije Upravi za sprečavanje pranja novca.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2018-04-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_sprecavanju_pranja_novca_i_finansiranja_terorizma.html",
+  },
+
+  // ── Arhivska građa ────────────────────────────────────────────────────────
+  {
+    propis: "ZAG",
+    clan: "—",
+    naslov: "Arhivska knjiga i rok za dostavljanje prepisa",
+    tekst:
+      "Stvaralac i imalac arhivske i dokumentarne građe dužan je da vodi arhivsku knjigu — evidenciju o celokupnoj dokumentarnoj građi koja nastaje u njegovom radu. Prepis arhivske knjige za dokumentarnu građu nastalu u prethodnoj kalendarskoj godini dostavlja se nadležnom javnom arhivu najkasnije do 30. aprila tekuće godine. Obaveza se odnosi na pravna i fizička lica koja se mogu smatrati stvaraocima odnosno imaocima građe, uključujući privredna društva. Napomena sistema: rok i obaveza su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2021-02-02",
+    izvorUrl:
+      "https://www.paragraf.rs/100pitanja/posao/prikaz-obaveza-iz-zakona-o-arhivskoj-gradji-i-arhivskoj-delatnosti.html",
+  },
+  {
+    propis: "ZAG",
+    clan: "—",
+    naslov: "Kazne za nepostupanje po obavezama arhiviranja",
+    tekst:
+      "Za nepostupanje po obavezama iz ovog zakona propisana je novčana kazna za pravno lice u rasponu od 50.000 do 2.000.000 dinara, a za odgovorno lice u pravnom licu od 5.000 do 150.000 dinara. Ovo je obaveza koju firme najčešće previde jer se ne vezuje za poreski kalendar, a kontroliše je nadležni javni arhiv, ne Poreska uprava. Napomena sistema: rasponi kazni su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2021-02-02",
+    izvorUrl:
+      "https://www.ekapija.com/news/3531141/sve-o-primeni-zakona-o-arhivskoj-gradji-preduzetnici-za-sada-bez-obaveze",
+  },
+
+  // ── Finansijska podrška porodici sa decom ─────────────────────────────────
+  {
+    propis: "ZFPPD",
+    clan: "—",
+    naslov: "Osnovica naknade zarade za vreme porodiljskog odsustva",
+    tekst:
+      "Osnovica naknade zarade za vreme porodiljskog odsustva, odsustva sa rada radi nege deteta i odsustva radi posebne nege deteta utvrđuje se tako što se saberu mesečne osnovice na koje su plaćeni doprinosi na primanja koja imaju karakter zarade, za poslednjih 18 meseci koji prethode prvom mesecu otpočinjanja odsustva. Pravo ostvaruju zaposleni kod pravnih i fizičkih lica, a pod propisanim uslovima i otac, usvojitelj, hranitelj odnosno staratelj deteta kada koristi odsustvo. Napomena sistema: način obračuna je proveren, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2018-07-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-finansijskoj-podrsci-porodici-sa-decom.html",
+  },
+
+  // ── PDV evidencija ────────────────────────────────────────────────────────
+  {
+    propis: "PRAVILNIK-POPDV",
+    clan: "—",
+    naslov: "Pregled obračuna PDV — obrazac POPDV",
+    tekst:
+      "Obveznik PDV podnosi nadležnom poreskom organu pregled obračuna PDV na Obrascu POPDV — Pregled obračuna PDV za poreski period, zajedno sa poreskom prijavom PDV. Pravilnik propisuje oblik, sadržinu i način vođenja evidencije o PDV iz koje se podaci za POPDV crpe. U primeni je od 1. januara 2018. godine. Napomena sistema: obaveza je proverena, broj člana pravilnika nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2018-01-01",
+    izvorUrl:
+      "https://www.neobilten.com/pravilnik-o-obliku-sadrzini-i-nacinu-vodjenja-evidencije-o-pdv-i-o-obliku-i-sadrzini-pregleda-obracuna-pdv-8/?lang=lat",
+  },
+  // ── Obligacioni odnosi — zastarelost ──────────────────────────────────────
+  /*
+   * Zastarelost fakture između firmi je jedno od najčešćih pitanja u
+   * računovodstvu, i skoro uvek se pogrešno pamti kao opštih deset godina.
+   * Za promet robe i usluga između pravnih lica rok je tri godine, i teče
+   * posebno za svaku isporuku — što je razlika koja odlučuje da li se
+   * potraživanje još može naplatiti ili se otpisuje.
+   */
+  {
+    propis: "ZOO",
+    clan: "371",
+    naslov: "Opšti rok zastarelosti potraživanja",
+    tekst:
+      "Potraživanja zastarevaju za deset godina, ako zakonom nije određen neki drugi rok zastarelosti. Ovaj rok je opšte pravilo — primenjuje se samo kada za konkretnu vrstu potraživanja nije propisan poseban, po pravilu kraći rok.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "1978-10-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_obligacionim_odnosima.html",
+  },
+  {
+    propis: "ZOO",
+    clan: "374",
+    naslov:
+      "Zastarelost međusobnih potraživanja pravnih lica iz prometa robe i usluga",
+    tekst:
+      "Međusobna potraživanja pravnih lica iz ugovora o prometu robe i usluga, kao i potraživanja naknade za izdatke učinjene u vezi sa tim ugovorima, zastarevaju za tri godine. Zastarevanje teče odvojeno za svaku isporuku robe, izvršeni rad ili uslugu. Ovo je rok koji se u praksi primenjuje na fakture između privrednih subjekata, a ne opšti rok od deset godina.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "1978-10-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_obligacionim_odnosima.html",
+  },
+
+  // ── Razvrstavanje stalnih sredstava ───────────────────────────────────────
+  {
+    propis: "PRAVILNIK-RAZVRSTAVANJE-SREDSTAVA",
+    clan: "—",
+    naslov: "Razvrstavanje stalnih sredstava u amortizacione grupe",
+    tekst:
+      "Stalna sredstva koja podležu obračunu amortizacije za poreske svrhe, osim nematerijalnih sredstava, razvrstavaju se u pet grupa, sa stopama propisanim članom 10b stav 3 Zakona o porezu na dobit pravnih lica: I grupa 2,5%, II grupa 10%, III grupa 15%, IV grupa 20%, V grupa 30%. Za sredstva razvrstana u I grupu amortizacija se utvrđuje proporcionalnom metodom, a za sredstva iz II do V grupe degresivnom metodom. Pravilnik propisuje koje se konkretno sredstvo svrstava u koju grupu. Napomena sistema: grupe i metode su provereni, broj člana pravilnika nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2019-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/pravilnik_o_nacinu_razvrstavanja_stalnih_sredstava_po_grupama_i_nacinu_utvrdjivanja_amortizacije_za_poreske_svrhe.html",
   },
 ];

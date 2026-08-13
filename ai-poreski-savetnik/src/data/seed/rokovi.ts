@@ -188,4 +188,17 @@ export const ROKOVI: SeedRok[] = [
       "https://aktivasistem.com/news/godisnji-porez-na-dohodak-gradana-za-2024-godinu/",
     verifikacija: "POTVRDJENO",
   },
+  {
+    naziv: "Prepis arhivske knjige nadležnom javnom arhivu",
+    opis:
+      "Dostavljanje prepisa arhivske knjige za dokumentarnu građu nastalu u prethodnoj kalendarskoj godini. Rok se ne vezuje za poreski kalendar i ne kontroliše ga Poreska uprava nego nadležni javni arhiv, pa se najčešće previdi. Za pravno lice propisana je novčana kazna od 50.000 do 2.000.000 dinara, a za odgovorno lice od 5.000 do 150.000 dinara.",
+    vrsteObveznika: ["DOO", "AD", "DRUGO_PRAVNO_LICE"],
+    ponavljanje: "GODISNJE",
+    danUMesecu: 30,
+    mesec: 4,
+    propis: "ZAG",
+    izvorUrl:
+      "https://www.paragraf.rs/100pitanja/posao/prikaz-obaveza-iz-zakona-o-arhivskoj-gradji-i-arhivskoj-delatnosti.html",
+    verifikacija: "DELIMICNO",
+  },
 ];
