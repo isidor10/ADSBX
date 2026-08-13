@@ -9,6 +9,12 @@
  * takođe znači da verifikator dobija čist, mašinski čitljiv objekat.
  */
 
+// Shema se ne šalje sirova: `jsonSchemaOutputFormat` je pretvara u dijalekt
+// koji `output_config.format` prihvata. Ručno sastavljanje tog objekta je
+// vraćalo 400, jer strukturirani izlaz ne podržava `enum` — helper ga premesti
+// u opis polja, pa vrednosti čuva runtime validacija u schema.ts.
+import { jsonSchemaOutputFormat } from "@anthropic-ai/sdk/helpers/json-schema";
+
 import type {
   PronadjenaOdredba,
   StrukturiraniOdgovor,
@@ -80,7 +86,7 @@ async function klasifikuj(
       system: PROMPT_KLASIFIKACIJE,
       output_config: {
         effort: "low",
-        format: { type: "json_schema", schema: SHEMA_KLASIFIKACIJE },
+        format: jsonSchemaOutputFormat(SHEMA_KLASIFIKACIJE),
       },
       messages: [
         {
@@ -90,7 +96,7 @@ async function klasifikuj(
             .join("\n\n"),
         },
       ],
-    } as never);
+    });
 
     const blok = (odgovor as { content: Array<{ type: string; text?: string }> })
       .content.find((b) => b.type === "text");
@@ -193,7 +199,7 @@ async function pretraziWeb(
         },
       ],
       messages: [{ role: "user", content: uputstvo }],
-    } as never);
+    });
 
     const sadrzaj = (
       odgovor as {
@@ -303,10 +309,10 @@ async function sintetizuj(
     thinking: { type: "adaptive" },
     output_config: {
       effort: nivoTruda(),
-      format: { type: "json_schema", schema: SHEMA_ODGOVORA },
+      format: jsonSchemaOutputFormat(SHEMA_ODGOVORA),
     },
     messages: poruke,
-  } as never);
+  });
 
   const blokovi = (
     odgovor as { content: Array<{ type: string; text?: string }> }

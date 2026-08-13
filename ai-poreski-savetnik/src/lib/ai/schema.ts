@@ -130,11 +130,16 @@ export const validatorOdgovora = z.object({
     z.object({
       citatId: z.string(),
       relevantnost: z.string(),
-      tipTvrdnje: z.enum(TIPOVI_TVRDNJE),
+      // Strukturirani izlaz ne podržava `enum` — dozvoljene vrednosti stižu do
+      // modela kroz opis polja, pa ih ovde niko ne garantuje. Nepoznata vrednost
+      // ne sme da obori ceo odgovor, ali ne sme ni da prođe kao zakon: pada na
+      // najslabiju tvrdnju, jer je greška u tom smeru bezopasna.
+      tipTvrdnje: z.enum(TIPOVI_TVRDNJE).catch("AI_ZAKLJUCAK"),
     }),
   ),
   vazno: z.array(z.string()),
-  nivoPouzdanosti: z.enum(NIVOI_POUZDANOSTI),
+  // Isto načelo: nepoznat nivo nikada ne postaje VISOKA.
+  nivoPouzdanosti: z.enum(NIVOI_POUZDANOSTI).catch("POTREBNA_PROVERA"),
   obrazlozenjePouzdanosti: z.string(),
   potrebnaPitanja: z.array(z.string()).optional(),
   aiZakljucak: z.string().optional(),
