@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { Nalaz, type PodaciNalaza } from "@/components/Nalaz";
 import {
   Citat,
   DISCLAIMER,
@@ -99,6 +100,10 @@ function Razgovor() {
     "standard",
   );
   const [panelOtvoren, postaviPanel] = useState(false);
+  // Nalaz ostaje montiran i posle štampe. Uklanjanje na `afterprint` je trka
+  // koju dokument gubi: pregledači taj događaj umeju da okinu pre nego što
+  // otisnu stranu, pa je izlazio prazan PDF. Na ekranu ga ionako nema.
+  const [nalaz, postaviNalaz] = useState<PodaciNalaza | null>(null);
   const dno = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -256,8 +261,26 @@ function Razgovor() {
     }
   }
 
+  /**
+   * Priprema nalaz pa otvara štampu. React mora prvo da ga iscrta, inače bi
+   * `print()` uhvatio prazan dokument — otud čekanje na sledeći okvir.
+   */
+  function odstampajNalaz(pitanje: string, poruka: Poruka) {
+    if (!poruka.odgovor) return;
+    postaviNalaz({
+      pitanje,
+      odgovor: poruka.odgovor,
+      citati: poruka.citati ?? [],
+      webIzvori: poruka.webIzvori ?? [],
+      upozorenja: poruka.upozorenja ?? [],
+      ciljniDatum: poruka.ciljniDatum,
+    });
+    requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+  }
+
   return (
     <>
+      {nalaz && <Nalaz podaci={nalaz} />}
       <main className="glavna glavna-razgovor">
         <div style={{ flex: 1, overflowY: "auto", padding: "0 0 20px" }}>
           {poruke.length === 0 ? (
@@ -275,7 +298,22 @@ function Razgovor() {
                 p.uloga === "korisnik" ? (
                   <PitanjeKorisnika key={i} tekst={p.tekst ?? ""} />
                 ) : (
-                  <OdgovorAsistenta key={i} poruka={p} />
+                  <OdgovorAsistenta
+                    key={i}
+                    poruka={p}
+                    // Nalaz nosi i pitanje, jer onaj ko ga dobije nema razgovor
+                    // pred sobom. Pitanje je poslednja poruka korisnika pre
+                    // ovog odgovora.
+                    naPdf={() =>
+                      odstampajNalaz(
+                        poruke
+                          .slice(0, i)
+                          .reverse()
+                          .find((r) => r.uloga === "korisnik")?.tekst ?? "",
+                        p,
+                      )
+                    }
+                  />
                 ),
               )}
               {ucitavanje && <Ucitavanje faza={faza} />}
@@ -475,7 +513,13 @@ function Odeljak({
   );
 }
 
-function OdgovorAsistenta({ poruka }: { poruka: Poruka }) {
+function OdgovorAsistenta({
+  poruka,
+  naPdf,
+}: {
+  poruka: Poruka;
+  naPdf: () => void;
+}) {
   if (poruka.greska) {
     return <div className="opasnost">{poruka.greska}</div>;
   }
@@ -619,6 +663,23 @@ function OdgovorAsistenta({ poruka }: { poruka: Poruka }) {
       <p className="sitni slab" style={{ marginTop: 14, marginBottom: 0 }}>
         Pouzdanost: {o.obrazlozenjePouzdanosti}
       </p>
+
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: "1px solid var(--ivica)",
+        }}
+      >
+        <button type="button" className="dugme-tiho" onClick={naPdf}>
+          📄 Sačuvaj kao PDF
+        </button>
+        <span className="sitni slab" style={{ marginLeft: 10 }}>
+          Nalaz sa pitanjem, pravnim osnovom i mestom za potpis onoga ko
+          proverava. U prozoru za štampu izaberite odredište{" "}
+          <strong>Save as PDF</strong>.
+        </span>
+      </div>
     </article>
   );
 }

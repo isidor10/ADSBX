@@ -402,3 +402,123 @@ button, input, select, textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Nalaz za štampu / PDF ────────────────────────────────────────────────────
+   Dokument koji se šalje računovođi na proveru. Na ekranu ga nema; postoji samo
+   dok traje štampa. Zato je sve zadato u crno-belom i u milimetrima: nalaz se
+   često i odštampa, a boja koja nosi značenje na papiru nestaje. */
+
+#nalaz { display: none; }
+
+@media print {
+  /* Aplikacija se sklanja samo kada nalaz zaista postoji. Bez tog uslova bi
+     obično Ctrl+P, pre nego što je iko tražio nalaz, dalo praznu stranu. */
+  body:has(#nalaz) :is(.ljuska, .bocna, .glavna, .panel-izvora, .donja-nav) {
+    display: none !important;
+  }
+
+  @page { size: A4; margin: 18mm 16mm 16mm; }
+
+  html, body {
+    background: #fff;
+    color: #000;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+
+  #nalaz {
+    display: block;
+    max-width: 100%;
+    font-family: var(--serif), Georgia, serif;
+  }
+
+  #nalaz a { color: #000; text-decoration: underline; }
+
+  .nalaz-zaglavlje {
+    display: flex;
+    justify-content: space-between;
+    gap: 12mm;
+    padding-bottom: 3mm;
+    border-bottom: 1.2pt solid #000;
+    margin-bottom: 6mm;
+  }
+  .nalaz-brend { font-size: 16pt; font-weight: 700; }
+  .nalaz-podbrend { font-size: 8.5pt; }
+  .nalaz-meta { font-size: 8.5pt; text-align: right; line-height: 1.7; }
+
+  .nalaz-naslov {
+    font-size: 9pt;
+    font-family: var(--sans), system-ui, sans-serif;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin: 6mm 0 1.5mm;
+    padding-bottom: 1mm;
+    border-bottom: 0.5pt solid #999;
+    /* Naslov bez teksta ispod sebe na dnu strane je izgubljen naslov. */
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  #nalaz p { margin: 0 0 2.5mm; orphans: 3; widows: 3; }
+  #nalaz ul, #nalaz ol { margin: 0 0 2.5mm; padding-left: 6mm; }
+  #nalaz li { margin-bottom: 1.5mm; }
+
+  .nalaz-pitanje {
+    padding: 2.5mm 3mm;
+    border-left: 2pt solid #000;
+    background: #f2f2f2;
+  }
+  .nalaz-vodeci { font-size: 12pt; font-weight: 600; }
+
+  .nalaz-tabela { width: 100%; border-collapse: collapse; }
+  .nalaz-tabela th,
+  .nalaz-tabela td {
+    border: 0.5pt solid #999;
+    padding: 1.5mm 2mm;
+    text-align: left;
+    vertical-align: top;
+  }
+  .nalaz-tabela th { width: 38mm; font-weight: 600; background: #f2f2f2; }
+
+  /* Citat se ne sme prelomiti preko strane: član i njegov izvor moraju ostati
+     zajedno, inače se na proveri ne zna šta pripada čemu. */
+  .nalaz-osnov li { margin-bottom: 4mm; break-inside: avoid; page-break-inside: avoid; }
+  .nalaz-propis { font-weight: 700; }
+  .nalaz-oznake { font-size: 8.5pt; margin-bottom: 1mm; }
+  .nalaz-osnov blockquote {
+    margin: 1.5mm 0 1.5mm 3mm;
+    padding-left: 3mm;
+    border-left: 0.5pt solid #999;
+    font-size: 9.5pt;
+  }
+  .nalaz-url { font-size: 8pt; word-break: break-all; }
+
+  .nalaz-prazno, .nalaz-zakljucak {
+    padding: 2.5mm 3mm;
+    border: 0.5pt dashed #666;
+  }
+  .nalaz-web { font-size: 9pt; }
+  .nalaz-web a { word-break: break-all; }
+
+  .nalaz-uputstvo { break-inside: avoid; page-break-inside: avoid; }
+
+  .nalaz-potpis {
+    width: 100%;
+    margin-top: 8mm;
+    border-collapse: collapse;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .nalaz-potpis td { width: 50%; font-size: 8.5pt; padding-right: 8mm; }
+  .nalaz-potpis .nalaz-linija {
+    height: 10mm;
+    border-bottom: 0.5pt solid #000;
+  }
+
+  .nalaz-disklejmer {
+    margin-top: 6mm;
+    padding-top: 2mm;
+    border-top: 0.5pt solid #999;
+    font-size: 8pt;
+  }
+}
