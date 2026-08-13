@@ -55,6 +55,12 @@ export interface UlazPipeline {
   dodatniPrompt?: string;
   /** Ako je zadat, preskače se prepoznavanje datuma iz teksta. */
   ciljniDatum?: Date;
+  /**
+   * Javlja dokle se stiglo. Složeno pitanje sa web pretragom traje minutima, a
+   * prazan spinner se ne razlikuje od zaglavljene aplikacije — ni za čoveka ni
+   * za proxy, koji vezu bez saobraćaja prekine.
+   */
+  naFazu?: (faza: string) => void;
 }
 
 export interface IzlazPipeline extends RezultatVerifikacije {
@@ -98,8 +104,9 @@ async function klasifikuj(
       ],
     });
 
-    const blok = (odgovor as { content: Array<{ type: string; text?: string }> })
-      .content.find((b) => b.type === "text");
+    const blok = (
+      odgovor as { content: Array<{ type: string; text?: string }> }
+    ).content.find((b) => b.type === "text");
     if (!blok?.text) throw new Error("prazan odgovor klasifikacije");
     return validatorKlasifikacije.parse(JSON.parse(blok.text));
   } catch (greska) {
@@ -182,24 +189,29 @@ async function pretraziWeb(
   ].join("\n");
 
   try {
-    const odgovor = await anthropic().messages.create({
-      model: MODEL,
-      max_tokens: 8000,
-      system:
-        "Ti si istraživač propisa Republike Srbije. Sažimaš nalaze činjenično, bez tumačenja, i uz svaki podatak navodiš izvor. Ako podatak ne možeš da nađeš na zvaničnom izvoru, to jasno napišeš.",
-      output_config: { effort: "medium" },
-      tools: [
-        {
-          type: "web_search_20260209",
-          name: "web_search",
-          max_uses: maksWebPretraga(),
-          // Prvi prolaz: zvanični izvori imaju prednost, ali dozvoljavamo i
-          // Paragraf Lex jer jedini pouzdano prati prečišćene tekstove.
-          allowed_domains: [...PRIMARNI_DOMENI, ...SVI_DOZVOLJENI_DOMENI],
-        },
-      ],
-      messages: [{ role: "user", content: uputstvo }],
-    });
+    // Streaming, a ne obično čekanje: pretraga zvaničnih izvora ume da traje
+    // minutima, a veza bez ijednog bajta se u međuvremenu prekida — i kod API-ja
+    // i kroz proxy. `finalMessage()` svejedno vraća ceo odgovor.
+    const odgovor = await anthropic()
+      .messages.stream({
+        model: MODEL,
+        max_tokens: 8000,
+        system:
+          "Ti si istraživač propisa Republike Srbije. Sažimaš nalaze činjenično, bez tumačenja, i uz svaki podatak navodiš izvor. Ako podatak ne možeš da nađeš na zvaničnom izvoru, to jasno napišeš.",
+        output_config: { effort: "medium" },
+        tools: [
+          {
+            type: "web_search_20260209",
+            name: "web_search",
+            max_uses: maksWebPretraga(),
+            // Prvi prolaz: zvanični izvori imaju prednost, ali dozvoljavamo i
+            // Paragraf Lex jer jedini pouzdano prati prečišćene tekstove.
+            allowed_domains: [...PRIMARNI_DOMENI, ...SVI_DOZVOLJENI_DOMENI],
+          },
+        ],
+        messages: [{ role: "user", content: uputstvo }],
+      })
+      .finalMessage();
 
     const sadrzaj = (
       odgovor as {
@@ -216,7 +228,10 @@ async function pretraziWeb(
 
     for (const blok of sadrzaj) {
       if (blok.type === "text" && blok.text) tekstovi.push(blok.text);
-      if (blok.type === "web_search_tool_result" && Array.isArray(blok.content)) {
+      if (
+        blok.type === "web_search_tool_result" &&
+        Array.isArray(blok.content)
+      ) {
         for (const rezultat of blok.content) {
           if (!rezultat.url) continue;
           const { prioritet, institucija } = prioritetZaUrl(rezultat.url);
@@ -232,7 +247,8 @@ async function pretraziWeb(
 
     // Deduplikacija po URL-u, sortiranje po prioritetu izvora.
     const jedinstveni = new Map<string, WebIzvor>();
-    for (const i of izvori) if (!jedinstveni.has(i.url)) jedinstveni.set(i.url, i);
+    for (const i of izvori)
+      if (!jedinstveni.has(i.url)) jedinstveni.set(i.url, i);
 
     return {
       izvori: [...jedinstveni.values()].sort(
@@ -277,7 +293,8 @@ async function sintetizuj(
         "",
         "Izvori:",
         ...webIzvori.map(
-          (i) => `- [${i.institucija}, prioritet ${i.prioritet}] ${i.naslov} — ${i.url}`,
+          (i) =>
+            `- [${i.institucija}, prioritet ${i.prioritet}] ${i.naslov} — ${i.url}`,
         ),
         "</nalazi_sa_weba>",
       ].join("\n"),
@@ -299,20 +316,24 @@ async function sintetizuj(
     ? `${SISTEMSKI_PROMPT}\n\n# Poseban zadatak\n${dodatniPrompt}`
     : SISTEMSKI_PROMPT;
 
-  const odgovor = await anthropic().messages.create({
-    model: MODEL,
-    max_tokens: 16000,
-    // Stabilan prefiks se kešira — sistemski prompt se ne menja između upita.
-    system: [
-      { type: "text", text: sistem, cache_control: { type: "ephemeral" } },
-    ],
-    thinking: { type: "adaptive" },
-    output_config: {
-      effort: nivoTruda(),
-      format: jsonSchemaOutputFormat(SHEMA_ODGOVORA),
-    },
-    messages: poruke,
-  });
+  // Isto i ovde, sa jačim razlogom: 16.000 tokena uz razmišljanje je najduži
+  // poziv u celom toku, a upravo se on ranije završavao prekinutom vezom.
+  const odgovor = await anthropic()
+    .messages.stream({
+      model: MODEL,
+      max_tokens: 16000,
+      // Stabilan prefiks se kešira — sistemski prompt se ne menja između upita.
+      system: [
+        { type: "text", text: sistem, cache_control: { type: "ephemeral" } },
+      ],
+      thinking: { type: "adaptive" },
+      output_config: {
+        effort: nivoTruda(),
+        format: jsonSchemaOutputFormat(SHEMA_ODGOVORA),
+      },
+      messages: poruke,
+    })
+    .finalMessage();
 
   const blokovi = (
     odgovor as { content: Array<{ type: string; text?: string }> }
@@ -329,12 +350,18 @@ export async function pokreniPipeline(
   ulaz: UlazPipeline,
 ): Promise<IzlazPipeline> {
   const pocetak = Date.now();
-  const ciljniDatum =
-    ulaz.ciljniDatum ?? prepoznajCiljniDatum(ulaz.pitanje);
+  const faza = ulaz.naFazu ?? (() => {});
+  const ciljniDatum = ulaz.ciljniDatum ?? prepoznajCiljniDatum(ulaz.pitanje);
   const firmaKontekst = kontekstFirme(ulaz.firma ?? null);
 
+  faza("Razumevam pitanje…");
   const klasifikacija = await klasifikuj(ulaz.pitanje, firmaKontekst);
 
+  faza(
+    klasifikacija.trebaWebPretraga
+      ? "Tražim odredbe u pravnoj bazi i proveravam zvanične izvore…"
+      : "Tražim odredbe u pravnoj bazi…",
+  );
   const [odredbe, web] = await Promise.all([
     pretrazi(
       [ulaz.pitanje, ...klasifikacija.pretrazniUpiti],
@@ -346,6 +373,11 @@ export async function pokreniPipeline(
       : Promise.resolve({ izvori: [] as WebIzvor[], beleske: "" }),
   ]);
 
+  faza(
+    `Sastavljam odgovor — ${odredbe.length} ${odredbe.length === 1 ? "odredba" : "odredbi"} u kontekstu${
+      web.izvori.length ? `, ${web.izvori.length} sa weba` : ""
+    }…`,
+  );
   const sirovOdgovor = await sintetizuj(
     ulaz.pitanje,
     odredbe,
@@ -357,6 +389,7 @@ export async function pokreniPipeline(
     ulaz.istorija,
   );
 
+  faza("Proveravam citate…");
   const verifikovan = verifikuj(sirovOdgovor, odredbe, web.izvori, ciljniDatum);
 
   return {
