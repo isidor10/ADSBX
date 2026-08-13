@@ -569,3 +569,29 @@ button, input, select, textarea {
   min-height: 30px;
   cursor: pointer;
 }
+
+/* ── Glas ─────────────────────────────────────────────────────────────────── */
+
+.dugme-glas {
+  min-height: 52px;
+  min-width: 52px;
+  font-size: 20px;
+  line-height: 1;
+  border: 1px solid var(--ivica);
+  border-radius: 12px;
+  background: var(--povrsina-2);
+  cursor: pointer;
+}
+.dugme-glas:disabled { opacity: 0.5; cursor: default; }
+.dugme-glas-aktivno {
+  border-color: var(--akcenat);
+  background: var(--akcenat-pozadina);
+}
+
+.traka-glasa {
+  padding: 8px 12px;
+  border: 1px solid var(--akcenat);
+  border-radius: 10px;
+  background: var(--akcenat-pozadina);
+  font-size: 14px;
+}
