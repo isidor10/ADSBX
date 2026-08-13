@@ -212,30 +212,55 @@ async function pokreniAplikaciju() {
   // preko prosleđenog porta. Sastavljamo tačnu adresu da ne mora da je traži.
   const codespace = process.env.CODESPACE_NAME;
   const domen = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+  const adresa =
+    codespace && domen
+      ? `https://${codespace}-${port}.${domen}`
+      : `http://localhost:${port}`;
 
-  if (codespace && domen) {
-    console.log(
-      [
-        "  \x1b[1mOtvorite ovu adresu:\x1b[0m",
-        `  \x1b[36mhttps://${codespace}-${port}.${domen}\x1b[0m`,
+  function ispisiAdresu() {
+    const linije = [
+      "",
+      "  \x1b[1m┌────────────────────────────────────────────────────────────┐\x1b[0m",
+      "  \x1b[1m│\x1b[0m  Otvorite ovu adresu:                                      \x1b[1m│\x1b[0m",
+      "  \x1b[1m└────────────────────────────────────────────────────────────┘\x1b[0m",
+      `  \x1b[36m\x1b[1m${adresa}\x1b[0m`,
+      "",
+    ];
+    if (codespace && domen) {
+      linije.push(
+        `  \x1b[2mAko se ne otvori sama: kartica PORTS dole → red ${port} →\x1b[0m`,
+        "  \x1b[2mpređite mišem preko adrese i kliknite ikonicu globusa.\x1b[0m",
         "",
-        `  \x1b[2mAko se ne otvori sama: dole kartica PORTS → red ${port} →\x1b[0m`,
-        "  \x1b[2mpređite mišem i kliknite ikonicu globusa.\x1b[0m",
-      ].join("\n"),
-    );
-  } else {
-    console.log(`  Otvorite: \x1b[36mhttp://localhost:${port}\x1b[0m`);
+      );
+    }
+    linije.push("  \x1b[2mZaustavljanje: Ctrl+C\x1b[0m", "");
+    console.log(linije.join("\n"));
   }
 
-  console.log("  Zaustavljanje: Ctrl+C\n");
+  ispisiAdresu();
 
   // `--hostname 0.0.0.0` je bitan: vezivanje samo za localhost ume da spreči
   // prosleđivanje porta u Codespaces-u i sličnim udaljenim okruženjima.
+  //
+  // stdout ide kroz nas, a ne pravo na ekran, iz jednog razloga: Next na kraju
+  // ispiše svoj „Local: http://localhost:PORT", koji u Codespaces-u ne radi i
+  // pritom odgurne našu adresu uvis. Kada javi da je spreman, adresu ispisujemo
+  // ponovo — da poslednje što korisnik vidi bude ono što treba da klikne.
   const dete = spawn(
     "npx",
     ["next", "dev", "--hostname", "0.0.0.0", "--port", String(port)],
-    { stdio: "inherit", cwd: KOREN, shell: true },
+    { stdio: ["inherit", "pipe", "inherit"], cwd: KOREN, shell: true },
   );
+
+  let vecPonovljeno = false;
+  dete.stdout?.on("data", (deo: Buffer) => {
+    process.stdout.write(deo);
+    if (vecPonovljeno) return;
+    if (/Ready in|ready in|started server/i.test(deo.toString())) {
+      vecPonovljeno = true;
+      setTimeout(ispisiAdresu, 250);
+    }
+  });
 
   // Ako server padne, poslednje što korisnik vidi ne sme da bude adresa.
   dete.on("exit", (kod, signal) => {
