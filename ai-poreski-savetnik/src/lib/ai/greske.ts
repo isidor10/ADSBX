@@ -14,6 +14,21 @@ export interface OpisGreske {
   ponoviti: boolean;
 }
 
+/**
+ * Izvlači rečenicu koju je API zaista vratio.
+ *
+ * SDK je pakuje u `error.error.message`, a `greska.message` sadrži i ceo JSON,
+ * što je nečitljivo u korisničkoj poruci. Kada tog polja nema, vraća se skraćen
+ * `message` — bolje išta konkretno nego „došlo je do greške”.
+ */
+function porukaApija(greska: InstanceType<typeof Anthropic.APIError>): string {
+  const telo = greska.error as { error?: { message?: string } } | undefined;
+  const poruka = telo?.error?.message;
+  if (poruka) return poruka;
+  const sirovo = String(greska.message ?? "").trim();
+  return sirovo.length > 300 ? `${sirovo.slice(0, 300)}…` : sirovo || "bez opisa";
+}
+
 export function opisiGresku(greska: unknown): OpisGreske {
   if (greska instanceof Anthropic.AuthenticationError) {
     return {
@@ -65,8 +80,14 @@ export function opisiGresku(greska: unknown): OpisGreske {
         ponoviti: true,
       };
     }
+    // 400 znači da je zahtev koji aplikacija sastavlja pogrešan — kriv je kod,
+    // ne korisnikova podešavanja. Slanje na .env je odvodilo od uzroka, pa se
+    // ovde prenosi ono što je API zaista rekao.
     return {
-      poruka: `AI servis je odbio zahtev (${status || "bez statusa"}). Ako se ponavlja, proverite podešavanja u .env fajlu.`,
+      poruka:
+        `AI servis je odbio zahtev (${status || "bez statusa"}): ` +
+        `${porukaApija(greska)} ` +
+        "Ovo je greška u samom zahtevu, ne u vašim podešavanjima — prijavite je sa ovim tekstom.",
       status: 502,
       ponoviti: false,
     };

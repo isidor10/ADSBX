@@ -1,4 +1,4 @@
-# AI Poreski savetnik — Republika Srbija
+# Miranda 👠 — poreski savetnik za Republiku Srbiju
 
 Poreski savetnik, računovođa i finansijsko-administrativni asistent za poslovanje
 u Republici Srbiji. Sistem je građen po principu **LLM + RAG + web pretraga +

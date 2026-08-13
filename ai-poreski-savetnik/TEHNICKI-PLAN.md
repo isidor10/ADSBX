@@ -1,4 +1,4 @@
-# AI Poreski savetnik — tehnički plan sistema
+# Miranda 👠 — tehnički plan sistema
 
 > Verzija plana: 1.0 · Datum: 12.08.2026.
 > Prioritet sistema: **TAČNOST PROPISA → POUZDANOST ODGOVORA → CITIRANOST IZVORA → OBRAČUNI → DIZAJN**

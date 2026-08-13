@@ -202,7 +202,12 @@ function PocetniEkran({ naPitanje }: { naPitanje: (t: string) => void }) {
         textAlign: "center",
       }}
     >
-      <h1 style={{ fontSize: 30 }}>AI Poreski savetnik</h1>
+      <h1 style={{ fontSize: 30 }}>
+        Miranda{" "}
+        <span role="img" aria-label="štikla">
+          👠
+        </span>
+      </h1>
       <p className="prigusen" style={{ marginTop: 10, fontSize: 16 }}>
         Kako mogu da vam pomognem?
       </p>

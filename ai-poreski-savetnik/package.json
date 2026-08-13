@@ -2,7 +2,7 @@
   "name": "ai-poreski-savetnik",
   "version": "0.1.0",
   "private": true,
-  "description": "AI poreski savetnik i računovođa za Republiku Srbiju — LLM + RAG + web pretraga + pravna baza.",
+  "description": "Miranda — poreski savetnik i računovođa za Republiku Srbiju — LLM + RAG + web pretraga + pravna baza.",
   "scripts": {
     "kreni": "tsx scripts/kreni.ts",
     "kljuc": "tsx scripts/kljuc.ts",

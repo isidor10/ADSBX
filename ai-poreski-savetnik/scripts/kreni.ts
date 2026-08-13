@@ -15,6 +15,7 @@
 import { execSync, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { join } from "node:path";
 
 import { maskiraj, nadjiKljuc, proveriKodAnthropic } from "./kljuc";
@@ -158,8 +159,54 @@ function bezKljuca() {
 
 // ── 5. Pokretanje ────────────────────────────────────────────────────────────
 
-function pokreniAplikaciju() {
+/** Da li se na portu može slušati. Jedini pouzdan način je — pokušati. */
+function portSlobodan(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const probni = createServer();
+    probni.once("error", () => resolve(false));
+    probni.once("listening", () => probni.close(() => resolve(true)));
+    probni.listen(port, "0.0.0.0");
+  });
+}
+
+async function nadjiSlobodanPort(od = 3000, koliko = 10): Promise<number | null> {
+  for (let p = od; p < od + koliko; p += 1) {
+    if (await portSlobodan(p)) return p;
+  }
+  return null;
+}
+
+async function pokreniAplikaciju() {
   naslov("5/5  Pokretanje aplikacije");
+
+  // Adresa se ispisuje tek kada se zna da port zaista može da se zauzme.
+  // Ranije je ispisivana unapred, pa je zauzet port 3000 značio da poslednje
+  // što korisnik pročita bude adresa koja ne radi, praćena EADDRINUSE.
+  const port = await nadjiSlobodanPort();
+
+  if (port === null) {
+    console.error(
+      [
+        "  \x1b[31m✗\x1b[0m Portovi 3000–3009 su svi zauzeti.",
+        "",
+        "  \x1b[2mNajverovatnije je u pitanju ranije pokretanje koje još radi.",
+        "  Oslobodite port pa pokušajte ponovo:\x1b[0m",
+        "      \x1b[36mnpx kill-port 3000\x1b[0m",
+        "",
+      ].join("\n"),
+    );
+    process.exit(1);
+  }
+
+  if (port !== 3000) {
+    console.log(
+      [
+        `  \x1b[33m!\x1b[0m Port 3000 je zauzet — verovatno raniji \x1b[2mnpm run kreni\x1b[0m koji još radi.`,
+        `    Pokrećem na portu ${port}. Da oslobodite 3000: \x1b[36mnpx kill-port 3000\x1b[0m`,
+        "",
+      ].join("\n"),
+    );
+  }
 
   // U Codespaces-u localhost ne znači ništa korisniku — aplikacija je dostupna
   // preko prosleđenog porta. Sastavljamo tačnu adresu da ne mora da je traži.
@@ -170,24 +217,38 @@ function pokreniAplikaciju() {
     console.log(
       [
         "  \x1b[1mOtvorite ovu adresu:\x1b[0m",
-        `  \x1b[36mhttps://${codespace}-3000.${domen}\x1b[0m`,
+        `  \x1b[36mhttps://${codespace}-${port}.${domen}\x1b[0m`,
         "",
-        "  \x1b[2mAko se ne otvori sama: dole kartica PORTS → red 3000 →\x1b[0m",
+        `  \x1b[2mAko se ne otvori sama: dole kartica PORTS → red ${port} →\x1b[0m`,
         "  \x1b[2mpređite mišem i kliknite ikonicu globusa.\x1b[0m",
       ].join("\n"),
     );
   } else {
-    console.log("  Otvorite: \x1b[36mhttp://localhost:3000\x1b[0m");
+    console.log(`  Otvorite: \x1b[36mhttp://localhost:${port}\x1b[0m`);
   }
 
   console.log("  Zaustavljanje: Ctrl+C\n");
 
   // `--hostname 0.0.0.0` je bitan: vezivanje samo za localhost ume da spreči
   // prosleđivanje porta u Codespaces-u i sličnim udaljenim okruženjima.
-  spawn("npx", ["next", "dev", "--hostname", "0.0.0.0", "--port", "3000"], {
-    stdio: "inherit",
-    cwd: KOREN,
-    shell: true,
+  const dete = spawn(
+    "npx",
+    ["next", "dev", "--hostname", "0.0.0.0", "--port", String(port)],
+    { stdio: "inherit", cwd: KOREN, shell: true },
+  );
+
+  // Ako server padne, poslednje što korisnik vidi ne sme da bude adresa.
+  dete.on("exit", (kod, signal) => {
+    if (signal || kod === 0 || kod === null) return;
+    console.error(
+      [
+        "",
+        `  \x1b[31m✗\x1b[0m Server se ugasio (izlazni kod ${kod}).`,
+        "  \x1b[2mAdresa iznad više ne radi. Greška je ispisana neposredno pre ove poruke.\x1b[0m",
+        "",
+      ].join("\n"),
+    );
+    process.exit(kod);
   });
 }
 
@@ -196,7 +257,7 @@ async function glavna() {
   podesiBazu();
   napuniPravnuBazu();
   if (!(await proveriKljuc())) bezKljuca();
-  pokreniAplikaciju();
+  await pokreniAplikaciju();
 }
 
 glavna();
