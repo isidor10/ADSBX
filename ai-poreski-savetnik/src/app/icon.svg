@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#1f4d3f"/>
+  <!-- Tas vage: poreski savet počiva na propisu, a ne na proceni. -->
+  <g fill="none" stroke="#e8f0ec" stroke-width="2" stroke-linecap="round">
+    <path d="M16 7v18"/>
+    <path d="M9 9h14"/>
+    <path d="M6 20a4 4 0 0 0 6 0l-3-8z" stroke-linejoin="round"/>
+    <path d="M20 20a4 4 0 0 0 6 0l-3-8z" stroke-linejoin="round"/>
+    <path d="M11 26h10"/>
+  </g>
+</svg>

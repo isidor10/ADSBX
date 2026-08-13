@@ -86,7 +86,7 @@ export function anthropic(): Anthropic {
   if (!klijent) {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error(
-        "ANTHROPIC_API_KEY nije podešen. Kopirajte .env.example u .env i unesite ključ.",
+        "ANTHROPIC_API_KEY nije podešen. Upišite ključ u fajl .env.",
       );
     }
     klijent = new Anthropic();
