@@ -704,4 +704,208 @@ export const ODREDBE: SeedOdredba[] = [
     izvorUrl:
       "https://www.paragraf.rs/baza-znanja/knjigovodstvo/rokovi-evidentiranja-pdv-i-ispravke-evidentiranog-pdv-u-sef-popdv.html",
   },
+  // ── Poreski postupak — zastarelost ────────────────────────────────────────
+  /*
+   * Dva roka koja odlučuju da li poreski dug uopšte postoji.
+   *
+   * Relativna zastarelost se prekida svakom radnjom poreskog organa, pa se u
+   * praksi pomera godinama; apsolutna ne. Ko pita „da li ovaj dug još važi",
+   * pita o jednom od ova dva roka — i pogrešan odgovor košta tačno onoliko
+   * koliko dug iznosi.
+   */
+  {
+    propis: "ZPPPA",
+    clan: "114",
+    naslov: "Zastarelost prava na utvrđivanje i naplatu poreza (relativna)",
+    tekst:
+      "Pravo Poreske uprave na utvrđivanje i naplatu poreza i sporednih poreskih davanja zastareva za pet godina od dana kada je zastarelost počela da teče. Zastarelost prava na utvrđivanje počinje da teče od prvog dana naredne godine od godine u kojoj je trebalo utvrditi porez, a zastarelost prava na naplatu od prvog dana naredne godine od godine u kojoj je obaveza dospela za plaćanje. Rok se prekida svakom radnjom poreskog organa preduzetom radi utvrđivanja ili naplate, pa posle prekida počinje da teče iznova.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2003-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-poreskom-postupku-i-poreskoj-administraciji.html",
+  },
+  {
+    propis: "ZPPPA",
+    clan: "114ž",
+    naslov: "Apsolutna zastarelost poreske obaveze",
+    tekst:
+      "Pravo na utvrđivanje, naplatu, povraćaj, poreski kredit, refakciju, refundaciju i namirenje dospelih obaveza putem preknjižavanja poreza uvek zastareva u roku od deset godina od isteka godine u kojoj je porez trebalo utvrditi ili naplatiti, odnosno u kojoj je izvršena preplata. Za razliku od relativne zastarelosti, ovaj rok se ne prekida radnjama poreskog organa. Po isteku deset godina nadležni poreski organ po službenoj dužnosti donosi rešenje o prestanku poreske obaveze zbog zastarelosti.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2003-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-poreskom-postupku-i-poreskoj-administraciji.html",
+  },
+
+  // ── Porezi na imovinu ─────────────────────────────────────────────────────
+  {
+    propis: "ZPI",
+    clan: "—",
+    naslov: "Stopa poreza na prenos apsolutnih prava",
+    tekst:
+      "Stopa poreza na prenos apsolutnih prava je proporcionalna i iznosi 2,5%. Porez se plaća kod prenosa uz naknadu prava svojine na nepokretnosti i drugih apsolutnih prava propisanih zakonom, ako na taj prenos nije plaćen PDV. Napomena sistema: stopa je proverena, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2005-01-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_porezima_na_imovinu.html",
+  },
+  {
+    propis: "ZPI",
+    clan: "—",
+    naslov: "Stope poreza na nasleđe i poklon",
+    tekst:
+      "Obveznici koji su u odnosu na ostavioca, odnosno poklonodavca, u drugom naslednom redu plaćaju porez na nasleđe i poklon po stopi od 1,5%. Obveznici koji su u trećem i daljem naslednom redu, kao i obveznici koji sa ostaviocem odnosno poklonodavcem nisu u srodstvu, plaćaju porez po stopi od 2,5%. Naslednici i poklonoprimci prvog naslednog reda, kao i supružnik, po pravilu su oslobođeni. Napomena sistema: stope su proverene, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2005-01-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_porezima_na_imovinu.html",
+  },
+
+  // ── Rokovi plaćanja u komercijalnim transakcijama ─────────────────────────
+  {
+    propis: "ZRINO",
+    clan: "—",
+    naslov: "Najduži ugovoreni rokovi plaćanja",
+    tekst:
+      "Kada je dužnik javni sektor, rok za izmirenje novčane obaveze ne može biti duži od 45 dana. Kada je dužnik Republički fond za zdravstveno osiguranje ili korisnik njegovih sredstava, može se ugovoriti rok do 90 dana. Kada je dužnik privredni subjekt, rok ne može biti duži od 60 dana; izuzetno se između privrednih subjekata može ugovoriti duži rok ako ugovorene obaveze zahtevaju plaćanje u ratama, ali ni tada duže od 90 dana. Napomena sistema: rokovi su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2013-03-31",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_rokovima_izmirenja_novcanih_obaveza_u_komercijalnim_transakcijama.html",
+  },
+
+  // ── Privredna društva ─────────────────────────────────────────────────────
+  {
+    propis: "ZPD",
+    clan: "—",
+    naslov: "Minimalni osnovni kapital društva sa ograničenom odgovornošću",
+    tekst:
+      "Minimalni osnovni kapital društva sa ograničenom odgovornošću iznosi 100 dinara, osim ako posebnim zakonom za određenu delatnost nije propisan veći iznos. Osnovni kapital je novčana vrednost upisanih uloga članova društva koja se registruje u skladu sa zakonom o registraciji. Ulog može biti novčani i nenovčani. Napomena sistema: iznos je proveren, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2012-02-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon-o-privrednim-drustvima.html",
+  },
+
+  // ── Sprečavanje pranja novca ──────────────────────────────────────────────
+  /*
+   * Ovo je jedini propis u bazi po kome je sam korisnik aplikacije obveznik:
+   * računovođa koji pruža usluge trećima ima obaveze poznavanja stranke i
+   * prijavljivanja sumnjivih transakcija. Zato stoji ovde, a ne kao tuđa tema.
+   */
+  {
+    propis: "ZSPNFT",
+    clan: "4",
+    naslov: "Obveznici zakona — računovođe, revizori i poreski savetnici",
+    tekst:
+      "Obveznici primene ovog zakona su finansijske i nefinansijske institucije taksativno navedene u ovom članu. Među njima su, pored ostalih, revizorska društva i samostalni revizori, preduzetnici i pravna lica koja se bave pružanjem računovodstvenih usluga, kao i poreski savetnici. Obveznik je dužan da sprovodi radnje i mere poznavanja i praćenja stranke, da odredi ovlašćeno lice i njegovog zamenika, izradi analizu rizika i prijavljuje gotovinske i sumnjive transakcije Upravi za sprečavanje pranja novca.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2018-04-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_sprecavanju_pranja_novca_i_finansiranja_terorizma.html",
+  },
+
+  // ── Arhivska građa ────────────────────────────────────────────────────────
+  {
+    propis: "ZAG",
+    clan: "—",
+    naslov: "Arhivska knjiga i rok za dostavljanje prepisa",
+    tekst:
+      "Stvaralac i imalac arhivske i dokumentarne građe dužan je da vodi arhivsku knjigu — evidenciju o celokupnoj dokumentarnoj građi koja nastaje u njegovom radu. Prepis arhivske knjige za dokumentarnu građu nastalu u prethodnoj kalendarskoj godini dostavlja se nadležnom javnom arhivu najkasnije do 30. aprila tekuće godine. Obaveza se odnosi na pravna i fizička lica koja se mogu smatrati stvaraocima odnosno imaocima građe, uključujući privredna društva. Napomena sistema: rok i obaveza su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2021-02-02",
+    izvorUrl:
+      "https://www.paragraf.rs/100pitanja/posao/prikaz-obaveza-iz-zakona-o-arhivskoj-gradji-i-arhivskoj-delatnosti.html",
+  },
+  {
+    propis: "ZAG",
+    clan: "—",
+    naslov: "Kazne za nepostupanje po obavezama arhiviranja",
+    tekst:
+      "Za nepostupanje po obavezama iz ovog zakona propisana je novčana kazna za pravno lice u rasponu od 50.000 do 2.000.000 dinara, a za odgovorno lice u pravnom licu od 5.000 do 150.000 dinara. Ovo je obaveza koju firme najčešće previde jer se ne vezuje za poreski kalendar, a kontroliše je nadležni javni arhiv, ne Poreska uprava. Napomena sistema: rasponi kazni su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2021-02-02",
+    izvorUrl:
+      "https://www.ekapija.com/news/3531141/sve-o-primeni-zakona-o-arhivskoj-gradji-preduzetnici-za-sada-bez-obaveze",
+  },
+
+  // ── Finansijska podrška porodici sa decom ─────────────────────────────────
+  {
+    propis: "ZFPPD",
+    clan: "—",
+    naslov: "Osnovica naknade zarade za vreme porodiljskog odsustva",
+    tekst:
+      "Osnovica naknade zarade za vreme porodiljskog odsustva, odsustva sa rada radi nege deteta i odsustva radi posebne nege deteta utvrđuje se tako što se saberu mesečne osnovice na koje su plaćeni doprinosi na primanja koja imaju karakter zarade, za poslednjih 18 meseci koji prethode prvom mesecu otpočinjanja odsustva. Pravo ostvaruju zaposleni kod pravnih i fizičkih lica, a pod propisanim uslovima i otac, usvojitelj, hranitelj odnosno staratelj deteta kada koristi odsustvo. Napomena sistema: način obračuna je proveren, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2018-07-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon-o-finansijskoj-podrsci-porodici-sa-decom.html",
+  },
+
+  // ── PDV evidencija ────────────────────────────────────────────────────────
+  {
+    propis: "PRAVILNIK-POPDV",
+    clan: "—",
+    naslov: "Pregled obračuna PDV — obrazac POPDV",
+    tekst:
+      "Obveznik PDV podnosi nadležnom poreskom organu pregled obračuna PDV na Obrascu POPDV — Pregled obračuna PDV za poreski period, zajedno sa poreskom prijavom PDV. Pravilnik propisuje oblik, sadržinu i način vođenja evidencije o PDV iz koje se podaci za POPDV crpe. U primeni je od 1. januara 2018. godine. Napomena sistema: obaveza je proverena, broj člana pravilnika nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2018-01-01",
+    izvorUrl:
+      "https://www.neobilten.com/pravilnik-o-obliku-sadrzini-i-nacinu-vodjenja-evidencije-o-pdv-i-o-obliku-i-sadrzini-pregleda-obracuna-pdv-8/?lang=lat",
+  },
+  // ── Obligacioni odnosi — zastarelost ──────────────────────────────────────
+  /*
+   * Zastarelost fakture između firmi je jedno od najčešćih pitanja u
+   * računovodstvu, i skoro uvek se pogrešno pamti kao opštih deset godina.
+   * Za promet robe i usluga između pravnih lica rok je tri godine, i teče
+   * posebno za svaku isporuku — što je razlika koja odlučuje da li se
+   * potraživanje još može naplatiti ili se otpisuje.
+   */
+  {
+    propis: "ZOO",
+    clan: "371",
+    naslov: "Opšti rok zastarelosti potraživanja",
+    tekst:
+      "Potraživanja zastarevaju za deset godina, ako zakonom nije određen neki drugi rok zastarelosti. Ovaj rok je opšte pravilo — primenjuje se samo kada za konkretnu vrstu potraživanja nije propisan poseban, po pravilu kraći rok.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "1978-10-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_obligacionim_odnosima.html",
+  },
+  {
+    propis: "ZOO",
+    clan: "374",
+    naslov:
+      "Zastarelost međusobnih potraživanja pravnih lica iz prometa robe i usluga",
+    tekst:
+      "Međusobna potraživanja pravnih lica iz ugovora o prometu robe i usluga, kao i potraživanja naknade za izdatke učinjene u vezi sa tim ugovorima, zastarevaju za tri godine. Zastarevanje teče odvojeno za svaku isporuku robe, izvršeni rad ili uslugu. Ovo je rok koji se u praksi primenjuje na fakture između privrednih subjekata, a ne opšti rok od deset godina.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "1978-10-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_obligacionim_odnosima.html",
+  },
+
+  // ── Razvrstavanje stalnih sredstava ───────────────────────────────────────
+  {
+    propis: "PRAVILNIK-RAZVRSTAVANJE-SREDSTAVA",
+    clan: "—",
+    naslov: "Razvrstavanje stalnih sredstava u amortizacione grupe",
+    tekst:
+      "Stalna sredstva koja podležu obračunu amortizacije za poreske svrhe, osim nematerijalnih sredstava, razvrstavaju se u pet grupa, sa stopama propisanim članom 10b stav 3 Zakona o porezu na dobit pravnih lica: I grupa 2,5%, II grupa 10%, III grupa 15%, IV grupa 20%, V grupa 30%. Za sredstva razvrstana u I grupu amortizacija se utvrđuje proporcionalnom metodom, a za sredstva iz II do V grupe degresivnom metodom. Pravilnik propisuje koje se konkretno sredstvo svrstava u koju grupu. Napomena sistema: grupe i metode su provereni, broj člana pravilnika nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2019-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/pravilnik_o_nacinu_razvrstavanja_stalnih_sredstava_po_grupama_i_nacinu_utvrdjivanja_amortizacije_za_poreske_svrhe.html",
+  },
 ];
