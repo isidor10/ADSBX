@@ -22,7 +22,11 @@ const Ulaz = z.object({
 export async function POST(zahtev: Request) {
   const korisnik = await trenutniKorisnik();
 
-  const limit = ogranici(kljucKlijenta(zahtev, korisnik?.id), 30, 60 * 60 * 1000);
+  const limit = ogranici(
+    kljucKlijenta(zahtev, korisnik?.id),
+    30,
+    60 * 60 * 1000,
+  );
   if (!limit.dozvoljeno) {
     return NextResponse.json(
       {
@@ -38,7 +42,10 @@ export async function POST(zahtev: Request) {
     ulaz = Ulaz.parse(await zahtev.json());
   } catch {
     return NextResponse.json(
-      { greska: "Neispravan zahtev. Pitanje mora imati između 3 i 8000 znakova." },
+      {
+        greska:
+          "Neispravan zahtev. Pitanje mora imati između 3 i 8000 znakova.",
+      },
       { status: 400 },
     );
   }
@@ -86,61 +93,57 @@ export async function POST(zahtev: Request) {
     });
 
     // ── Glavni tok ──────────────────────────────────────────────────────────
-    const rezultat = await pokreniPipeline({
-      pitanje: ulaz.pitanje,
-      istorija: istorija.map((p) => ({
-        uloga: p.uloga as "korisnik" | "asistent",
-        sadrzaj: p.sadrzaj,
-      })),
-      firma: firma
-        ? {
-            naziv: firma.naziv,
-            pravnaForma: firma.pravnaForma,
-            pdvStatus: firma.pdvStatus,
-            pdvPeriod: firma.pdvPeriod,
-            sifraDelatnosti: firma.sifraDelatnosti,
-            nazivDelatnosti: firma.nazivDelatnosti,
-            brojZaposlenih: firma.brojZaposlenih,
-            sediste: firma.sediste,
-            nacinOporezivanja: firma.nacinOporezivanja,
-          }
-        : undefined,
-      dodatniPrompt:
-        ulaz.rezim === "drugo_misljenje" ? PROMPT_DRUGO_MISLJENJE : undefined,
+    // Odgovor se šalje kao tok NDJSON redova umesto kao jedan JSON na kraju.
+    // Razlog nije lepota nego opstanak veze: složeno pitanje sa web pretragom
+    // traje minutima, a POST bez ijednog bajta u međuvremenu proxy (Codespaces,
+    // Vercel, nginx) prekine — korisnik dobije „nije moguće doći do servera”
+    // iako je odgovor uredno nastajao. Uz to, faze daju i vidljiv napredak.
+    const kodirac = new TextEncoder();
+    const konacniRazgovorId = razgovorId;
+
+    const tok = new ReadableStream<Uint8Array>({
+      async start(kontroler) {
+        let zatvoren = false;
+        const posalji = (dogadjaj: Record<string, unknown>) => {
+          if (zatvoren) return;
+          kontroler.enqueue(kodirac.encode(`${JSON.stringify(dogadjaj)}\n`));
+        };
+
+        // Puls drži vezu živom i kada jedna faza traje dugo (npr. web pretraga).
+        const puls = setInterval(() => posalji({ tip: "puls" }), 10_000);
+
+        try {
+          const rezultat = await izracunaj(
+            ulaz,
+            firma,
+            istorija,
+            konacniRazgovorId,
+            (tekst) => posalji({ tip: "faza", tekst }),
+          );
+          posalji({ tip: "gotovo", ...rezultat });
+        } catch (greska) {
+          console.error("[/api/chat]", greska);
+          const opis = opisiGresku(greska);
+          posalji({
+            tip: "greska",
+            greska: opis.poruka,
+            ponoviti: opis.ponoviti,
+          });
+        } finally {
+          clearInterval(puls);
+          zatvoren = true;
+          kontroler.close();
+        }
+      },
     });
 
-    // Poslednja provera: brojevi članova napisani u slobodnom tekstu koje ne
-    // pokriva nijedan citat.
-    const sumnjiviClanovi = proveriClanoveUTekstu(
-      `${rezultat.odgovor.kratakOdgovor} ${rezultat.odgovor.objasnjenje}`,
-      rezultat.citati,
-    );
-    const upozorenja = [...rezultat.dodataUpozorenja];
-    if (sumnjiviClanovi.length > 0) {
-      upozorenja.push(
-        `U tekstu odgovora pominju se ${sumnjiviClanovi.join(", ")} bez potvrđenog izvora u pravnoj bazi. Proverite ove navode pre nego što se na njih oslonite.`,
-      );
-    }
-
-    const porukaId = await zapisiOdgovor({
-      razgovorId,
-      pitanje: ulaz.pitanje,
-      rezultat,
-      tekstOdgovora: rezultat.odgovor.kratakOdgovor,
-    });
-
-    return NextResponse.json({
-      porukaId,
-      razgovorId,
-      odgovor: rezultat.odgovor,
-      citati: rezultat.citati,
-      webIzvori: rezultat.webIzvori,
-      upozorenja,
-      nivoPouzdanosti: rezultat.nivoPouzdanosti,
-      ciljniDatum: rezultat.ciljniDatum.toISOString(),
-      koriscenaWebPretraga: rezultat.koriscenaWebPretraga,
-      odbacenoCitata: rezultat.odbaceniCitati.length,
-      trajanjeMs: rezultat.trajanjeMs,
+    return new Response(tok, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-store, no-transform",
+        // Bez ovoga nginx bafferuje odgovor i puls nikad ne stigne do klijenta.
+        "X-Accel-Buffering": "no",
+      },
     });
   } catch (greska) {
     console.error("[/api/chat]", greska);
@@ -150,4 +153,73 @@ export async function POST(zahtev: Request) {
       { status: opis.status },
     );
   }
+}
+
+type Istorija = Array<{ uloga: string; sadrzaj: string }>;
+
+/** Sve posle pripreme razgovora — izdvojeno da tok može da ga pozove. */
+async function izracunaj(
+  ulaz: z.infer<typeof Ulaz>,
+  firma: Awaited<ReturnType<typeof db.firma.findFirst>>,
+  istorija: Istorija,
+  razgovorId: string,
+  naFazu: (tekst: string) => void,
+) {
+  const rezultat = await pokreniPipeline({
+    pitanje: ulaz.pitanje,
+    naFazu,
+    istorija: istorija.map((p) => ({
+      uloga: p.uloga as "korisnik" | "asistent",
+      sadrzaj: p.sadrzaj,
+    })),
+    firma: firma
+      ? {
+          naziv: firma.naziv,
+          pravnaForma: firma.pravnaForma,
+          pdvStatus: firma.pdvStatus,
+          pdvPeriod: firma.pdvPeriod,
+          sifraDelatnosti: firma.sifraDelatnosti,
+          nazivDelatnosti: firma.nazivDelatnosti,
+          brojZaposlenih: firma.brojZaposlenih,
+          sediste: firma.sediste,
+          nacinOporezivanja: firma.nacinOporezivanja,
+        }
+      : undefined,
+    dodatniPrompt:
+      ulaz.rezim === "drugo_misljenje" ? PROMPT_DRUGO_MISLJENJE : undefined,
+  });
+
+  // Poslednja provera: brojevi članova napisani u slobodnom tekstu koje ne
+  // pokriva nijedan citat.
+  const sumnjiviClanovi = proveriClanoveUTekstu(
+    `${rezultat.odgovor.kratakOdgovor} ${rezultat.odgovor.objasnjenje}`,
+    rezultat.citati,
+  );
+  const upozorenja = [...rezultat.dodataUpozorenja];
+  if (sumnjiviClanovi.length > 0) {
+    upozorenja.push(
+      `U tekstu odgovora pominju se ${sumnjiviClanovi.join(", ")} bez potvrđenog izvora u pravnoj bazi. Proverite ove navode pre nego što se na njih oslonite.`,
+    );
+  }
+
+  const porukaId = await zapisiOdgovor({
+    razgovorId,
+    pitanje: ulaz.pitanje,
+    rezultat,
+    tekstOdgovora: rezultat.odgovor.kratakOdgovor,
+  });
+
+  return {
+    porukaId,
+    razgovorId,
+    odgovor: rezultat.odgovor,
+    citati: rezultat.citati,
+    webIzvori: rezultat.webIzvori,
+    upozorenja,
+    nivoPouzdanosti: rezultat.nivoPouzdanosti,
+    ciljniDatum: rezultat.ciljniDatum.toISOString(),
+    koriscenaWebPretraga: rezultat.koriscenaWebPretraga,
+    odbacenoCitata: rezultat.odbaceniCitati.length,
+    trajanjeMs: rezultat.trajanjeMs,
+  };
 }

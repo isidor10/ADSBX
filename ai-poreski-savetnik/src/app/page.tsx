@@ -43,13 +43,37 @@ interface Poruka {
 }
 
 const BRZE_OPCIJE = [
-  { ikona: "💰", tekst: "Porezi", upit: "Koje poreze plaća DOO u Srbiji i po kojim stopama?" },
+  {
+    ikona: "💰",
+    tekst: "Porezi",
+    upit: "Koje poreze plaća DOO u Srbiji i po kojim stopama?",
+  },
   { ikona: "📚", tekst: "Zakoni", upit: "Šta kaže član 29 Zakona o PDV?" },
-  { ikona: "🧾", tekst: "Fakture", upit: "Koji su rokovi za evidentiranje PDV u sistemu elektronskih faktura?" },
-  { ikona: "👨‍💼", tekst: "Zarade", upit: "Kako se obračunava zarada — koji su porez i doprinosi na bruto zaradu?" },
-  { ikona: "📊", tekst: "Kalkulator", upit: "Koliko je neto zarada ako je bruto 120.000 dinara?" },
-  { ikona: "📅", tekst: "Rokovi", upit: "Koji su moji poreski rokovi ovog meseca?" },
-  { ikona: "🔍", tekst: "Proveri propis", upit: "Da li je limit za paušalno oporezivanje i dalje 6.000.000 dinara?" },
+  {
+    ikona: "🧾",
+    tekst: "Fakture",
+    upit: "Koji su rokovi za evidentiranje PDV u sistemu elektronskih faktura?",
+  },
+  {
+    ikona: "👨‍💼",
+    tekst: "Zarade",
+    upit: "Kako se obračunava zarada — koji su porez i doprinosi na bruto zaradu?",
+  },
+  {
+    ikona: "📊",
+    tekst: "Kalkulator",
+    upit: "Koliko je neto zarada ako je bruto 120.000 dinara?",
+  },
+  {
+    ikona: "📅",
+    tekst: "Rokovi",
+    upit: "Koji su moji poreski rokovi ovog meseca?",
+  },
+  {
+    ikona: "🔍",
+    tekst: "Proveri propis",
+    upit: "Da li je limit za paušalno oporezivanje i dalje 6.000.000 dinara?",
+  },
 ];
 
 const PRIMER =
@@ -68,8 +92,12 @@ function Razgovor() {
   const [poruke, postaviPoruke] = useState<Poruka[]>([]);
   const [unos, postaviUnos] = useState("");
   const [ucitavanje, postaviUcitavanje] = useState(false);
+  // Tekst faze iz toka — bez njega je čekanje od par minuta nerazlučivo od kvara.
+  const [faza, postaviFazu] = useState("");
   const [razgovorId, postaviRazgovorId] = useState<string | undefined>();
-  const [rezim, postaviRezim] = useState<"standard" | "drugo_misljenje">("standard");
+  const [rezim, postaviRezim] = useState<"standard" | "drugo_misljenje">(
+    "standard",
+  );
   const [panelOtvoren, postaviPanel] = useState(false);
   const dno = useRef<HTMLDivElement>(null);
 
@@ -97,6 +125,7 @@ function Razgovor() {
     postaviPoruke((p) => [...p, { uloga: "korisnik", tekst: pitanje }]);
     postaviUnos("");
     postaviUcitavanje(true);
+    postaviFazu("Šaljem pitanje…");
 
     try {
       const odgovor = await fetch("/api/chat", {
@@ -104,9 +133,12 @@ function Razgovor() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pitanje, razgovorId, rezim }),
       });
-      const podaci = await odgovor.json();
 
-      if (!odgovor.ok) {
+      // Odgovor stiže kao tok NDJSON redova: faze dok traje, pa „gotovo" ili
+      // „greska". Kad tok pukne pre završnog reda, to se ovde i vidi — ranije
+      // se svaki takav slučaj svodio na „nije moguće doći do servera".
+      if (!odgovor.ok || !odgovor.body) {
+        const podaci = await odgovor.json().catch(() => ({}));
         postaviPoruke((p) => [
           ...p,
           { uloga: "asistent", greska: podaci.greska ?? "Došlo je do greške." },
@@ -114,20 +146,71 @@ function Razgovor() {
         return;
       }
 
-      postaviRazgovorId(podaci.razgovorId);
-      postaviPoruke((p) => [
-        ...p,
-        {
-          uloga: "asistent",
-          odgovor: podaci.odgovor,
-          citati: podaci.citati,
-          webIzvori: podaci.webIzvori,
-          upozorenja: podaci.upozorenja,
-          ciljniDatum: podaci.ciljniDatum,
-          koriscenaWebPretraga: podaci.koriscenaWebPretraga,
-        },
-      ]);
-      if (podaci.citati?.length > 0) postaviPanel(true);
+      const citac = odgovor.body.getReader();
+      const dekoder = new TextDecoder();
+      let ostatak = "";
+      let zavrseno = false;
+
+      while (true) {
+        const { value, done } = await citac.read();
+        if (done) break;
+
+        ostatak += dekoder.decode(value, { stream: true });
+        const redovi = ostatak.split("\n");
+        ostatak = redovi.pop() ?? "";
+
+        for (const red of redovi) {
+          if (!red.trim()) continue;
+          let dogadjaj: Record<string, never>;
+          try {
+            dogadjaj = JSON.parse(red);
+          } catch {
+            continue;
+          }
+
+          if (dogadjaj.tip === "faza") {
+            postaviFazu(dogadjaj.tekst);
+          } else if (dogadjaj.tip === "greska") {
+            zavrseno = true;
+            postaviPoruke((p) => [
+              ...p,
+              { uloga: "asistent", greska: dogadjaj.greska },
+            ]);
+          } else if (dogadjaj.tip === "gotovo") {
+            zavrseno = true;
+            postaviRazgovorId(dogadjaj.razgovorId);
+            postaviPoruke((p) => [
+              ...p,
+              {
+                uloga: "asistent",
+                odgovor: dogadjaj.odgovor,
+                citati: dogadjaj.citati,
+                webIzvori: dogadjaj.webIzvori,
+                upozorenja: dogadjaj.upozorenja,
+                ciljniDatum: dogadjaj.ciljniDatum,
+                koriscenaWebPretraga: dogadjaj.koriscenaWebPretraga,
+              },
+            ]);
+            if (
+              Array.isArray(dogadjaj.citati) &&
+              (dogadjaj.citati as unknown[]).length > 0
+            ) {
+              postaviPanel(true);
+            }
+          }
+        }
+      }
+
+      if (!zavrseno) {
+        postaviPoruke((p) => [
+          ...p,
+          {
+            uloga: "asistent",
+            greska:
+              "Veza je prekinuta pre nego što je odgovor stigao do kraja. Pokušajte ponovo — ako se ponavlja, pitanje je verovatno preobimno za jedan zahtev, pa ga podelite na dva.",
+          },
+        ]);
+      }
     } catch {
       postaviPoruke((p) => [
         ...p,
@@ -139,6 +222,7 @@ function Razgovor() {
       ]);
     } finally {
       postaviUcitavanje(false);
+      postaviFazu("");
     }
   }
 
@@ -164,7 +248,7 @@ function Razgovor() {
                   <OdgovorAsistenta key={i} poruka={p} />
                 ),
               )}
-              {ucitavanje && <Ucitavanje />}
+              {ucitavanje && <Ucitavanje faza={faza} />}
               <div ref={dno} />
             </div>
           )}
@@ -298,7 +382,10 @@ function PocetniEkran({ naPitanje }: { naPitanje: (t: string) => void }) {
           background: "var(--povrsina-2)",
         }}
       >
-        <div className="sitni slab" style={{ marginBottom: 6, fontWeight: 600 }}>
+        <div
+          className="sitni slab"
+          style={{ marginBottom: 6, fontWeight: 600 }}
+        >
           PRIMER SLOŽENOG PITANJA
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55 }}>{PRIMER}</div>
@@ -330,11 +417,14 @@ function PitanjeKorisnika({ tekst }: { tekst: string }) {
   );
 }
 
-function Ucitavanje() {
+function Ucitavanje({ faza }: { faza?: string }) {
   return (
     <div className="kartica" style={{ padding: "16px 18px" }}>
       <div className="ucitavanje prigusen mali">
-        Pretražujem pravnu bazu i proveravam važeće propise…
+        {faza || "Pretražujem pravnu bazu i proveravam važeće propise…"}
+      </div>
+      <div className="sitni slab" style={{ marginTop: 6 }}>
+        Složeno pitanje sa proverom zvaničnih izvora ume da traje i par minuta.
       </div>
     </div>
   );
@@ -388,7 +478,9 @@ function OdgovorAsistenta({ poruka }: { poruka: Poruka }) {
         )}
       </div>
 
-      <p style={{ fontSize: 16.5, fontWeight: 550, margin: 0, lineHeight: 1.55 }}>
+      <p
+        style={{ fontSize: 16.5, fontWeight: 550, margin: 0, lineHeight: 1.55 }}
+      >
         {o.kratakOdgovor}
       </p>
 
@@ -398,42 +490,41 @@ function OdgovorAsistenta({ poruka }: { poruka: Poruka }) {
         </p>
       </Odeljak>
 
-      {o.poreskiTretman &&
-        Object.values(o.poreskiTretman).some(Boolean) && (
-          <Odeljak naslov="Poreski i računovodstveni tretman">
-            <div className="kartica" style={{ padding: 0, overflow: "hidden" }}>
-              <table className="tabela-obracuna">
-                <tbody>
-                  {(
-                    [
-                      ["poreziKojiSePlacaju", "Porezi"],
-                      ["osnovica", "Osnovica"],
-                      ["stopa", "Stopa"],
-                      ["rok", "Rok"],
-                      ["prijava", "Prijava"],
-                      ["knjizenje", "Knjiženje"],
-                    ] as const
-                  ).map(([kljuc, naziv]) =>
-                    o.poreskiTretman?.[kljuc] ? (
-                      <tr key={kljuc}>
-                        <td
-                          style={{
-                            width: 130,
-                            fontWeight: 600,
-                            color: "var(--tekst-prigusen)",
-                          }}
-                        >
-                          {naziv}
-                        </td>
-                        <td>{o.poreskiTretman[kljuc]}</td>
-                      </tr>
-                    ) : null,
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Odeljak>
-        )}
+      {o.poreskiTretman && Object.values(o.poreskiTretman).some(Boolean) && (
+        <Odeljak naslov="Poreski i računovodstveni tretman">
+          <div className="kartica" style={{ padding: 0, overflow: "hidden" }}>
+            <table className="tabela-obracuna">
+              <tbody>
+                {(
+                  [
+                    ["poreziKojiSePlacaju", "Porezi"],
+                    ["osnovica", "Osnovica"],
+                    ["stopa", "Stopa"],
+                    ["rok", "Rok"],
+                    ["prijava", "Prijava"],
+                    ["knjizenje", "Knjiženje"],
+                  ] as const
+                ).map(([kljuc, naziv]) =>
+                  o.poreskiTretman?.[kljuc] ? (
+                    <tr key={kljuc}>
+                      <td
+                        style={{
+                          width: 130,
+                          fontWeight: 600,
+                          color: "var(--tekst-prigusen)",
+                        }}
+                      >
+                        {naziv}
+                      </td>
+                      <td>{o.poreskiTretman[kljuc]}</td>
+                    </tr>
+                  ) : null,
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Odeljak>
+      )}
 
       {poruka.citati && poruka.citati.length > 0 && (
         <Odeljak naslov="Pravni osnov">
