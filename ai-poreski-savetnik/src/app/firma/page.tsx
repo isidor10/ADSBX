@@ -503,6 +503,7 @@ function Prijava({ naUspeh }: { naUspeh: () => void }) {
             cursor: "pointer",
             color: "var(--akcenat)",
             width: "100%",
+            minHeight: 44,
           }}
         >
           {akcija === "prijava"

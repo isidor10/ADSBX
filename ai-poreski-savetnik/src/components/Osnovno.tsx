@@ -3,6 +3,24 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  IkonaAdmin,
+  IkonaDokument,
+  IkonaFirma,
+  IkonaIstorija,
+  IkonaIzmene,
+  IkonaKalkulator,
+  IkonaMesec,
+  IkonaOko,
+  IkonaPropisi,
+  IkonaRazgovor,
+  IkonaRokovi,
+  IkonaSunce,
+  IkonaUpozorenje,
+  IkonaVeza,
+  IkonaVise,
+  IkonaZatvori,
+} from "./Ikone";
 
 export const DISCLAIMER =
   "Informacije koje pruža AI predstavljaju informativnu i stručnu podršku i ne predstavljaju zamenu za individualni savet ovlašćenog poreskog savetnika, računovođe, advokata ili nadležnog državnog organa.";
@@ -27,28 +45,44 @@ export function jeVisokorizicno(tekst: string): boolean {
 }
 
 const STRANE = [
-  { put: "/", naziv: "Razgovor", ikona: "💬", mobilni: "Chat" },
-  { put: "/firma", naziv: "Moja firma", ikona: "🏢", mobilni: "Firma" },
+  { put: "/", naziv: "Razgovor", Ikona: IkonaRazgovor, mobilni: "Chat" },
+  { put: "/firma", naziv: "Moja firma", Ikona: IkonaFirma, mobilni: "Firma" },
   {
     put: "/kalkulator",
     naziv: "Kalkulatori",
-    ikona: "📊",
+    Ikona: IkonaKalkulator,
     mobilni: "Kalkulator",
   },
-  { put: "/propisi", naziv: "Propisi", ikona: "📚", mobilni: "Propisi" },
-  { put: "/rokovi", naziv: "Rokovi", ikona: "📅", mobilni: "Rokovi" },
+  { put: "/propisi", naziv: "Propisi", Ikona: IkonaPropisi, mobilni: "Propisi" },
+  { put: "/rokovi", naziv: "Rokovi", Ikona: IkonaRokovi, mobilni: "Rokovi" },
 ];
 
 const DODATNE = [
-  { put: "/istorija", naziv: "Istorija", ikona: "🕘" },
-  { put: "/dokument", naziv: "Analiziraj dokument", ikona: "📄" },
-  { put: "/izmene", naziv: "Izmene propisa", ikona: "🔔" },
-  { put: "/admin", naziv: "Administracija", ikona: "⚙️" },
+  { put: "/istorija", naziv: "Istorija", Ikona: IkonaIstorija },
+  { put: "/dokument", naziv: "Analiziraj dokument", Ikona: IkonaDokument },
+  { put: "/izmene", naziv: "Izmene propisa", Ikona: IkonaIzmene },
+  { put: "/admin", naziv: "Administracija", Ikona: IkonaAdmin },
 ];
+
+/*
+ * Donja navigacija nosi četiri stavke i „Više".
+ *
+ * Pet ikonica u redu na iPhone SE daje po ~64px svaka — dovoljno za prst, ali
+ * tek. Zato ovde stoje samo one koje se koriste svakodnevno, a ostalo ide u
+ * fioku: bolje jedan dodatni dodir do „Rokova" nego četiri stešnjene mete.
+ * Razgovor je prvi jer je centar aplikacije.
+ */
+const DONJE = STRANE.slice(0, 4);
+const U_FIOCI = [STRANE[4], ...DODATNE];
 
 export function Navigacija() {
   const putanja = usePathname();
   const [tema, postaviTemu] = useState<string | null>(null);
+  const [fiokaOtvorena, postaviFioku] = useState(false);
+
+  // Fioka se zatvara pri promeni strane — inače ostane otvorena preko sadržaja
+  // na koji je korisnik upravo otišao.
+  useEffect(() => postaviFioku(false), [putanja]);
 
   useEffect(() => {
     const sacuvana = localStorage.getItem("tema");
@@ -79,7 +113,7 @@ export function Navigacija() {
             }}
           >
             Miranda{" "}
-            <span role="img" aria-label="štikla" style={{ fontSize: 18 }}>
+            <span role="img" aria-label="štikla" className="stikla">
               👠
             </span>
           </div>
@@ -95,7 +129,7 @@ export function Navigacija() {
               href={s.put}
               className={`nav-stavka ${putanja === s.put ? "nav-stavka-aktivna" : ""}`}
             >
-              <span aria-hidden>{s.ikona}</span>
+              <s.Ikona velicina={18} />
               {s.naziv}
             </Link>
           ))}
@@ -115,7 +149,7 @@ export function Navigacija() {
               href={s.put}
               className={`nav-stavka ${putanja === s.put ? "nav-stavka-aktivna" : ""}`}
             >
-              <span aria-hidden>{s.ikona}</span>
+              <s.Ikona velicina={18} />
               {s.naziv}
             </Link>
           ))}
@@ -130,7 +164,11 @@ export function Navigacija() {
               textAlign: "left",
             }}
           >
-            <span aria-hidden>{tema === "tamna" ? "☀️" : "🌙"}</span>
+            {tema === "tamna" ? (
+              <IkonaSunce velicina={18} />
+            ) : (
+              <IkonaMesec velicina={18} />
+            )}
             {tema === "tamna" ? "Svetla tema" : "Tamna tema"}
           </button>
         </div>
@@ -140,19 +178,75 @@ export function Navigacija() {
         </p>
       </nav>
 
+      {fiokaOtvorena && (
+        <div
+          className="fioka-zastor"
+          onClick={() => postaviFioku(false)}
+          aria-hidden
+        />
+      )}
+
+      <div
+        className={`fioka ${fiokaOtvorena ? "fioka-otvorena" : ""}`}
+        role="dialog"
+        aria-label="Više"
+        aria-hidden={!fiokaOtvorena}
+      >
+        <div className="fioka-rucka" aria-hidden />
+        {U_FIOCI.map((s) => (
+          <Link
+            key={s.put}
+            href={s.put}
+            className={`fioka-stavka ${putanja === s.put ? "fioka-stavka-aktivna" : ""}`}
+            tabIndex={fiokaOtvorena ? 0 : -1}
+          >
+            <s.Ikona velicina={19} />
+            {s.naziv}
+          </Link>
+        ))}
+        <button
+          type="button"
+          className="fioka-stavka"
+          onClick={promeniTemu}
+          tabIndex={fiokaOtvorena ? 0 : -1}
+        >
+          {tema === "tamna" ? (
+            <IkonaSunce velicina={19} />
+          ) : (
+            <IkonaMesec velicina={19} />
+          )}
+          {tema === "tamna" ? "Svetla tema" : "Tamna tema"}
+        </button>
+      </div>
+
       <nav className="donja-nav">
-        {STRANE.map((s) => (
+        {DONJE.map((s) => (
           <Link
             key={s.put}
             href={s.put}
             className={putanja === s.put ? "aktivna" : ""}
           >
-            <span className="ikona" aria-hidden>
-              {s.ikona}
+            <span className="ikona">
+              <s.Ikona velicina={21} />
             </span>
             {s.mobilni}
           </Link>
         ))}
+        <button
+          type="button"
+          onClick={() => postaviFioku((v) => !v)}
+          className={fiokaOtvorena || U_FIOCI.some((s) => s.put === putanja) ? "aktivna" : ""}
+          aria-expanded={fiokaOtvorena}
+        >
+          <span className="ikona">
+            {fiokaOtvorena ? (
+              <IkonaZatvori velicina={21} />
+            ) : (
+              <IkonaVise velicina={21} />
+            )}
+          </span>
+          Više
+        </button>
       </nav>
     </>
   );
@@ -160,18 +254,25 @@ export function Navigacija() {
 
 export function Pouzdanost({ nivo }: { nivo: string }) {
   const mapa: Record<string, { tekst: string; klasa: string }> = {
-    VISOKA: { tekst: "🟢 Visoka pouzdanost", klasa: "znacka-zelena" },
+    VISOKA: { tekst: "Visoka pouzdanost", klasa: "znacka-zelena" },
     POTREBNA_PROVERA: {
-      tekst: "🟡 Potrebna dodatna provera",
+      tekst: "Potrebna dodatna provera",
       klasa: "znacka-zuta",
     },
     NEDOVOLJNO_PODATAKA: {
-      tekst: "🔴 Nedovoljno podataka",
+      tekst: "Nedovoljno podataka",
       klasa: "znacka-crvena",
     },
   };
   const p = mapa[nivo] ?? { tekst: nivo, klasa: "znacka-siva" };
-  return <span className={`znacka ${p.klasa}`}>{p.tekst}</span>;
+  // Tačka umesto semafora u emoji. Boju uzima od značke, pa nivo pouzdanosti i
+  // dalje ima svoju boju — samo prigušenu do nivoa ostatka interfejsa.
+  return (
+    <span className={`znacka ${p.klasa}`}>
+      <span className="tacka" aria-hidden />
+      {p.tekst}
+    </span>
+  );
 }
 
 export function StatusPropisa({ status }: { status: string }) {
@@ -248,7 +349,7 @@ export function KarticaPravnogOsnova({
           className="sitni"
           style={{ fontWeight: 700, letterSpacing: "0.04em" }}
         >
-          📚 PRAVNI OSNOV{redni !== undefined ? ` ${redni}` : ""}
+          PRAVNI OSNOV{redni !== undefined ? ` ${redni}` : ""}
         </span>
         {citat.tipTvrdnje && (
           <span className="znacka znacka-siva">
@@ -267,7 +368,16 @@ export function KarticaPravnogOsnova({
           fontSize: citat.potvrdjen ? 15 : 13.5,
         }}
       >
-        {citat.potvrdjen ? citat.oznaka : `⚠︎ ${citat.oznaka}`}
+        {citat.potvrdjen ? (
+          citat.oznaka
+        ) : (
+          <span
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+          >
+            <IkonaUpozorenje velicina={14} />
+            {citat.oznaka}
+          </span>
+        )}
       </div>
 
       {citat.relevantnost && (
@@ -294,36 +404,23 @@ export function KarticaPravnogOsnova({
         )}
       </div>
 
-      <div
-        style={{
-          marginTop: 10,
-          display: "flex",
-          gap: 14,
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="osnov-radnje">
         <a
           href={citat.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mali"
-          style={{ fontWeight: 600 }}
+          className="osnov-radnja"
         >
-          🔗 Otvori propis
+          <IkonaVeza velicina={15} />
+          Otvori propis
         </a>
         <button
+          type="button"
           onClick={() => postaviOtvoren(!otvoren)}
-          className="mali"
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: "var(--tekst-prigusen)",
-            textDecoration: "underline",
-          }}
+          className="osnov-radnja osnov-radnja-tiha"
+          aria-expanded={otvoren}
         >
+          <IkonaOko velicina={15} />
           {otvoren ? "Sakrij tekst odredbe" : "Prikaži tekst odredbe"}
         </button>
         <span className="sitni slab">{citat.institucija}</span>
@@ -352,8 +449,13 @@ export function Upozorenja({ poruke }: { poruke: string[] }) {
   return (
     <div className="razmak-y-s">
       {poruke.map((p, i) => (
-        <div key={i} className="upozorenje">
-          ⚠︎ {p}
+        <div
+          key={i}
+          className="upozorenje"
+          style={{ display: "flex", gap: 10, alignItems: "flex-start" }}
+        >
+          <IkonaUpozorenje velicina={16} className="ikona-nesabijena" />
+          <span>{p}</span>
         </div>
       ))}
     </div>

@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IkonaMikrofon, IkonaStop } from "./Ikone";
 import {
   izgovori,
   naGlasoveSpremne,
@@ -33,6 +34,9 @@ export interface UpravljanjeGlasom {
   prekini: () => void;
   izgovoriOdgovor: (tekst: string) => void;
   dostupno: boolean;
+  /** Objašnjenje zašto glas ne radi — prikazuje se tek kad se zatraži. */
+  objasnjenjeVidljivo: boolean;
+  objasniNedostupnost: () => void;
 }
 
 export function useGlas(
@@ -44,6 +48,7 @@ export function useGlas(
   const [cujem, postaviCujem] = useState("");
   const [greska, postaviGresku] = useState<string | null>(null);
   const [neprekidno, postaviNeprekidno] = useState(false);
+  const [objasnjenjeVidljivo, postaviObjasnjenje] = useState(false);
 
   const zaustaviSlusanje = useRef<(() => void) | null>(null);
   const zaustaviGovor = useRef<(() => void) | null>(null);
@@ -141,6 +146,8 @@ export function useGlas(
     prekini,
     izgovoriOdgovor,
     dostupno: Boolean(podrska?.prepoznavanje),
+    objasnjenjeVidljivo,
+    objasniNedostupnost: () => postaviObjasnjenje((v) => !v),
   };
 }
 
@@ -153,19 +160,27 @@ const NATPIS: Record<StanjeGlasa, string> = {
 };
 
 export function DugmeGlasa({ glas }: { glas: UpravljanjeGlasom }) {
-  // Kada pregledač ne podržava govor, dugme se ranije potpuno sklanjalo. To
-  // znači da korisnik ne vidi ni opciju ni razlog — pita se zašto je nema, a
-  // odgovora nigde. Bolje je ostaviti ga isključeno i reći šta nedostaje.
+  /*
+   * Kada pregledač ne podržava govor, dugme ostaje na svom mestu — ali nije
+   * `disabled`.
+   *
+   * Isključeno dugme na telefonu ne prima ni dodir ni hover, pa objašnjenje u
+   * `title` nikada niko ne pročita. Zbog toga je razlog ranije stajao ispisan
+   * ispod polja, stalno, i na iPhone SE trošio tri reda za rečenicu koja se
+   * pročita jednom u životu. Sada dugme prima dodir i tek tada kaže zašto ne
+   * radi: objašnjenje postoji, ali ne zauzima ekran dok se ne zatraži.
+   */
   if (!glas.dostupno) {
     return (
       <button
         type="button"
-        disabled
+        aria-disabled
+        onClick={glas.objasniNedostupnost}
         title="Prepoznavanje govora radi u Chrome-u i Edge-u. Otvorite aplikaciju tamo."
-        aria-label="Glas nije dostupan u ovom pregledaču"
-        className="dugme-glas"
+        aria-label="Zašto glas nije dostupan"
+        className="dugme-glas dugme-glas-neaktivno"
       >
-        🎙️
+        <IkonaMikrofon velicina={20} />
       </button>
     );
   }
@@ -181,43 +196,84 @@ export function DugmeGlasa({ glas }: { glas: UpravljanjeGlasom }) {
       aria-label={NATPIS[glas.stanje]}
       className={`dugme-glas ${aktivno ? "dugme-glas-aktivno" : ""}`}
     >
-      {glas.stanje === "govorim" ? "⏹" : "🎙️"}
+      {glas.stanje === "govorim" ? (
+        <IkonaStop velicina={20} />
+      ) : (
+        <IkonaMikrofon velicina={20} />
+      )}
     </button>
   );
 }
 
 export function TrakaGlasa({ glas }: { glas: UpravljanjeGlasom }) {
+  /*
+   * Ova traka se pojavljuje samo kada ima šta da kaže.
+   *
+   * Ranije su napomena o glasu i prekidač za neprekidan razgovor stajali ispod
+   * polja stalno — tri reda teksta koja na iPhone SE pojedu petinu ekrana, a
+   * čitaju se jednom u životu. Sada se prikazuje stanje dok razgovor traje,
+   * greška kad je ima, i napomena samo dok korisnik nije počeo.
+   */
+  // Bez podrške nema šta da se prikaže dok korisnik sam ne pita — a pita tako
+  // što dodirne mikrofon.
   if (!glas.dostupno) {
+    if (!glas.objasnjenjeVidljivo) return null;
     return (
-      <div className="sitni slab" style={{ marginTop: 8 }}>
-        ⚠︎ Ovaj pregledač ne podržava prepoznavanje govora, pa je mikrofon
-        isključen. Radi u Chrome-u i Edge-u; u Safariju i Firefox-u ne.
-      </div>
+      <p className="glas-napomena" role="status">
+        Prepoznavanje govora radi u Chrome-u i Edge-u. U Safariju i Firefox-u ga
+        nema, pa pitanje ovde treba otkucati.
+      </p>
     );
   }
 
+  const uToku =
+    glas.stanje === "slusam" ||
+    glas.stanje === "obradjujem" ||
+    glas.stanje === "govorim";
+
+  if (!uToku && !glas.greska) return null;
+
   return (
     <div className="razmak-y-s" style={{ marginTop: 8 }}>
-      {glas.stanje === "slusam" && (
+      {(glas.stanje === "slusam" ||
+        glas.stanje === "obradjujem" ||
+        glas.stanje === "govorim") && (
         <div className="traka-glasa">
-          <span className="ucitavanje">● </span>
-          {glas.cujem || "Slušam…"}
+          <span className="glas-stanje">
+            <span className="glas-tacka" aria-hidden />
+            {glas.stanje === "slusam"
+              ? "Slušam"
+              : glas.stanje === "obradjujem"
+                ? "Razmišljam"
+                : "Odgovaram"}
+          </span>
+          {glas.stanje === "slusam" && glas.cujem && (
+            <span className="glas-prepis">{glas.cujem}</span>
+          )}
         </div>
       )}
 
-      <label
-        className="sitni slab"
-        style={{ display: "flex", alignItems: "center", gap: 6 }}
-      >
-        <input
-          type="checkbox"
-          checked={glas.neprekidno}
-          onChange={(e) => glas.postaviNeprekidno(e.target.checked)}
-        />
-        Neprekidan razgovor — mikrofon se sam otvara posle odgovora
-      </label>
+      {uToku && (
+        <label className="glas-neprekidno">
+          <input
+            type="checkbox"
+            checked={glas.neprekidno}
+            onChange={(e) => glas.postaviNeprekidno(e.target.checked)}
+          />
+          Nastavi razgovor bez klika
+        </label>
+      )}
 
-      {glas.napomena && <div className="sitni slab">⚠︎ {glas.napomena}</div>}
+      {/*
+        Napomena o glasu stoji uz razgovor koji je u toku, ne pre njega.
+        Ranije je bilo obrnuto — tri reda o tome da na uređaju nema srpskog
+        glasa dočekivala su svakoga ko otvori aplikaciju, uključujući sve one
+        koji glas nikada neće ni dodirnuti. Sada se pojavi kada je važna: u
+        trenutku kada je čovek pritisnuo mikrofon i čeka da čuje odgovor.
+      */}
+      {glas.napomena && uToku && (
+        <p className="glas-napomena">{glas.napomena}</p>
+      )}
       {glas.greska && <div className="upozorenje mali">{glas.greska}</div>}
     </div>
   );

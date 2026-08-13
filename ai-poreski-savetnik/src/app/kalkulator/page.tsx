@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Podnozje, Zaglavlje } from "@/components/Osnovno";
+import { IkonaVeza } from "@/components/Ikone";
 
 interface Polje {
   kljuc: string;
@@ -307,10 +308,11 @@ export default function StranaKalkulatora() {
             <button
               key={k.kljuc}
               onClick={() => izaberi(k)}
-              className={`znacka ${
+              aria-pressed={izabran.kljuc === k.kljuc}
+              className={`znacka znacka-dugme ${
                 izabran.kljuc === k.kljuc ? "znacka-zelena" : "znacka-siva"
               }`}
-              style={{ border: "none", cursor: "pointer", minHeight: 34, fontSize: 12.5 }}
+              style={{ fontSize: 12.5 }}
             >
               {k.naziv}
             </button>
@@ -545,10 +547,10 @@ function PrikazRezultata({ rezultat }: { rezultat: Rezultat }) {
                   href={p.izvorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="sitni"
-                  style={{ fontWeight: 600 }}
+                  className="osnov-radnja"
                 >
-                  🔗 Otvori izvor
+                  <IkonaVeza velicina={14} />
+                  Otvori izvor
                 </a>
                 {p.verifikacija !== "POTVRDJENO" && (
                   <span className="znacka znacka-zuta">Nije potvrđeno</span>

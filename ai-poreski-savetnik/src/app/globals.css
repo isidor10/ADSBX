@@ -6,83 +6,137 @@
   računovođa drži otvoren ceo dan.
 */
 
+/*
+  Paleta: tiha raskoš. Topli neutrali — ivory, krem, taupe, diskretna braon —
+  i vrlo tamna topla siva za tekst. Nijedna boja ne viče; hijerarhiju nose
+  razmak, tipografija i tanka linija, ne kontrast i ne zasićenost.
+
+  Sve boje stoje ovde kao tokeni. To je namerno: tema se menja na jednom mestu,
+  a nijedna komponenta ne zna koja je boja „prava" — zna samo koju ulogu traži.
+*/
+
 :root {
-  --pozadina: #fbfaf8;
-  --povrsina: #ffffff;
-  --povrsina-2: #f4f2ee;
-  --ivica: #e3ded6;
-  --ivica-jaka: #cec7bb;
-  --tekst: #1c1a17;
-  --tekst-prigusen: #6b6459;
-  --tekst-slab: #938b7e;
+  /* Podloge — od najsvetlije ka radnoj površini. */
+  --pozadina: #f6f3ee;
+  --povrsina: #fffefc;
+  --povrsina-2: #efeae1;
+  --povrsina-3: #e7e1d6;
 
-  --akcenat: #1f4d3f;
-  --akcenat-svetli: #2e6b58;
-  --akcenat-pozadina: #e8f0ec;
+  /* Linije. Tanke i tihe; one nose podelu umesto senki. */
+  --ivica: #e2dcd1;
+  --ivica-jaka: #cdc5b6;
 
-  --zelena: #1f6f43;
-  --zelena-pozadina: #e6f2ea;
-  --zuta: #8a5a00;
-  --zuta-pozadina: #fdf2dc;
-  --crvena: #9c2c1f;
-  --crvena-pozadina: #fbe9e6;
+  /* Tekst — topla crna, ne čista. Čista crna na krem podlozi izgleda tvrdo. */
+  --tekst: #1a1714;
+  --tekst-prigusen: #6b6255;
+  --tekst-slab: #98907f;
 
-  --senka: 0 1px 2px rgba(28, 26, 23, 0.04), 0 4px 12px rgba(28, 26, 23, 0.04);
-  --senka-jaka: 0 2px 4px rgba(28, 26, 23, 0.06), 0 12px 28px rgba(28, 26, 23, 0.08);
+  /* Akcenat: diskretna braon. Koristi se retko i namerno. */
+  --akcenat: #6d5f4b;
+  --akcenat-svetli: #877860;
+  --akcenat-pozadina: #ece6db;
 
-  --radijus: 10px;
-  --serif: ui-serif, "Iowan Old Style", "Source Serif 4", Georgia, serif;
-  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  /* Stanja — prigušena, ne semaforska. */
+  --zelena: #4c6650;
+  --zelena-pozadina: #e6ebe3;
+  --zuta: #8a6a37;
+  --zuta-pozadina: #f3ebdc;
+  --crvena: #8c4a3b;
+  --crvena-pozadina: #f2e4df;
+
+  /* Senke jedva postoje. Dubinu daje linija, ne oblak ispod kartice. */
+  --senka: 0 1px 1px rgba(26, 23, 20, 0.03);
+  --senka-jaka: 0 1px 2px rgba(26, 23, 20, 0.05), 0 8px 24px rgba(26, 23, 20, 0.06);
+
+  /* Manje zaobljenja nego ranije — oštrija ivica deluje skuplje. */
+  --radijus: 6px;
+  --radijus-s: 4px;
+
+  /* Ritam razmaka. Sve u interfejsu koristi ove korake, ništa „između". */
+  --r1: 4px;
+  --r2: 8px;
+  --r3: 12px;
+  --r4: 16px;
+  --r5: 24px;
+  --r6: 32px;
+  --r7: 48px;
+  --r8: 64px;
+
+  /* Tipografija: jedan sans za sve, jedan serif samo za naslove. */
+  --sans: var(--font-sans), ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --serif: var(--font-serif), ui-serif, "Iowan Old Style", Georgia, serif;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+
+  /* Sigurne zone — iPhone Dynamic Island, donja crta, zaobljeni uglovi. */
+  --sigurno-gore: env(safe-area-inset-top, 0px);
+  --sigurno-dole: env(safe-area-inset-bottom, 0px);
+  --sigurno-levo: env(safe-area-inset-left, 0px);
+  --sigurno-desno: env(safe-area-inset-right, 0px);
+
+  --visina-donje-nav: 60px;
 }
 
+/*
+  Tamna tema: charcoal i topla siva, ivory tekst. Nije crna sa neonom —
+  ista tiha raskoš, samo noću. Podloge ostaju blago tople da ivory tekst
+  na njima ne deluje plavo.
+*/
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="svetla"]) {
-    --pozadina: #14161a;
-    --povrsina: #1a1d22;
-    --povrsina-2: #21252b;
-    --ivica: #2c313a;
-    --ivica-jaka: #3d444f;
-    --tekst: #e8e6e1;
-    --tekst-prigusen: #a3a49f;
-    --tekst-slab: #7b7d79;
+    --pozadina: #161512;
+    --povrsina: #1c1a17;
+    --povrsina-2: #23211d;
+    --povrsina-3: #2b2823;
 
-    --akcenat: #5fb99a;
-    --akcenat-svetli: #7fcfb2;
-    --akcenat-pozadina: #17302a;
+    --ivica: #302c26;
+    --ivica-jaka: #453f36;
 
-    --zelena: #5fb98a;
-    --zelena-pozadina: #16301f;
-    --zuta: #d9a33c;
-    --zuta-pozadina: #33280f;
-    --crvena: #e08072;
-    --crvena-pozadina: #331a16;
+    --tekst: #ece6dc;
+    --tekst-prigusen: #a39a8b;
+    --tekst-slab: #7a7264;
 
-    --senka: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
-    --senka-jaka: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.3);
+    --akcenat: #c3b39a;
+    --akcenat-svetli: #d6c8b2;
+    --akcenat-pozadina: #292520;
+
+    --zelena: #8fae91;
+    --zelena-pozadina: #1e241e;
+    --zuta: #c9a469;
+    --zuta-pozadina: #2a2318;
+    --crvena: #c98878;
+    --crvena-pozadina: #2b1e1a;
+
+    --senka: 0 1px 1px rgba(0, 0, 0, 0.3);
+    --senka-jaka: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
 
 :root[data-tema="tamna"] {
-  --pozadina: #14161a;
-  --povrsina: #1a1d22;
-  --povrsina-2: #21252b;
-  --ivica: #2c313a;
-  --ivica-jaka: #3d444f;
-  --tekst: #e8e6e1;
-  --tekst-prigusen: #a3a49f;
-  --tekst-slab: #7b7d79;
-  --akcenat: #5fb99a;
-  --akcenat-svetli: #7fcfb2;
-  --akcenat-pozadina: #17302a;
-  --zelena: #5fb98a;
-  --zelena-pozadina: #16301f;
-  --zuta: #d9a33c;
-  --zuta-pozadina: #33280f;
-  --crvena: #e08072;
-  --crvena-pozadina: #331a16;
-  --senka: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
-  --senka-jaka: 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 28px rgba(0, 0, 0, 0.3);
+  --pozadina: #161512;
+  --povrsina: #1c1a17;
+  --povrsina-2: #23211d;
+  --povrsina-3: #2b2823;
+
+  --ivica: #302c26;
+  --ivica-jaka: #453f36;
+
+  --tekst: #ece6dc;
+  --tekst-prigusen: #a39a8b;
+  --tekst-slab: #7a7264;
+
+  --akcenat: #c3b39a;
+  --akcenat-svetli: #d6c8b2;
+  --akcenat-pozadina: #292520;
+
+  --zelena: #8fae91;
+  --zelena-pozadina: #1e241e;
+  --zuta: #c9a469;
+  --zuta-pozadina: #2a2318;
+  --crvena: #c98878;
+  --crvena-pozadina: #2b1e1a;
+
+  --senka: 0 1px 1px rgba(0, 0, 0, 0.3);
+  --senka-jaka: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -203,6 +257,48 @@ button, input, select, textarea {
 .znacka-crvena { background: var(--crvena-pozadina); color: var(--crvena); }
 .znacka-siva { background: var(--povrsina-2); color: var(--tekst-prigusen); }
 
+/* Značka koja se klika nije ista stvar kao značka koja se čita: ista je po
+   izgledu, ali mora da bude meta za prst. Otud posebna klasa — da se visina od
+   44px ne nalepi i na desetak oznaka koje niko ne dodiruje. */
+.znacka-dugme {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--ivica);
+  cursor: pointer;
+}
+.znacka-dugme:hover { border-color: var(--ivica-jaka); }
+
+/* Tačka umesto emoji semafora. Boju nosi `currentColor` značke u kojoj stoji,
+   pa se u tamnoj temi menja sama i nikada ne izađe iz palete. */
+.tacka {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+/* Ikona u flex redu se inače skuplja kada tekst pored nje prelama u više
+   redova — pa umesto trougla upozorenja ostane crtica. */
+.ikona-nesabijena { flex: none; margin-top: 1px; }
+
+/* Ikonica i tekst u istom redu — poravnati po sredini, osim kad tekst ima više
+   redova, pa ikona ide uz prvi (`-vrh`). */
+.red-ikone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.red-ikone-vrh { display: flex; align-items: flex-start; gap: 10px; }
+
+/* Štikla je jedini emoji koji je ostao, i to namerno — ona je znak, ne ukras.
+   Sitna je i blago podignuta da stoji uz ime, a ne da ga nadglasa. */
+.stikla {
+  font-size: 0.68em;
+  vertical-align: 0.28em;
+  margin-left: -0.08em;
+}
+
 /* ── Pravni osnov ─────────────────────────────────────────────────────────── */
 
 .pravni-osnov {
@@ -216,6 +312,47 @@ button, input, select, textarea {
   border-left-color: var(--zuta);
   background: var(--zuta-pozadina);
 }
+
+/* Red radnji ispod citata: „otvori propis" i „prikaži tekst odredbe". Oba su
+   tekst, ne dugmad — ali se dodiruju, pa im visina mora biti puna meta. */
+.osnov-radnje {
+  display: flex;
+  align-items: center;
+  gap: var(--r4);
+  flex-wrap: wrap;
+  margin-top: var(--r1);
+}
+.osnov-radnja {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--akcenat);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.osnov-radnja-tiha { color: var(--tekst-prigusen); }
+
+.dugme-zatvori {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -10px 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--tekst-prigusen);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dugme-zatvori:hover { background: var(--povrsina-2); color: var(--tekst); }
 
 .upozorenje {
   border: 1px solid var(--zuta);
@@ -294,7 +431,7 @@ button, input, select, textarea {
   color: var(--tekst-prigusen);
   font-size: 14px;
   font-weight: 500;
-  min-height: 42px;
+  min-height: 44px;
 }
 .nav-stavka:hover { background: var(--povrsina-2); text-decoration: none; }
 .nav-stavka-aktivna {
@@ -341,21 +478,34 @@ button, input, select, textarea {
     grid-template-columns: repeat(5, 1fr);
     position: fixed;
     inset: auto 0 0 0;
-    background: var(--povrsina);
+    background: color-mix(in srgb, var(--povrsina) 88%, transparent);
+    /* Zamućenje ispod trake: sadržaj koji prolazi ne udara direktno u ikonice,
+       a traka ne mora da bude neprozirna da bi bila čitljiva. */
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
     border-top: 1px solid var(--ivica);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--sigurno-dole);
+    padding-left: var(--sigurno-levo);
+    padding-right: var(--sigurno-desno);
     z-index: 50;
   }
-  .donja-nav a {
+  .donja-nav a,
+  .donja-nav button {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    min-height: 60px;
-    font-size: 11px;
+    min-height: var(--visina-donje-nav);
+    font-size: 10.5px;
     font-weight: 550;
+    letter-spacing: 0.01em;
     color: var(--tekst-prigusen);
+    background: none;
+    border: none;
+    cursor: pointer;
+    /* Bez ovoga iOS pravi sivi bljesak preko cele mete na dodir. */
+    -webkit-tap-highlight-color: transparent;
   }
   .donja-nav a:hover { text-decoration: none; }
   .donja-nav .aktivna { color: var(--akcenat); }
@@ -559,39 +709,381 @@ button, input, select, textarea {
   .istorija-raspored { grid-template-columns: minmax(0, 1fr); }
 }
 
+/* ── Fioka „Više" ─────────────────────────────────────────────────────────────
+   Ostatak navigacije, na dohvat palca. Otvara se odozdo jer je tamo ruka —
+   meni na vrhu ekrana na telefonu od 6.7" traži premeštanje hvata. */
+
+.fioka-zastor {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 23, 20, 0.28);
+  backdrop-filter: blur(2px);
+  z-index: 55;
+  animation: pojavi 160ms ease;
+}
+
+.fioka {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 56;
+  background: var(--povrsina);
+  border-top: 1px solid var(--ivica);
+  border-radius: 14px 14px 0 0;
+  box-shadow: var(--senka-jaka);
+  padding: var(--r2) var(--r3)
+    calc(var(--visina-donje-nav) + var(--sigurno-dole) + var(--r2));
+  transform: translateY(100%);
+  transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  visibility: hidden;
+}
+.fioka-otvorena {
+  transform: translateY(0);
+  visibility: visible;
+}
+
+/* Sitna crta na vrhu — bez nje se ne vidi da se list može povući nadole. */
+.fioka-rucka {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ivica-jaka);
+  margin: var(--r1) auto var(--r3);
+}
+
+.fioka-stavka {
+  display: flex;
+  align-items: center;
+  gap: var(--r3);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--r2);
+  border: none;
+  border-radius: var(--radijus);
+  background: none;
+  color: var(--tekst);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.fioka-stavka:hover { background: var(--povrsina-2); text-decoration: none; }
+.fioka-stavka-aktivna { color: var(--akcenat); font-weight: 550; }
+
+@keyframes pojavi {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Fioka postoji samo tamo gde postoji i donja navigacija. */
+@media (min-width: 781px) {
+  .fioka,
+  .fioka-zastor { display: none; }
+}
+
+/* ── Početni ekran ────────────────────────────────────────────────────────────
+   Prvo što se vidi. Nosi ga prazan prostor i tipografija, ne kartice. */
+
+.pocetni {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: var(--r7) var(--r5) var(--r5);
+}
+
+.pocetni-zaglavlje { margin-bottom: var(--r6); }
+
+.pocetni-naslov {
+  font-family: var(--serif);
+  font-size: clamp(34px, 9vw, 46px);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.1;
+}
+
+.pocetni-podnaslov {
+  margin: var(--r2) 0 0;
+  font-size: 17px;
+  color: var(--tekst-prigusen);
+  letter-spacing: -0.005em;
+}
+
+/* Predlozi: redovi razdvojeni linijom, bez okvira. Kartica oko svakog pitanja
+   bila bi pet kutija jedna ispod druge — linija radi isti posao tiše. */
+.predlozi {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--ivica);
+}
+.predlozi li { border-bottom: 1px solid var(--ivica); }
+.predlozi button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--r4);
+  width: 100%;
+  min-height: 60px;
+  padding: var(--r3) 0;
+  background: none;
+  border: none;
+  color: var(--tekst);
+  font-size: 15.5px;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 140ms ease;
+}
+.predlozi button:hover { color: var(--akcenat); }
+.predlog-strelica {
+  flex: none;
+  color: var(--tekst-slab);
+  transition: transform 160ms ease, color 140ms ease;
+}
+.predlozi button:hover .predlog-strelica {
+  color: var(--akcenat);
+  transform: translateX(3px);
+}
+
+/* Brze akcije: jedan red sitnih, tihih prečica. Namerno ne izgledaju kao
+   glavni poziv na akciju — glavni poziv je pitanje. */
+.brze-akcije {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--r2);
+  margin-top: var(--r5);
+}
+.brze-akcije a,
+.brze-akcije button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--r2);
+  min-height: 40px;
+  padding: 0 var(--r3);
+  border: 1px solid var(--ivica);
+  border-radius: 999px;
+  background: none;
+  color: var(--tekst-prigusen);
+  font-size: 13.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 140ms ease, color 140ms ease;
+}
+.brze-akcije a:hover,
+.brze-akcije button:hover {
+  border-color: var(--ivica-jaka);
+  color: var(--tekst);
+  text-decoration: none;
+}
+
+.pocetni-disklejmer {
+  margin-top: var(--r7);
+  padding-top: var(--r4);
+  border-top: 1px solid var(--ivica);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--tekst-slab);
+}
+
+@media (max-width: 780px) {
+  .pocetni { padding: var(--r6) var(--r4) var(--r4); }
+}
+
+/* ── Traka za unos ────────────────────────────────────────────────────────────
+   Najvažniji red u aplikaciji. Polje, mikrofon, pošalji — i ništa više u istoj
+   liniji. Sve ostalo ide iznad, tiho. */
+
+.sr-samo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.unos-red {
+  display: flex;
+  gap: var(--r2);
+  align-items: flex-end;
+}
+
+.unos-polje {
+  flex: 1;
+  min-height: 52px;
+  max-height: 40dvh;
+  resize: none;
+  border-radius: 26px;
+  padding: 15px var(--r4);
+  /* 16px je granica ispod koje iOS Safari sam zumira stranu na fokus polja.
+     Zum se posle ne vraća i ceo raspored ostane pomeren — zato nikada manje. */
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.dugme-posalji {
+  flex: none;
+  width: 52px;
+  min-height: 52px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.izbor-stila-omot {
+  display: inline-flex;
+  align-items: center;
+}
 .izbor-stila {
   font: inherit;
-  color: var(--tekst);
-  background: var(--povrsina-2);
+  font-size: 12.5px;
+  color: var(--tekst-prigusen);
+  background: none;
   border: 1px solid var(--ivica);
-  border-radius: 8px;
-  padding: 4px 8px;
-  min-height: 30px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  min-height: 34px;
   cursor: pointer;
 }
 
-/* ── Glas ─────────────────────────────────────────────────────────────────── */
-
+/* Mikrofon: krug iste veličine kao „pošalji", odmah pored njega. Na telefonu
+   je to donji desni ugao — mesto do kojeg palac stiže bez premeštanja hvata. */
 .dugme-glas {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
   min-height: 52px;
-  min-width: 52px;
-  font-size: 20px;
-  line-height: 1;
-  border: 1px solid var(--ivica);
-  border-radius: 12px;
-  background: var(--povrsina-2);
+  padding: 0;
+  border: 1px solid var(--ivica-jaka);
+  border-radius: 50%;
+  background: var(--povrsina);
+  color: var(--tekst-prigusen);
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
 }
-.dugme-glas:disabled { opacity: 0.5; cursor: default; }
+.dugme-glas:hover:not(:disabled) {
+  border-color: var(--akcenat);
+  color: var(--akcenat);
+}
+.dugme-glas:disabled { opacity: 0.45; cursor: default; }
+/* Nedostupan mikrofon: prigušen, ali i dalje meta za prst — dodir na njega je
+   jedini način da se sazna zašto ne radi. */
+.dugme-glas-neaktivno {
+  opacity: 0.45;
+  cursor: help;
+}
 .dugme-glas-aktivno {
   border-color: var(--akcenat);
   background: var(--akcenat-pozadina);
+  color: var(--akcenat);
+}
+
+/* Puls dok sluša — jedan krug koji se širi, bez talasa i bez šarenila. */
+.dugme-glas-aktivno::after {
+  content: "";
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--akcenat);
+  animation: puls-glasa 1.8s ease-out infinite;
+  pointer-events: none;
+}
+.dugme-glas { position: relative; }
+
+@keyframes puls-glasa {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dugme-glas-aktivno::after { animation: none; }
 }
 
 .traka-glasa {
-  padding: 8px 12px;
-  border: 1px solid var(--akcenat);
-  border-radius: 10px;
-  background: var(--akcenat-pozadina);
+  padding: var(--r2) var(--r3);
+  border: 1px solid var(--ivica);
+  border-radius: var(--radijus);
+  background: var(--povrsina-2);
   font-size: 14px;
+  color: var(--tekst);
+}
+
+.glas-stanje {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--r2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--akcenat);
+}
+.glas-tacka {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--akcenat);
+  animation: pulsiranje 1.4s ease-in-out infinite;
+}
+.glas-prepis {
+  display: block;
+  margin-top: var(--r1);
+  color: var(--tekst);
+}
+
+.glas-napomena {
+  margin: var(--r2) 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--tekst-slab);
+}
+.glas-neprekidno {
+  display: flex;
+  align-items: center;
+  gap: var(--r2);
+  min-height: 44px;
+  font-size: 13px;
+  color: var(--tekst-prigusen);
+  cursor: pointer;
+}
+.glas-neprekidno input { width: 18px; height: 18px; }
+
+/* Sve mete za prst na najmanje 44px — Apple-ov minimum, ne preporuka. */
+.brze-akcije a,
+.brze-akcije button,
+.izbor-stila { min-height: 44px; }
+.izbor-stila { padding: 0 var(--r3); }
+
+/* Zaglavlje razgovora na telefonu: ime i čemu služi, pa razgovor. */
+.zaglavlje-razgovora { display: none; }
+
+@media (max-width: 780px) {
+  .zaglavlje-razgovora {
+    display: block;
+    padding: calc(var(--sigurno-gore) + var(--r3)) var(--r4) var(--r3);
+    border-bottom: 1px solid var(--ivica);
+    background: color-mix(in srgb, var(--pozadina) 90%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    text-align: center;
+  }
+  .zaglavlje-razgovora .ime {
+    font-family: var(--serif);
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+  }
+  .zaglavlje-razgovora .uloga {
+    margin-top: 2px;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--tekst-slab);
+  }
 }

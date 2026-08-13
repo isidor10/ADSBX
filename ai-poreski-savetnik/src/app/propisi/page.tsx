@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Podnozje, StatusPropisa, Zaglavlje } from "@/components/Osnovno";
+import { IkonaUpozorenje, IkonaVeza } from "@/components/Ikone";
 
 interface Rezultat {
   id: string;
@@ -108,8 +109,7 @@ export default function StranaPropisa() {
                 postaviUpit(p);
                 pretrazi(p);
               }}
-              className="znacka znacka-siva"
-              style={{ border: "none", cursor: "pointer", minHeight: 30 }}
+              className="znacka znacka-dugme znacka-siva"
             >
               {p}
             </button>
@@ -158,10 +158,10 @@ export default function StranaPropisa() {
                       href={p.izvorUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="sitni"
-                      style={{ fontWeight: 600 }}
+                      className="osnov-radnja"
                     >
-                      🔗 Izvor
+                      <IkonaVeza velicina={14} />
+                      Izvor
                     </a>
                     {p.verifikacija !== "POTVRDJENO" && (
                       <span className="znacka znacka-zuta">
@@ -205,7 +205,14 @@ export default function StranaPropisa() {
                           fontSize: r.potvrdjen ? 15 : 13.5,
                         }}
                       >
-                        {r.potvrdjen ? r.oznaka : `⚠︎ ${r.oznaka}`}
+                        {r.potvrdjen ? (
+                          r.oznaka
+                        ) : (
+                          <span className="red-ikone">
+                            <IkonaUpozorenje velicina={14} />
+                            {r.oznaka}
+                          </span>
+                        )}
                       </div>
                       {r.naslov && (
                         <div className="mali prigusen" style={{ marginTop: 3 }}>
@@ -240,19 +247,18 @@ export default function StranaPropisa() {
                       href={r.izvorUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mali"
-                      style={{ fontWeight: 600 }}
+                      className="osnov-radnja"
                     >
-                      🔗 Otvori propis
+                      <IkonaVeza velicina={15} />
+                      Otvori propis
                     </a>
                     <Link
                       href={`/?pitanje=${encodeURIComponent(
                         `Objasni mi ${r.potvrdjen ? r.oznaka : "ovu odredbu"} ${r.propis} i kako se primenjuje u praksi.`,
                       )}`}
-                      className="mali"
-                      style={{ fontWeight: 600 }}
+                      className="osnov-radnja osnov-radnja-tiha"
                     >
-                      💬 Pitaj AI o ovom članu
+                      Pitaj AI o ovom članu
                     </Link>
                     <span className="sitni slab">
                       Važi od {new Date(r.vaziOd).toLocaleDateString("sr-RS")}

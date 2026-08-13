@@ -17,6 +17,7 @@ import {
   Pouzdanost,
   Upozorenja,
 } from "@/components/Osnovno";
+import { IkonaDokument, IkonaUpozorenje } from "@/components/Ikone";
 
 export interface WebIzvor {
   naslov: string;
@@ -111,7 +112,7 @@ export function OdgovorAsistenta({
       >
         <Pouzdanost nivo={o.nivoPouzdanosti} />
         {poruka.koriscenaWebPretraga && (
-          <span className="znacka znacka-siva">🌐 Provereno na webu</span>
+          <span className="znacka znacka-siva">Provereno na webu</span>
         )}
         {poruka.ciljniDatum && (
           <span className="sitni slab">
@@ -221,10 +222,13 @@ export function OdgovorAsistenta({
       <div style={{ marginTop: 16 }} className="razmak-y-s">
         <Upozorenja poruke={poruka.upozorenja ?? []} />
         {rizicno && (
-          <div className="opasnost">
-            ⚠︎ Ovo je oblast povišenog poreskog rizika. Pre postupanja obavezno
+          <div className="opasnost red-ikone red-ikone-vrh">
+            <IkonaUpozorenje velicina={16} className="ikona-nesabijena" />
+            <span>
+            Ovo je oblast povišenog poreskog rizika. Pre postupanja obavezno
             proverite konkretan slučaj sa ovlašćenim poreskim savetnikom —
             posledice pogrešnog tretmana mogu biti značajne.
+            </span>
           </div>
         )}
       </div>
@@ -241,7 +245,8 @@ export function OdgovorAsistenta({
         }}
       >
         <button type="button" className="dugme-tiho" onClick={naPdf}>
-          📄 Sačuvaj kao PDF
+          <IkonaDokument velicina={16} />
+          Sačuvaj kao PDF
         </button>
         <span className="sitni slab" style={{ marginLeft: 10 }}>
           Nalaz sa pitanjem, pravnim osnovom i mestom za potpis onoga ko
