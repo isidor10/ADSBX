@@ -20,37 +20,42 @@ const Ulaz = z.object({
 });
 
 export async function POST(zahtev: Request) {
-  const korisnik = await trenutniKorisnik();
-
-  const limit = ogranici(
-    kljucKlijenta(zahtev, korisnik?.id),
-    30,
-    60 * 60 * 1000,
-  );
-  if (!limit.dozvoljeno) {
-    return NextResponse.json(
-      {
-        greska:
-          "Dostignut je limit broja pitanja. Pokušajte ponovo za nekoliko minuta.",
-      },
-      { status: 429 },
-    );
-  }
-
-  let ulaz: z.infer<typeof Ulaz>;
+  // Sve je unutar try bloka, uključujući čitanje sesije i ograničavanje broja
+  // zahteva. Ranije su ta dva koraka stajala izvan njega: kada bi tamo nešto
+  // puklo, Next bi vratio svoju HTML stranicu greške, klijent u njoj ne bi
+  // našao objašnjenje i korisnik bi dobio golo „Došlo je do greške”, bez traga
+  // u odgovoru o tome šta se desilo.
   try {
-    ulaz = Ulaz.parse(await zahtev.json());
-  } catch {
-    return NextResponse.json(
-      {
-        greska:
-          "Neispravan zahtev. Pitanje mora imati između 3 i 8000 znakova.",
-      },
-      { status: 400 },
-    );
-  }
+    const korisnik = await trenutniKorisnik();
 
-  try {
+    const limit = ogranici(
+      kljucKlijenta(zahtev, korisnik?.id),
+      30,
+      60 * 60 * 1000,
+    );
+    if (!limit.dozvoljeno) {
+      return NextResponse.json(
+        {
+          greska:
+            "Dostignut je limit od 30 pitanja na sat. Sačekajte i pokušajte ponovo.",
+        },
+        { status: 429 },
+      );
+    }
+
+    let ulaz: z.infer<typeof Ulaz>;
+    try {
+      ulaz = Ulaz.parse(await zahtev.json());
+    } catch {
+      return NextResponse.json(
+        {
+          greska:
+            "Neispravan zahtev. Pitanje mora imati između 3 i 8000 znakova.",
+        },
+        { status: 400 },
+      );
+    }
+
     // ── Profil firme ────────────────────────────────────────────────────────
     let firma = null;
     if (ulaz.firmaId && korisnik) {

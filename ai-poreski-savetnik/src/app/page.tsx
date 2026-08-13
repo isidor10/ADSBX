@@ -138,10 +138,40 @@ function Razgovor() {
       // „greska". Kad tok pukne pre završnog reda, to se ovde i vidi — ranije
       // se svaki takav slučaj svodio na „nije moguće doći do servera".
       if (!odgovor.ok || !odgovor.body) {
-        const podaci = await odgovor.json().catch(() => ({}));
+        // Server je odbio zahtev pre nego što je tok počeo. Ako uz odbijanje
+        // nije poslao objašnjenje, ovde se ranije ispisivalo samo „Došlo je do
+        // greške” — što ne kaže ništa ni korisniku ni onome ko to popravlja.
+        // Zato se prikazuje bar HTTP status i početak onoga što je stiglo.
+        const sirovo = await odgovor.text().catch(() => "");
+        let nasa = "";
+        let tudja = "";
+        try {
+          nasa = (JSON.parse(sirovo) as { greska?: string }).greska ?? "";
+        } catch {
+          tudja = sirovo
+            .replace(/<[^>]*>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 200);
+        }
+
         postaviPoruke((p) => [
           ...p,
-          { uloga: "asistent", greska: podaci.greska ?? "Došlo je do greške." },
+          {
+            uloga: "asistent",
+            greska:
+              // Poruku koju je aplikacija sama sastavila treba pokazati kakva
+              // jeste — ona već kaže šta da se uradi. Sve ostalo znači da je
+              // odgovor stigao mimo aplikacije, pa uz njega ide i putokaz.
+              nasa ||
+              [
+                `Server je odbio zahtev (HTTP ${odgovor.status}).`,
+                tudja && `Odgovor servera: „${tudja}”.`,
+                "Uzrok piše u terminalu u kojem radi „npm run kreni” — potražite red koji počinje sa [/api/chat].",
+              ]
+                .filter(Boolean)
+                .join(" "),
+          },
         ]);
         return;
       }
