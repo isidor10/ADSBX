@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { proveriClanoveUTekstu } from "@/lib/ai/verifier";
 import { PODRAZUMEVANI_STIL, STILOVI } from "@/lib/ai/stilovi";
+import { PORUKA_PRIJAVA, stanjePristupa } from "@/lib/pristup";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -38,6 +39,12 @@ export async function POST(zahtev: Request) {
     // Neprijavljeni posetilac svejedno dobija svoju istoriju — vezanu za
     // pregledač, ne za nalog.
     const gost = korisnik ? null : await idGosta();
+
+    // Svako pitanje troši API ključ vlasnika. Kada je aplikacija objavljena,
+    // neprijavljen posetilac ne sme da ga troši.
+    if (!korisnik && stanjePristupa() === "zatvoren") {
+      return NextResponse.json({ greska: PORUKA_PRIJAVA }, { status: 401 });
+    }
 
     const limit = ogranici(
       kljucKlijenta(zahtev, korisnik?.id),

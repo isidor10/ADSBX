@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { smeDaSeRegistruje } from "@/lib/pristup";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import {
@@ -15,6 +16,8 @@ export const runtime = "nodejs";
 
 const Prijava = z.object({
   akcija: z.enum(["registracija", "prijava", "odjava"]),
+  /** Pozivni kod, kada je aplikacija objavljena i kod je podešen. */
+  kod: z.string().max(200).optional(),
   email: z.string().email().optional(),
   lozinka: z.string().min(8).max(200).optional(),
   ime: z.string().max(120).optional(),
@@ -33,7 +36,7 @@ export async function POST(zahtev: Request) {
       { status: 400 },
     );
   }
-  const { akcija, email, lozinka, ime } = provera.data;
+  const { akcija, email, lozinka, ime, kod } = provera.data;
 
   if (akcija === "odjava") {
     await odjavi();
@@ -68,6 +71,14 @@ export async function POST(zahtev: Request) {
     // Prvi registrovani korisnik postaje administrator — inače admin panel
     // ne bi bio dostupan nikome pri prvom pokretanju.
     const brojKorisnika = await db.korisnik.count();
+
+    // Objavljena aplikacija troši ključ vlasnika, pa nalog ne sme da otvori
+    // bilo ko ko naiđe na adresu. Prvi korisnik je izuzet: njemu kod nema ko
+    // da da, a bez njega bi aplikacija bila zaključana i za vlasnika.
+    const odluka = smeDaSeRegistruje(email, kod, brojKorisnika === 0);
+    if (!odluka.dozvoljeno) {
+      return NextResponse.json({ greska: odluka.razlog }, { status: 403 });
+    }
 
     const korisnik = await db.korisnik.create({
       data: {
