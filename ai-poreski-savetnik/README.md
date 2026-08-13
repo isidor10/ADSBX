@@ -57,6 +57,16 @@ Nema instalacije, baze, naloga ni podešavanja. Bez API ključa odmah rade
 **Kalkulatori, Propisi, Rokovi i Moja firma**; za **Razgovor** i **Analizu
 dokumenata** otvorite `.env` i upišite `ANTHROPIC_API_KEY=sk-ant-...`.
 
+### Da li ključ radi
+
+```bash
+npm run kljuc
+```
+
+Pita Anthropic, ne gleda samo u fajl — pa razlikuje ključ pod navodnicima,
+ključ u pogrešnom fajlu, istekao ključ i nalog bez kredita, umesto da za sve
+ćuti isto. `npm run kreni` pokreće istu proveru kao četvrti korak.
+
 ### Na svom računaru
 
 Potreban je Node.js 20+:
