@@ -151,13 +151,16 @@ export const SHEMA_KLASIFIKACIJE = {
   properties: {
     oblasti: {
       type: "array",
-      description: "Poreske/pravne oblasti na koje se pitanje odnosi.",
+      description:
+        "Sve oblasti koje pitanje dodiruje, ne samo ona najočiglednija. Poslovni potez po pravilu pogađa više propisa odjednom — kupovina lokala je i porez na dobit i PDV i računovodstvo i porez na imovinu i gradnja. Navedi svaku oblast koja može da promeni odgovor.",
       items: {
         type: "string",
         enum: [
           "PDV", "DOBIT", "DOHODAK", "DOPRINOSI", "RAD", "RACUNOVODSTVO",
           "EFAKTURE", "FISKALIZACIJA", "POSTUPAK", "IMOVINA", "PRIVREDA",
-          "DEVIZNO", "OSTALO",
+          "DEVIZNO", "BZR", "PODACI", "PLACANJA", "IZVRSENJE", "INSPEKCIJA",
+          "UPRAVNI", "AML", "HRANA", "SANITARNO", "GRADNJA", "UGOSTITELJSTVO",
+          "TURIZAM", "OSTALO",
         ],
       },
     },

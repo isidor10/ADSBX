@@ -45,6 +45,7 @@ import {
   validatorKlasifikacije,
   validatorOdgovora,
 } from "./schema";
+import { PODRAZUMEVANI_STIL, uputstvoStila, type Stil } from "./stilovi";
 import { verifikuj, type RezultatVerifikacije } from "./verifier";
 
 export interface UlazPipeline {
@@ -53,6 +54,8 @@ export interface UlazPipeline {
   firma?: Parameters<typeof kontekstFirme>[0];
   /** Dodatni sistemski prompt — npr. za "drugo mišljenje" ili analizu dokumenta. */
   dodatniPrompt?: string;
+  /** Stil odgovaranja. Menja ton i obim, nikada pravni sadržaj. */
+  stil?: Stil;
   /** Ako je zadat, preskače se prepoznavanje datuma iz teksta. */
   ciljniDatum?: Date;
   /**
@@ -274,6 +277,7 @@ async function sintetizuj(
   firmaKontekst: string,
   dodatniPrompt: string | undefined,
   istorija: UlazPipeline["istorija"],
+  stil: Stil,
 ): Promise<StrukturiraniOdgovor> {
   const delovi = [
     kontekstDatuma(ciljniDatum),
@@ -312,9 +316,16 @@ async function sintetizuj(
   }
   poruke.push({ role: "user", content: delovi.filter(Boolean).join("\n\n") });
 
-  const sistem = dodatniPrompt
-    ? `${SISTEMSKI_PROMPT}\n\n# Poseban zadatak\n${dodatniPrompt}`
-    : SISTEMSKI_PROMPT;
+  // Uputstvo stila ide posle sistemskog prompta, a poseban zadatak posle njega:
+  // kasnije rečeno ima prednost, a nijedan od ta dva ne sme da nadjača pravila
+  // o citiranju iz osnovnog prompta — zato ona i stoje prva.
+  const sistem = [
+    SISTEMSKI_PROMPT,
+    uputstvoStila(stil, pitanje),
+    dodatniPrompt ? `# Poseban zadatak\n${dodatniPrompt}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   // Isto i ovde, sa jačim razlogom: 16.000 tokena uz razmišljanje je najduži
   // poziv u celom toku, a upravo se on ranije završavao prekinutom vezom.
@@ -387,6 +398,7 @@ export async function pokreniPipeline(
     firmaKontekst,
     ulaz.dodatniPrompt,
     ulaz.istorija,
+    ulaz.stil ?? PODRAZUMEVANI_STIL,
   );
 
   faza("Proveravam citate…");

@@ -67,7 +67,17 @@ Tvoj zadatak je da pripremiš pretragu, ne da odgovoriš.
 
 Za pretražne upite koristi terminologiju kojom su pisani propisi, a ne kojom je pisano pitanje. Primer: korisnik pita "da li mogu da odbijem PDV na auto" — dobar pretražni upit je "pravo na odbitak prethodnog poreza putnički automobil isključenje", a ne prepisano pitanje.
 
-Web pretragu traži samo kada odgovor zavisi od aktuelnih iznosa, stopa, limita, rokova ili skorašnjih izmena propisa. Za pitanja o principu ("kako se utvrđuje osnovica") web pretraga obično nije potrebna.`;
+Web pretragu traži samo kada odgovor zavisi od aktuelnih iznosa, stopa, limita, rokova ili skorašnjih izmena propisa. Za pitanja o principu ("kako se utvrđuje osnovica") web pretraga obično nije potrebna.
+
+# Oblasti: gledaj šire od očiglednog
+Jedan poslovni potez skoro nikad ne dodiruje samo jedan propis. Pre nego što izabereš oblasti, pitaj se šta sve ta radnja pokreće.
+
+Primer: "firma kupuje lokal i renovira ga" nije samo PDV. Tu su i porez na dobit (amortizacija, priznavanje ulaganja), računovodstvo (kapitalizacija ili tekući trošak), porez na imovinu, propisi o planiranju i izgradnji ako se izvode radovi, a moguće i Zakon o privrednim društvima ako je prodavac povezano lice.
+
+Bolje je navesti oblast koja se na kraju pokaže suvišnom nego propustiti onu koja menja odgovor.
+
+# Podzakonski akti
+Kada odgovor zavisi od načina obračuna, obrasca, roka ili praga, sam zakon retko je dovoljan — to je po pravilu uređeno pravilnikom ili uredbom. U tom slučaju u pretražne i web upite uvrsti i traženje podzakonskog akta, ne samo zakona.`;
 
 export function kontekstDatuma(ciljniDatum: Date, danas = new Date()): string {
   const pitaOProslosti =

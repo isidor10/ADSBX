@@ -10,12 +10,14 @@ import {
   type Poruka,
   type WebIzvor,
 } from "@/components/Poruke";
+import { Citat, DISCLAIMER, KarticaPravnogOsnova } from "@/components/Osnovno";
 import {
-  Citat,
-  DISCLAIMER,
-  KarticaPravnogOsnova,
-} from "@/components/Osnovno";
-
+  jeStil,
+  OPISI_STILOVA,
+  PODRAZUMEVANI_STIL,
+  STILOVI,
+  type Stil,
+} from "@/lib/ai/stilovi";
 
 const BRZE_OPCIJE = [
   {
@@ -78,6 +80,9 @@ function Razgovor() {
   // koju dokument gubi: pregledači taj događaj umeju da okinu pre nego što
   // otisnu stranu, pa je izlazio prazan PDF. Na ekranu ga ionako nema.
   const [nalaz, postaviNalaz] = useState<PodaciNalaza | null>(null);
+  // Stil se pamti između poseta: ko jednom bira „Accountant", po pravilu to
+  // želi i sledeći put, a ponovno biranje pri svakom otvaranju je trošak.
+  const [stil, postaviStil] = useState<Stil>(PODRAZUMEVANI_STIL);
   const dno = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,6 +92,16 @@ function Razgovor() {
   // Dolazak sa strane „Propisi" preko dugmeta „Pitaj AI o ovom članu" —
   // pitanje se prenosi kroz URL i unosi u polje, ali se NE šalje samo od sebe:
   // korisnik treba da vidi i po potrebi dopuni pitanje pre slanja.
+  useEffect(() => {
+    const sacuvan = localStorage.getItem("stil");
+    if (jeStil(sacuvan)) postaviStil(sacuvan);
+  }, []);
+
+  function promeniStil(s: Stil) {
+    postaviStil(s);
+    localStorage.setItem("stil", s);
+  }
+
   useEffect(() => {
     const iz = parametri.get("pitanje");
     if (iz) postaviUnos(iz);
@@ -110,7 +125,7 @@ function Razgovor() {
       const odgovor = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pitanje, razgovorId, rezim }),
+        body: JSON.stringify({ pitanje, razgovorId, rezim, stil }),
       });
 
       // Odgovor stiže kao tok NDJSON redova: faze dok traje, pa „gotovo" ili
@@ -303,6 +318,8 @@ function Razgovor() {
           ucitavanje={ucitavanje}
           rezim={rezim}
           naRezim={postaviRezim}
+          stil={stil}
+          naStil={promeniStil}
           brojIzvora={citati.length + webIzvori.length}
           naPanel={() => postaviPanel(true)}
         />
@@ -440,7 +457,6 @@ function PocetniEkran({ naPitanje }: { naPitanje: (t: string) => void }) {
   );
 }
 
-
 function Ucitavanje({ faza }: { faza?: string }) {
   return (
     <div className="kartica" style={{ padding: "16px 18px" }}>
@@ -454,8 +470,6 @@ function Ucitavanje({ faza }: { faza?: string }) {
   );
 }
 
-
-
 function UnosPitanja({
   vrednost,
   naPromenu,
@@ -463,6 +477,8 @@ function UnosPitanja({
   ucitavanje,
   rezim,
   naRezim,
+  stil,
+  naStil,
   brojIzvora,
   naPanel,
 }: {
@@ -472,6 +488,8 @@ function UnosPitanja({
   ucitavanje: boolean;
   rezim: "standard" | "drugo_misljenje";
   naRezim: (r: "standard" | "drugo_misljenje") => void;
+  stil: Stil;
+  naStil: (s: Stil) => void;
   brojIzvora: number;
   naPanel: () => void;
 }) {
@@ -493,6 +511,25 @@ function UnosPitanja({
             flexWrap: "wrap",
           }}
         >
+          <label
+            className="sitni slab"
+            style={{ display: "flex", alignItems: "center", gap: 6 }}
+          >
+            Stil
+            <select
+              value={stil}
+              onChange={(e) => naStil(e.target.value as Stil)}
+              className="izbor-stila"
+              title={OPISI_STILOVA[stil].opis}
+            >
+              {STILOVI.map((s) => (
+                <option key={s} value={s}>
+                  {OPISI_STILOVA[s].naziv}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <button
             onClick={() =>
               naRezim(rezim === "standard" ? "drugo_misljenje" : "standard")

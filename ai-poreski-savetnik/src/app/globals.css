@@ -558,3 +558,14 @@ button, input, select, textarea {
 @media (max-width: 900px) {
   .istorija-raspored { grid-template-columns: minmax(0, 1fr); }
 }
+
+.izbor-stila {
+  font: inherit;
+  color: var(--tekst);
+  background: var(--povrsina-2);
+  border: 1px solid var(--ivica);
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-height: 30px;
+  cursor: pointer;
+}
