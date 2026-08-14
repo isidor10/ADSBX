@@ -943,4 +943,168 @@ export const ODREDBE: SeedOdredba[] = [
     izvorUrl:
       "https://www.paragraf.rs/propisi/zakon_o_penzijskom_i_invalidskom_osiguranju.html",
   },
+  // ── Ugostiteljstvo ────────────────────────────────────────────────────────
+  /*
+   * Odavde nadalje su propisi koji ne odlučuju koliko se poreza plaća, nego
+   * da li se posao uopšte sme otvoriti.
+   *
+   * Pitanje „šta mi treba da otvorim kafić" ranije je dobijalo uredan poreski
+   * deo i rečenicu da se ostalo proveri u opštini — jer su ugostiteljstvo,
+   * bezbednost hrane, sanitarni uslovi, BZR i lokalne takse stajali u bazi kao
+   * prazna imena zakona. Polovičan odgovor na to pitanje je gori od nikakvog:
+   * čovek otvori objekat misleći da je sve pokrio.
+   */
+  {
+    propis: "ZUG",
+    clan: "—",
+    naslov: "Evidentiranje ugostiteljskog objekta i kategorizacija",
+    tekst:
+      "Ugostitelj je dužan da pre početka obavljanja delatnosti prijavi ugostiteljski objekat jedinici lokalne samouprave, na osnovu čega se objekat i ugostitelj evidentiraju u centralnom informacionom sistemu u oblasti ugostiteljstva i turizma (eTurista). Za objekte koji podležu kategorizaciji zahtev se podnosi kroz centralni informacioni sistem, posebno za svaki objekat; kategorija se utvrđuje rešenjem i važi tri godine od dostavljanja. Fizičko lice može pružati ugostiteljske usluge smeštaja u objektu kapaciteta do 30 individualnih ležajeva, za najviše 30 korisnika usluge. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2019-07-01",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon-o-ugostiteljstvu.html",
+  },
+
+  // ── Bezbednost hrane ──────────────────────────────────────────────────────
+  {
+    propis: "ZBH",
+    clan: "—",
+    naslov: "Upis u Centralni registar objekata i obavezan HACCP",
+    tekst:
+      "Proizvodnjom i prometom hrane mogu da se bave pravna lica i preduzetnici upisani u odgovarajući registar privrednih subjekata i registrovani, odnosno odobreni u Centralnom registru objekata koji vodi ministarstvo nadležno za poslove poljoprivrede. Registracija objekta vrši se na zahtev subjekta, bez prethodne inspekcijske kontrole. Subjekt u poslovanju hranom dužan je da uspostavi sistem samokontrole zasnovan na principima HACCP i odgovoran je za bezbednost hrane. Bez upisa objekta u Centralni registar objekat se smatra neregistrovanim, uspostavljen HACCP se ne priznaje, a inspekcija može zabraniti rad. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2009-06-11",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_bezbednosti_hrane.html",
+  },
+
+  // ── Bezbednost i zdravlje na radu ─────────────────────────────────────────
+  {
+    propis: "ZBZR",
+    clan: "—",
+    naslov: "Akt o proceni rizika, lice za bezbednost i osposobljavanje",
+    tekst:
+      "Poslodavac je dužan da donese akt o proceni rizika u pisanom obliku za sva radna mesta u radnoj okolini i da utvrdi način i mere za otklanjanje utvrđenih rizika. Dužan je i da odredi lice za bezbednost i zdravlje na radu, koje učestvuje u prepoznavanju i proceni rizika i upoznaje zaposlene sa rizicima. Osposobljavanje zaposlenog za bezbedan i zdrav rad sprovodi se pri zasnivanju radnog odnosa ili drugog radnog angažovanja, pri premeštaju na druge poslove, pri uvođenju nove tehnologije ili novih sredstava za rad, kao i pri promeni sredstava za rad. Obaveze važe od prvog zaposlenog, bez obzira na veličinu poslodavca. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2023-05-07",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_bezbednosti_i_zdravlju_na_radu.html",
+  },
+
+  // ── Lokalne komunalne takse ───────────────────────────────────────────────
+  {
+    propis: "ZFLS",
+    clan: "—",
+    naslov: "Firmarina — taksa za isticanje firme na poslovnom prostoru",
+    tekst:
+      "Lokalnu komunalnu taksu za isticanje firme na poslovnom prostoru (firmarinu) uvodi i naplaćuje jedinica lokalne samouprave, a visinu utvrđuje svojom odlukom. Preduzetnici i pravna lica razvrstana u mikro i mala pravna lica, sa godišnjim prihodom do 50.000.000 dinara, ne plaćaju ovu taksu — osim ako obavljaju delatnosti koje su zakonom izuzete od tog oslobođenja (između ostalog bankarstvo, osiguranje, proizvodnja i trgovina naftom, duvan, cement, poštanske, mobilne i telefonske usluge, elektroprivreda, kazina i noćni barovi). Obveznici iz izuzetih delatnosti plaćaju taksu bez obzira na visinu prihoda. Obaveza nastaje danom upisa u odgovarajući registar i traje dok se ne prijavi prestanak korišćenja prava. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni; konačan iznos zavisi od odluke vaše lokalne samouprave.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2007-01-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_finansiranju_lokalne_samouprave.html",
+  },
+
+  // ── Autorsko i srodna prava ───────────────────────────────────────────────
+  {
+    propis: "ZASP",
+    clan: "—",
+    naslov: "Naknada za javno saopštavanje muzike — SOKOJ i OFPS",
+    tekst:
+      "Javno saopštavanje muzičkog dela u poslovnom prostoru putem tehničkih uređaja za reprodukciju zvuka, odnosno zvuka i slike, povlači obavezu plaćanja naknade organizacijama za kolektivno ostvarivanje prava. SOKOJ kolektivno ostvaruje autorska prava autora muzike, a OFPS srodna prava proizvođača fonograma — ako se koristi tzv. mehanička muzika sa nosača zvuka, naknada se plaća objema organizacijama, i to su dve odvojene obaveze. Visina naknade utvrđuje se tarifom, pre svega prema površini prostora koji se koristi za prijem gostiju i prema značaju koji muzika ima za delatnost korisnika. Ova naknada nije sadržana u pretplati za televiziju ili druge usluge. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2010-01-01",
+    izvorUrl: "https://www.sokoj.rs/koji-su-sve-nacini-koriscenja-muzike/",
+  },
+
+  // ── Inspekcijski nadzor ───────────────────────────────────────────────────
+  /*
+   * Ovo je propis koji korisnik čita kada je već u nevolji, pa je važno da zna
+   * i šta inspektor sme, i šta on sam sme da traži. Zato ovde stoje i prava
+   * nadziranog subjekta, ne samo obaveze.
+   */
+  {
+    propis: "ZIN",
+    clan: "—",
+    naslov: "Najava nadzora, kontrolne liste i mere inspektora",
+    tekst:
+      "Inspektor u pisanom obliku obaveštava nadziranog subjekta o predstojećem inspekcijskom nadzoru, najkasnije tri dana pre početka nadzora; obaveštenje sadrži i podatak o internet stranici na kojoj je dostupna kontrolna lista. Postupajući u granicama predmeta nadzora iz naloga za inspekcijski nadzor, inspektor preduzima provere i radnje sadržane u kontrolnoj listi — koja je javno dostupna, pa se subjekt može unapred pripremiti. Inspektor može izreći preventivnu meru, meru za otklanjanje nezakonitosti, posebnu meru naredbe, zabrane ili zaplene, ili meru za zaštitu prava trećih lica; te mere se po pravilu određuju u zapisniku, a ako subjekt po njima ne postupi, izriču se rešenjem. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2016-04-30",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_inspekcijskom_nadzoru.html",
+  },
+
+  // ── Transferne cene ───────────────────────────────────────────────────────
+  {
+    propis: "PRAVILNIK-TRANSFERNE-CENE",
+    clan: "—",
+    naslov: "Izveštaj o transfernim cenama — pun i skraćen oblik",
+    tekst:
+      "Obveznik koji je u toku poreskog perioda imao transakcije sa povezanim licima dužan je da uz poreski bilans podnese dokumentaciju o transfernim cenama. Izveštaj se može podneti u skraćenom obliku za transakcije manjeg ekonomskog značaja: za jednokratnu transakciju sa povezanim licem u iznosu koji ne prelazi 8.000.000 dinara, odnosno za transakcije sa jednim povezanim licem čija ukupna vrednost u toku godine ne prelazi 8.000.000 dinara. Skraćeni oblik ne može se koristiti za zajmove, kredite i pozajmice — za njih se uvek podnosi pun izveštaj. Dokumentacija se dostavlja zajedno sa poreskim bilansom, u roku od 180 dana od isteka poreskog perioda. Napomena sistema: prag i rok su provereni, brojevi članova pravilnika nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2013-07-01",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/pravilnik-o-transfernim-cenama.html",
+  },
+  // ── Zaštita potrošača ─────────────────────────────────────────────────────
+  {
+    propis: "ZZP",
+    clan: "—",
+    naslov: "Reklamacija — rokovi za odgovor i za rešavanje",
+    tekst:
+      "Prodavac je dužan da bez odlaganja, a najkasnije u roku od osam dana od dana prijema reklamacije, pisanim ili elektronskim putem odgovori potrošaču. Odgovor mora da sadrži odluku da li se reklamacija prihvata, izjašnjenje o zahtevu potrošača i konkretan predlog i rok za rešavanje. Rok za rešavanje ne može biti duži od 15 dana, odnosno 30 dana za tehničku robu i nameštaj, računajući od dana podnošenja reklamacije. Potrošač može izjaviti reklamaciju zbog nesaobraznosti u roku od dve godine od dana kupovine. Prodavac je dužan da vodi evidenciju primljenih reklamacija i da je čuva najmanje dve godine od dana podnošenja. Napomena sistema: rokovi su provereni, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2021-12-20",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_zastiti_potrosaca.html",
+  },
+
+  // ── Trgovina ──────────────────────────────────────────────────────────────
+  {
+    propis: "ZOT",
+    clan: "29",
+    naslov: "Evidencija prometa robe",
+    tekst:
+      "Trgovac je dužan da vodi evidenciju o nabavci, prodaji i prodajnoj ceni robe, na osnovu isprava propisanih ovim članom. U trgovini na malo u prodajnom objektu evidencija se vodi posebno za svaki prodajni objekat. Kod trgovine na daljinu evidencija se vodi na nivou celokupne trgovine na daljinu tog trgovca na tržištu Republike Srbije, ili posebno po organizacionim jedinicama.",
+    potvrdjenBrojClana: true,
+    doslovanTekst: false,
+    vaziOd: "2019-08-03",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_trgovini.html",
+  },
+  {
+    propis: "ZOT",
+    clan: "—",
+    naslov: "Isticanje cena i podaci o trgovcu",
+    tekst:
+      "Trgovac je dužan da istakne prodajnu cenu robe, a pri oglašavanju prodajne cene i jediničnu cenu. Pružalac usluge ističe jediničnu cenu usluge na vidnom mestu, na jasan, nedvosmislen, lako uočljiv i čitljiv način. Cene se ističu u dinarima. Uz to trgovac ističe radno vreme, podatke o trgovcu i deklaraciju robe. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni; obaveze su menjane izmenama zakona, pa proverite aktuelan tekst pre postupanja.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2019-08-03",
+    izvorUrl: "https://www.paragraf.rs/propisi/zakon_o_trgovini.html",
+  },
+
+  // ── Devizno poslovanje ────────────────────────────────────────────────────
+  /*
+   * Zabluda koja se često čuje jeste da postoji zakonski rok za naplatu iz
+   * inostranstva. Ne postoji — ali postoji obaveza izveštavanja kada naplata
+   * izostane duže od godinu dana, i to je ono što se previdi.
+   */
+  {
+    propis: "ZDP",
+    clan: "—",
+    naslov: "Naplata iz inostranstva i izveštavanje NBS",
+    tekst:
+      "Zakon ne propisuje obavezan rok u kome je rezident dužan da naplati potraživanje iz inostranstva. Međutim, ako naplata izvoza izostane duže od godinu dana od dana izvoza, takav odnos se smatra kreditnim poslom sa inostranstvom i rezident je dužan da ga prijavi Narodnoj banci Srbije na propisanim obrascima (P-1 i P-2). Svi poslovi sa inostranstvom evidentiraju se i obavljaju preko ovlašćenih banaka. Nepoštovanje rokova za dostavljanje izveštaja NBS povlači novčane kazne. Napomena sistema: sadržina je proverena, brojevi članova nisu potvrđeni.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2006-07-27",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_deviznom_poslovanju.html",
+  },
 ];
