@@ -17,92 +17,17 @@
  * i NE menja status verifikacije — radije prazno nego pogrešno.
  */
 
-import { createHash } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
+import {
+  hash,
+  parsirajClanove,
+  uCistTekst,
+} from "./lib/parser-propisa";
 
 const db = new PrismaClient();
 
 const KORISNICKI_AGENT =
   "AI-Poreski-Savetnik/0.1 (ingest pravne baze; kontakt: administrator instance)";
-
-function hash(tekst: string): string {
-  return createHash("sha256").update(tekst).digest("hex").slice(0, 32);
-}
-
-/** Skida HTML i svodi na čist tekst, čuvajući prelome između članova. */
-function uCistTekst(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<\/(p|div|h\d|li|tr|br)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#\d+;/g, " ")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-interface ParsiranClan {
-  clan: string;
-  naslov: string | null;
-  stavovi: Array<{ stav: string | null; tekst: string }>;
-}
-
-/**
- * Parsiranje teksta propisa na članove i stavove.
- *
- * Srpski propisi imaju stabilnu strukturu: naslov člana u posebnom redu, pa
- * "Član N", pa stavovi. Parser je namerno konzervativan — ako ne prepozna
- * strukturu, vraća prazno umesto da nagađa granice člana.
- */
-function parsirajClanove(tekst: string): ParsiranClan[] {
-  const redovi = tekst.split("\n").map((r) => r.trim());
-  const clanovi: ParsiranClan[] = [];
-
-  const regexClana = /^Član\s+(\d+[a-zšđčćž]?)\.?$/i;
-  let tekuci: ParsiranClan | null = null;
-  let mogucNaslov: string | null = null;
-
-  for (const red of redovi) {
-    if (!red) continue;
-
-    const poklapanje = red.match(regexClana);
-    if (poklapanje) {
-      if (tekuci) clanovi.push(tekuci);
-      tekuci = { clan: poklapanje[1], naslov: mogucNaslov, stavovi: [] };
-      mogucNaslov = null;
-      continue;
-    }
-
-    // Kratak red bez tačke na kraju je verovatno naslov narednog člana.
-    if (red.length < 90 && !red.endsWith(".") && !/^\d/.test(red)) {
-      mogucNaslov = red;
-    }
-
-    if (tekuci) {
-      // Numerisan stav: "(1) tekst" ili "1) tekst"
-      const stavMatch = red.match(/^\(?(\d+)\)\s*(.+)/);
-      if (stavMatch) {
-        tekuci.stavovi.push({ stav: stavMatch[1], tekst: stavMatch[2] });
-      } else if (tekuci.stavovi.length > 0) {
-        tekuci.stavovi[tekuci.stavovi.length - 1].tekst += ` ${red}`;
-      } else {
-        tekuci.stavovi.push({ stav: null, tekst: red });
-      }
-    }
-  }
-  if (tekuci) clanovi.push(tekuci);
-
-  // Odbacujemo očigledno pogrešno parsiranje — bolje ništa nego smeće u bazi.
-  return clanovi.filter(
-    (c) => c.stavovi.length > 0 && c.stavovi.some((s) => s.tekst.length > 40),
-  );
-}
 
 async function dohvati(url: string): Promise<string | null> {
   try {
