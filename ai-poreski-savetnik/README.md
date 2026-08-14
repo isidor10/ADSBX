@@ -107,6 +107,41 @@ npm run izmene      # otkriva izmene i priprema obaveštenja
 `npm run ingest` **ništa ne upisuje ako dohvat ne uspe** i ne menja status
 verifikacije — neuspešan dohvat ostavlja bazu tačnom, samo nepotpunom.
 
+### Lični ingest sa Paragraf Lex-a
+
+Za vlasnika pretplate koji puni **sopstvenu, lokalnu** bazu:
+
+```bash
+npm run ingest:paragraf                  # svi propisi čiji je izvor Paragraf
+npm run ingest:paragraf -- --propis=ZOR  # samo jedan
+npm run ingest:paragraf -- --ocisti      # briše sve što je ovaj ingest upisao
+```
+
+Pristupni podaci idu u `.env`, koji `.gitignore` isključuje iz repozitorijuma:
+
+```
+PARAGRAF_KORISNIK=vas.email@primer.rs
+PARAGRAF_LOZINKA=vasa-lozinka
+```
+
+**Ovo je namerno ograničeno na jednog korisnika.** Paragraf se plaća po nalogu,
+a prečišćeni tekstovi i baza kao celina su njihov rad — jedan pretplatnik koji
+puni svoju bazu za svoju upotrebu je jedno, posluživanje istog sadržaja
+zaposlenima je nešto sasvim drugo. Zato skripta ima dve ograde koje se ne mogu
+zaobići zaboravom:
+
+1. **Odbija da radi ako `DATABASE_URL` nije lokalni SQLite** (`file:…`). Nad
+   produkcijskim Postgresom se neće pokrenuti.
+2. **Piše samo u bazu, nikada u `src/data/seed/*`.** Seed fajlovi su jedino
+   što odlazi na Vercel, pa ovaj sadržaj ne može da procuri kroz git.
+
+Spisak upisanog čuva se u `.paragraf-ingest.json` (van gita), pa `--ocisti`
+vraća bazu u pređašnje stanje jednom komandom — izlaz ako licenca ne dođe.
+
+Pre nego što aplikaciji pristupi bilo ko osim vlasnika pretplate, za ovaj izvor
+treba pribaviti poslovnu licencu od Paragrafa. Za produkciju je predviđen
+`npm run ingest`, koji koristi zvanične i besplatne izvore.
+
 ---
 
 ## Deploy na Vercel

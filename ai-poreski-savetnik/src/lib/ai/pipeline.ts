@@ -289,9 +289,14 @@ async function sintetizuj(
     delovi.push(
       [
         "<nalazi_sa_weba>",
-        "Ovo su nalazi pretrage zvaničnih izvora. Koristi ih za aktuelne iznose,",
-        "stope i rokove. Za njih NEMAŠ citatId — pominji ih u tekstu uz naziv",
-        "institucije, a u pravniOsnov stavljaj samo odredbe iz pravne baze.",
+        "Ovo su nalazi pretrage zvaničnih izvora. Za njih NEMAŠ citatId, pa u",
+        "pravniOsnov idu samo odredbe iz pravne baze — ali u tekstu odgovora ih",
+        "koristi punopravno, uz naziv institucije iz koje potiču.",
+        "",
+        "Koristi ih za aktuelne iznose, stope, limite i rokove, ali i onda kada",
+        "propis o kome se pita uopšte nije u pravnoj bazi. Baza ne sadrži sve",
+        "propise Republike Srbije; ako je odgovor ovde i izvor je zvaničan,",
+        "odgovori i napiši da podatak dolazi iz tog izvora, a ne iz baze.",
         "",
         webBeleske,
         "",

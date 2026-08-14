@@ -908,4 +908,39 @@ export const ODREDBE: SeedOdredba[] = [
     izvorUrl:
       "https://www.paragraf.rs/propisi/pravilnik_o_nacinu_razvrstavanja_stalnih_sredstava_po_grupama_i_nacinu_utvrdjivanja_amortizacije_za_poreske_svrhe.html",
   },
+  // ── Penzijsko i invalidsko osiguranje ─────────────────────────────────────
+  /*
+   * Ovde stoji samo ono što je zaista provereno.
+   *
+   * Pitanje „da li korisnik invalidske penzije sme da se zaposli bez posledica
+   * po penziju" nije uspelo da se potvrdi iz dostupnih izvora — pravilo o
+   * obustavi koje se lako nađe odnosi se na porodičnu, ne na invalidsku
+   * penziju, a te dve se u praksi stalno mešaju. Zato je ta razlika ovde
+   * napisana izričito, a sam odgovor se upućuje na RF PIO. Bolje jasno
+   * razgraničenje nego tvrdnja koja zvuči potpuno.
+   */
+  {
+    propis: "ZPIO",
+    clan: "—",
+    naslov: "Obustava isplate porodične penzije kod ponovnog osiguranja",
+    tekst:
+      "Isplata porodične penzije obustavlja se korisniku koji stekne svojstvo osiguranika. Član porodice umrlog osiguranika sme da radi, ali mu se za to vreme porodična penzija ne isplaćuje. Pažnja: ovo pravilo se odnosi na porodičnu penziju i ne sme se automatski prenositi na invalidsku — to su različita prava sa različitim uslovima. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2003-04-10",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_penzijskom_i_invalidskom_osiguranju.html",
+  },
+  {
+    propis: "ZPIO",
+    clan: "—",
+    naslov: "Ponovno određivanje penzije po osnovu naknadnog staža",
+    tekst:
+      "Ako korisnik starosne ili invalidske penzije ponovo stekne svojstvo osiguranika u obaveznom osiguranju, na njegov zahtev može mu se odrediti nov iznos penzije, pod uslovom da je naknadno navršio najmanje godinu dana staža osiguranja. Nov iznos se utvrđuje ponovnim obračunom penzije prema danu ostvarivanja prava, uz uračunavanje naknadno navršenog staža i osnovica, pa se zatim usklađuje. Promena u zdravstvenom stanju korisnika invalidske penzije koji stekne svojstvo osiguranika, nastala posle ostvarivanja prava, ne može biti razlog za ponovno utvrđivanje invalidnosti. Napomena sistema: sadržina je proverena, broj člana nije potvrđen.",
+    potvrdjenBrojClana: false,
+    doslovanTekst: false,
+    vaziOd: "2003-04-10",
+    izvorUrl:
+      "https://www.paragraf.rs/propisi/zakon_o_penzijskom_i_invalidskom_osiguranju.html",
+  },
 ];

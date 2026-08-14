@@ -106,15 +106,30 @@ export function verifikuj(
     );
   }
 
+  /*
+   * Odsustvo odredbe u bazi nije isto što i odsustvo odgovora.
+   *
+   * Ranije je svaki odgovor bez citata iz baze dobijao NEDOVOLJNO_PODATAKA —
+   * i onda kada je pretraga našla zvanične izvore na webu i odgovor iz njih
+   * bio potpuno jasan. Pravna baza je najgušća oko poreza; čim se pitanje
+   * pomeri na PIO, zdravstveno ili socijalna davanja, ona je prazna, pa je
+   * korisnik dobijao crvenu oznaku i odbijanje na pitanje na koje je odgovor
+   * postojao dva reda niže, u nalazima sa weba.
+   *
+   * Zato se sada razlikuju dva slučaja: nema ničega (i dalje NEDOVOLJNO
+   * PODATAKA) i ima weba ali ne i baze (POTREBNA_PROVERA — odgovor stoji, ali
+   * nosi upozorenje da nije potvrđen kroz internu bazu).
+   */
   if (citati.length === 0) {
-    nivo = "NEDOVOLJNO_PODATAKA";
     if (webIzvori.length === 0) {
+      nivo = "NEDOVOLJNO_PODATAKA";
       upozorenja.push(
         "Nije pronađen potvrđen pravni osnov za ovaj odgovor. Ne mogu pouzdano da potvrdim ovu informaciju na osnovu trenutno dostupnih izvora.",
       );
     } else {
+      nivo = spustiNivo(nivo, "POTREBNA_PROVERA");
       upozorenja.push(
-        "Odgovor se oslanja samo na izvore sa weba, bez potvrđene odredbe u pravnoj bazi. Obavezno proverite važeći tekst propisa.",
+        "Odgovor se oslanja na izvore sa weba, bez potvrđene odredbe u pravnoj bazi. Proverite važeći tekst propisa pre postupanja.",
       );
     }
   }
